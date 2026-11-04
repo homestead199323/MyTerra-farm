@@ -467,12 +467,19 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   // that must build on the CURRENT farm (toast "Undo" after other edits, a
   // cloud pull landing in between) rather than on a snapshot taken earlier.
   const setData = useCallback((nd) => {
+    const resolved = typeof nd === "function" ? nd(dataRef.current) : nd;
+    if (!resolved || typeof resolved !== "object") return;
+    // Nothing changed (an updater handed the farm back as it was, e.g. the
+    // hourly forecast refresh once the town's position is stored): save and
+    // push nothing. Pushing it anyway uploaded this tab's whole copy of the
+    // farm every hour, so a tab or phone left open with an older copy
+    // overwrote newer edits made elsewhere (farm size, type of space,
+    // anything) and the next focus pulled that older copy back.
+    if (resolved === dataRef.current) return;
     // Phase 8.2 — read-only after trial/subscription expiry. The farms RLS
     // rejects the upsert anyway; blocking here keeps local state consistent
     // with the cloud and turns a dead click into an upgrade prompt.
     if (lockedRef.current) { setUpgradeOpen(true); return; }
-    const resolved = typeof nd === "function" ? nd(dataRef.current) : nd;
-    if (!resolved || typeof resolved !== "object") return;
     const withGamify = updateGamify(resolved);
     // Phase 8.4 — extract transient _pendingCelebrations before persisting
     const { _pendingCelebrations, ...persistable } = withGamify;

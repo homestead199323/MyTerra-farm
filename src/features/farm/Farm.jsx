@@ -80,6 +80,15 @@ const FD_TEMPLATES = [
     ]; } },
 ];
 
+/* Type of space, editable after setup (also in Settings → My Space).
+   Writes profile.environment only — brief §18: areas, plants and the
+   canvas size are never touched. */
+const ENV_CHOICES = [
+  { id: "balcony", emoji: "🏙️", label: "Balcony" },
+  { id: "backyard", emoji: "🏡", label: "Backyard" },
+  { id: "farm", emoji: "🚜", label: "Farm" },
+];
+
 /* Exact-metre input: local draft, commits on blur or Enter.
    Commit path: draft → blur → onCommit → handleZoneGeom → dim tag on map. */
 function MeterField({label, value, min, max, onCommit}) {
@@ -141,6 +150,10 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
      editing their own dimensions (starter canvas can be 3×2 m). */
   const sizeMin = mapEnv === "balcony" ? 2 : mapEnv === "backyard" ? 4 : 10;
   const sizeLabel = mapEnv === "farm" ? "Total farm size" : "Total space size";
+  function pickEnv(id) {
+    if (id === mapEnv) return;
+    saveData({...data, profile: {...(data.profile || {}), environment: id}});
+  }
   const [cityQuery, setCityQuery] = useState(data.city || "");
   const [cityResults, setCityResults] = useState([]);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -710,6 +723,24 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
                 <div style={{fontSize:11, color:C.t3, fontFamily:F.mono, paddingBottom:10, whiteSpace:"nowrap"}}>{(farmW*farmH).toLocaleString()} m²</div>
               </div>
               <div style={{fontSize:11, color:C.t3, marginBottom:16}}>Areas are kept inside the space when its size changes. Recheck planting rows after shrinking an area.</div>
+
+              <div style={{fontSize:11, fontWeight:700, color:C.t2, textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:6}}>Type of space</div>
+              <div role="group" aria-label="Type of space" data-fd-env style={{display:"flex", gap:8, marginBottom:6}}>
+                {ENV_CHOICES.map(function(o) {
+                  const active = o.id === mapEnv;
+                  return (
+                    <button key={o.id} type="button" aria-pressed={active} onClick={function() { pickEnv(o.id); }}
+                      style={{flex:1, padding:"10px 4px", borderRadius:10, cursor:"pointer", WebkitTapHighlightColor:"transparent",
+                        border:`1.5px solid ${active ? C.green : C.bdr}`, background: active ? C.gp : C.card, color:C.text,
+                        fontSize:12, fontWeight: active ? 700 : 500, fontFamily:F.body,
+                        display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
+                      <span style={{fontSize:18}}>{o.emoji}</span>
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{fontSize:11, color:C.t3, marginBottom:16}}>Changes how your map looks and which decor fits. Your areas, plants and size stay as they are.</div>
 
               <section className="q-inset"><h3>Ground & paths</h3><div className="q-grid2">{[
                 ['camera','View',[['3d','3D'],['flat','Flat overhead']]],
