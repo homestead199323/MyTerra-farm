@@ -515,3 +515,15 @@
 - [x] **Short-video generator (2026-10-25).** `marketing/video/` records the real app frame by frame (frozen clock,
   1/30 s per frame) and edits 9:16 shorts with AI voice, captions, finger marks, loop ending. Viral rules:
   `marketing/video/PLAYBOOK.md`. Part 1 ("I let a farming app design my entire farm") rendered, 35 s.
+- [x] **Farm size / type of space edits reverting (2026-11-05).** Reported: a changed farm size jumps back (Mac
+  browser). Cause: the hourly forecast refresh in `App.jsx` called `setData` with the farm unchanged and `setData`
+  still saved and pushed it, so every open tab or phone uploaded its own (possibly older) copy of the whole farm
+  once an hour and on every page load; another device's newer edit was overwritten and pulled back on the next
+  focus. Fix (`e4237a6`): `setData` returns early when an updater hands back the same object. Also added the
+  Balcony / Backyard / Farm picker to Farm Designer → ⚙ next to the size (profile.environment only).
+  Verified: ESLint, 143+3 tests, Vite build on Mac, production dpl_DLwPzSFgn6FX8VWkWxx9a4UUaS4J READY, live bundle
+  index-MR2FBlMr.js carries the new strings; on the live signed-in farm a page load now sends only the GET (before:
+  GET + full-farm POST) and a real size edit still POSTs 200 and survives reload; demo: picker switches to Backyard
+  and survives reload. NOT verified: the exact revert he saw (not reproduced end to end — needs two devices or a
+  tab left open for an hour). Remaining risk: whole-document last-write-wins — a device that edits before its
+  focus pull lands can still overwrite a newer edit made elsewhere; a compare-and-swap on `updated_at` would close it.
