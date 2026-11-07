@@ -21,7 +21,7 @@ const roomy = (A, pad) => !!A && A.x1 - A.x0 > 2 * pad + .05 && A.z1 - A.z0 > 2 
 
 /**
  * animals: [{ idx, species, kind: 'grazer'|'bird'|'hopper', L, walk (m/s), x, z, arena|null, home {x,z}|null, water {x0,x1,z0,z1,y}|null, seed }]
- * returns { tick(now, env) → Leg[], scatter(idxs, x, z, now) → Leg[] }; Leg = { idx, from, to, t0, t1, mode, param, heading }
+ * returns { tick(now, env) → Leg[], look(idxs, x, z, now) → Leg[], scatter(idxs, x, z, now) → Leg[] }; Leg = { idx, from, to, t0, t1, mode, param, heading }
  */
 export function createBrain(animals) {
   const S = animals.map((a) => ({
@@ -31,11 +31,18 @@ export function createBrain(animals) {
   const leg = (s, to, mode, dur, now, param = 0) => {
     const from = [s.x, s.z], dx = to[0] - from[0], dz = to[1] - from[1];
     if (mode === MODE.walk || mode === MODE.scatter) { if (Math.hypot(dx, dz) > 1e-4) s.heading = Math.atan2(dx, dz); }
-    s.x = to[0]; s.z = to[1]; s.mode = mode; s.until = now + dur; s.leg = { from, to: [to[0], to[1]], t0: now, t1: now + dur };
-    return { idx: s.idx, from, to: [to[0], to[1]], t0: now, t1: now + dur, mode, param, heading: s.heading };
+    s.x = to[0]; s.z = to[1]; s.mode = mode; s.until = now + dur;
+    s.leg = { idx: s.idx, from, to: [to[0], to[1]], t0: now, t1: now + dur, mode, param, heading: s.heading };
+    return s.leg;
   };
   const still = (s, mode, dur, now, param = 0) => leg(s, [s.x, s.z], mode, dur, now, param);
   const walkTo = (s, to, now, mode = MODE.walk, speedMul = 1) => leg(s, to, mode, Math.max(.4, Math.hypot(to[0] - s.x, to[1] - s.z) / (s.walk * speedMul)), now);
+  const settleAtCurrentPosition = (s, now) => {
+    if (!s.leg || now >= s.leg.t1) return;
+    const u = smooth((now - s.leg.t0) / Math.max(1e-6, s.leg.t1 - s.leg.t0));
+    s.x = s.leg.from[0] + (s.leg.to[0] - s.leg.from[0]) * u;
+    s.z = s.leg.from[1] + (s.leg.to[1] - s.leg.from[1]) * u;
+  };
   const randomPoint = (s, A, pad, near = true) => {
     for (let k = 0; k < 8; k++) {
       const d = near ? between(s.r, 1, 4) * s.L : 0, a = s.r() * 6.2832;
@@ -74,16 +81,31 @@ export function createBrain(animals) {
   };
   return {
     animals: S,
+    snapshot() {
+      return S.filter((s) => s.leg).map((s) => ({ ...s.leg, from: [...s.leg.from], to: [...s.leg.to] }));
+    },
     tick(now, env = { night: 0, reduced: false }) {
       const out = [];
       S.forEach((s) => { if (now >= s.until) out.push(decide(s, now, env)); });
+      return out;
+    },
+    look(idxs, x, z, now) {
+      const out = [];
+      idxs.forEach((idx) => {
+        const s = S.find((q) => q.idx === idx);
+        if (!s || s.mode === MODE.inside || s.mode === MODE.swim) return;
+        settleAtCurrentPosition(s, now);
+        const dx = x - s.x, dz = z - s.z;
+        if (Math.hypot(dx, dz) > 1e-3) s.heading = Math.atan2(dx, dz);
+        out.push(still(s, MODE.stand, between(s.r, 1.8, 2.8), now));
+      });
       return out;
     },
     scatter(idxs, x, z, now) {
       const out = [];
       idxs.forEach((idx) => {
         const s = S.find((q) => q.idx === idx); if (!s || s.mode === MODE.inside || !roomy(s.arena, s.pad)) return;
-        if (s.leg && now < s.leg.t1) { const u = smooth((now - s.leg.t0) / Math.max(1e-6, s.leg.t1 - s.leg.t0)); s.x = s.leg.from[0] + (s.leg.to[0] - s.leg.from[0]) * u; s.z = s.leg.from[1] + (s.leg.to[1] - s.leg.from[1]) * u; } // where it is right now, mid-leg
+        settleAtCurrentPosition(s, now);
         let dx = s.x - x, dz = s.z - z, d = Math.hypot(dx, dz);
         if (d < 1e-3) { const a = s.r() * 6.2832; dx = Math.sin(a); dz = Math.cos(a); d = 1; }
         const run = s.L * between(s.r, 1.5, 2.5), to = clampRect(s.x + dx / d * run, s.z + dz / d * run, s.arena, s.pad);

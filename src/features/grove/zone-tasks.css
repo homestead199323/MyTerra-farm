@@ -79,7 +79,7 @@
 @keyframes q-tp-burst{0%{opacity:1;transform:rotate(var(--a)) translateX(0)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) rotate(180deg)}}
 @keyframes q-badge-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
 @keyframes q-badge-ring{0%{transform:scale(.9);opacity:.7}70%,100%{transform:scale(1.6);opacity:0}}
-@media (prefers-reduced-motion:reduce){.q-tp,.q-tp-task,.q-tp-hero,.q-tp-float,.q-tp-burst i,.q-zone-badge .q-badge-bob,.q-zone-badge .q-badge-ring{animation:none!important}.q-tp-float{display:none}}
+@media (prefers-reduced-motion:reduce){.q-tp-backdrop,.q-tp,.q-tp-task,.q-tp-hero,.q-tp-sticker,.q-tp-reward,.q-tp-clear,.q-tp-float,.q-tp-burst i,.q-zone-badge .q-badge-bob,.q-zone-badge .q-badge-ring{animation:none!important}.q-tp,.q-tp-task,.q-tp-meter span,.q-tp-go{transition:none}.q-tp-float{display:none}}
 /* Dashboard "Today" rows open the zone popup */
 .q-task-row-button{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:var(--color-text);text-align:left;cursor:pointer;font:inherit;padding-left:4px;padding-right:4px;border-radius:0;transition:background .15s}
 .q-task-row-button:hover{background:var(--surface-soft)}

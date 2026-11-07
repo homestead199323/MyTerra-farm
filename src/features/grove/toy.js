@@ -35,15 +35,24 @@ export function ripple(mat, { time, ripple: amount }) {
   const prev = mat.onBeforeCompile;
   mat.onBeforeCompile = (sh, r) => {
     if (prev) prev(sh, r);
-    Object.assign(sh.uniforms, { uTime: time, uRipple: amount });
+    Object.assign(sh.uniforms, { uTime: time, uRipple: amount, uWaterWind: WIND });
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nuniform float uTime; uniform float uRipple;")
+      .replace("#include <common>", `#include <common>
+uniform float uTime; uniform float uRipple; uniform vec3 uWaterWind;
+vec3 g3Wave(vec2 p) {
+  vec2 d = normalize(uWaterWind.xy), crossD = vec2(-d.y, d.x);
+  float a = dot(p, d) * 3.1 - uTime * (1.1 + uWaterWind.z);
+  float b = dot(p, crossD) * 2.7 - uTime * .85;
+  float amp = uRipple * .012;
+  vec2 slope = (d * cos(a) * 3.1 + crossD * cos(b) * 2.7 * .45) * amp;
+  return vec3(slope, (sin(a) + sin(b) * .45) * amp);
+}`)
       .replace("#include <beginnormal_vertex>", `#include <beginnormal_vertex>
-{ float g3dx = cos(position.x * 3.1 + uTime * 1.7) * 3.1, g3dz = cos(position.z * 2.7 - uTime * 1.3) * 2.7; objectNormal = normalize(objectNormal - vec3(g3dx, 0., g3dz) * uRipple * .024); }`)
+{ vec3 wave = g3Wave(position.xz); objectNormal = normalize(objectNormal - vec3(wave.x, 0., wave.y)); }`)
       .replace("#include <begin_vertex>", `#include <begin_vertex>
-transformed.y += uRipple * (sin(position.x * 3.1 + uTime * 1.7) + sin(position.z * 2.7 - uTime * 1.3)) * .012;`);
+transformed.y += g3Wave(position.xz).z;`);
   };
-  mat.customProgramCacheKey = () => "g3ripple";
+  mat.customProgramCacheKey = () => "g3ripple-wind-v2";
   return mat;
 }
 export const UP = new THREE.Vector3(0, 1, 0);

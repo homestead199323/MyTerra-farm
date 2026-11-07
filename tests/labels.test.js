@@ -30,9 +30,17 @@ test('labels: side-by-side beds all placed', () => {
   const r = placeLabels([it('b1', { x: 50, w: 40 }), it('b2', { x: 100, w: 40 }), it('b3', { x: 150, w: 40 })], opt);
   assert.equal(r.filter((q) => q.show).length, 3);
 });
-test('labels: overlapping lower-priority label is hidden', () => {
+test('labels: dense farms keep a screen-sized budget and prioritise jobs', () => {
+  const items = Array.from({length: 20}, (_, i) => it(`bed-${i}`, { x: 25 + (i % 5) * 75, y: 40 + Math.floor(i / 5) * 80, w: 32, area: 20 - i }));
+  items[19].jobs = 1;
+  const r = placeLabels(items, { W: 400, H: 400 });
+  assert.equal(r.filter((entry) => entry.show).length, 5);
+  assert.equal(by(r, 'bed-19').show, true);
+});
+test('labels: neighbouring labels shift rather than overlap', () => {
   const r = placeLabels([it('a', { x: 100, area: 50 }), it('b', { x: 110, area: 10 })], opt);
-  assert.equal(by(r, 'a').show, true); assert.equal(by(r, 'b').show, false);
+  assert.equal(by(r, 'a').show, true); assert.equal(by(r, 'b').show, true);
+  assert.ok(Math.abs(by(r, 'a').y - by(r, 'b').y) >= 20);
 });
 test('labels: clamped to the viewport', () => {
   const [r] = placeLabels([it('a', { x: -20, y: 5 })], opt);

@@ -116,6 +116,18 @@ function MeterField({label, value, min, max, onCommit}) {
   );
 }
 
+function Live3DPreview({data, selectedId}) {
+  const [previewData, setPreviewData] = useState(data);
+  // The editor can emit dozens of geometry updates per second during a drag.
+  // Let the 2D handle track the pointer immediately and rebuild the 3D world
+  // once the layout has settled, including the final pointer-up position.
+  useEffect(() => {
+    const timer = setTimeout(() => setPreviewData(data), 140);
+    return () => clearTimeout(timer);
+  }, [data]);
+  return <div className="fd-preview-map" aria-hidden="true" inert><GroveScene data={previewData} activeZoneId={selectedId} interactive={false} showEditButton={false} showHelperText={false} noBorder /></div>;
+}
+
 function Setup({data, setData:saveData, onPlantInZone, onBack}) {
   const [history,setHistory]=useState({past:[],future:[],gesture:false});
   const gesture=useRef(false);
@@ -135,6 +147,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
   const [rowsDraft, setRowsDraft] = useState(null);  // "Number of rows" field while being typed (so it can be cleared)
   const [lineKind, setLineKind] = useState("path");
   const [sheet, setSheet] = useState(null);         // null | "settings"
+  const [show3dPreview, setShow3dPreview] = useState(false);
   const [farmW, setFarmW] = useState(data.farmW || 100);
   const [farmH, setFarmH] = useState(data.farmH || 60);
   const [tutorialDismissed, setTutorialDismissed] = useState(!!data.designerTutorialSeen);
@@ -169,19 +182,19 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
      unplaced zones don't overlap. This is render-only; we don't mutate
      data.zones, so the user's storage stays clean until they actually
      interact with the zone. */
-  const zones = (data.zones || []).map((z, i) => {
+  const zones = useMemo(() => (data.zones || []).map((z, i) => {
     if (z.xM != null && z.yM != null && z.wM != null && z.hM != null) return z;
     const area = +z.areaM2 || 6;
     const wM = Math.max(1, Math.round(Math.sqrt(area * 1.5) * 10) / 10);
     const hM = Math.max(1, Math.round((area / wM) * 10) / 10);
     return { ...z, xM: 4, yM: 4 + i * (hM + 1), wM, hM };
-  });
+  }), [data.zones]);
 
   const upZ = (id, u) => setData({...data, zones: data.zones.map(z => z.id===id ? {...z,...u} : z)});
   const delZ = id => { setData({...data,zones:data.zones.filter(z=>z.id!==id),garden:{...data.garden,plots:data.garden.plots.map(p=>p.zone===id?{...p,zone:""}:p)},livestock:{...data.livestock,animals:data.livestock.animals.map(a=>a.zone===id?{...a,zone:""}:a)}});setSel(null); };
 
   /* ── Grove editor plumbing ── */
-  const groveData = {...data, zones, farmW, farmH, ornaments: data.ornaments || []};
+  const groveData = useMemo(() => ({...data, zones, farmW, farmH, ornaments: data.ornaments || []}), [data, zones, farmW, farmH]);
   function clampGeom(g) {
     const wM = Math.max(.2, Math.min(farmW, g.wM));
     const hM = Math.max(.2, Math.min(farmH, g.hM));
@@ -349,6 +362,9 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
           <div style={{fontSize:15, fontWeight:800, fontFamily:F.head, color:C.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>Farm Designer</div>
           <div style={{fontSize:11, color:C.t2, fontFamily:F.mono}}>{farmW}×{farmH} m · {zones.length} {zones.length === 1 ? "zone" : "zones"} · {ornaments.length}/{MAX_ORNAMENTS} decor</div>
         </div>
+        <button type="button" className="q-secondary fd-preview-toggle" aria-pressed={show3dPreview} onClick={function() { setShow3dPreview(!show3dPreview); }}>
+          {show3dPreview ? "Hide 3D" : "Preview 3D"}
+        </button>
         <button type="button" aria-label="Farm settings" onClick={function() { setSheet("settings"); }}
           style={{border:`1px solid ${C.bdr}`, background:C.card, color:C.text, fontSize:16, lineHeight:1,
             width:36, height:36, borderRadius:12, cursor:"pointer", WebkitTapHighlightColor:"transparent"}}>⚙</button>
@@ -385,6 +401,11 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
             />
           </div>
         )}
+
+        {show3dPreview && <aside className="fd-preview" aria-label="Live 3D preview of your farm">
+          <div className="fd-preview-heading">3D preview <button type="button" aria-label="Close 3D preview" onClick={() => setShow3dPreview(false)}>×</button></div>
+          <Live3DPreview data={groveData} selectedId={sel} />
+        </aside>}
 
         {draw && (
           <div className="fd-draw-bar" onClick={function(e){e.stopPropagation();}}>

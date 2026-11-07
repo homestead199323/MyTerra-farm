@@ -13,10 +13,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout } from "lucide-react";
+import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent } from "./gestures";
 import { placeLabels } from "./labels";
-import { growthOf, animalZone, bedRows, layoutPlots, STAGES } from "../quiet/farm-model";
+import { previewGrowthOf, growthSceneStages, growthTransitionStart, growthTransitionDelay, growthTransitionProgress, GROWTH_DURATION_MS, GROWTH_STAGGER_MS, rowAtDate } from "./growth-preview";
+import { animalZone, bedRows, layoutPlots, STAGES } from "../quiet/farm-model";
+import PlantArt from "../quiet/PlantArt";
 import { plantingRows } from "../quiet/planting-plan";
 import { plantedRows, plantPosition } from "./aerial-layout";
 import { srand } from "./sceneMath";
@@ -42,6 +44,7 @@ const HARNESS = import.meta.env.DEV && typeof window !== "undefined" ? window.__
 const isCoarse = () => HARNESS?.coarse === true || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches);
 // growth stages (farm-model STAGES): Planned, Sown, Seedling, Growing, Maturing, Harvest window
 const STAGE_CSS = ["#c3cbc4", "#dcca92", "#a9dd8c", "#5fb24d", "#c1d44f", "#f7c552"];
+const AREA_ICONS = { house: House, orchard: Trees, pasture: PawPrint, coop: PawPrint, barn: Warehouse, water: Droplets, beehive: Hexagon, veg: Sprout, raised: Sprout, herbs: Sprout, nursery: Sprout, container: Sprout };
 const dayNum = (key) => { const [y, m, d] = String(key || "").split("-").map(Number); return Date.UTC(y || 1970, (m || 1) - 1, d || 1) / 864e5; };
 const addDays = (key, n) => { const t = new Date((dayNum(key) + n) * 864e5); return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, "0")}-${String(t.getUTCDate()).padStart(2, "0")}`; };
 
@@ -618,11 +621,11 @@ function barnZone(g, z, ctx, tag) {
 /* ---------- zones ---------- */
 /* Every plant of a zone (position, size, crop, stage) plus one segment per planted row carrying the
    plot's growth state — the segments drive the stage markers, harvest glow and tooltips. */
-function plantingsOf(z, plots, crops, today) {
+function plantingsOf(z, plots, crops, today, actualToday) {
   const out = [], rows = [], vertical = z.rowAxis === "vertical", orchard = z.type === "orchard";
   const push = (x, y, size, crop, stage) => out.push({ x, y, size, crop, stage });
   const info = (plot) => {
-    const g = growthOf(plot, crops.get(plot.crop), today);
+    const g = previewGrowthOf(plot, crops.get(plot.crop), today, actualToday);
     const left = plot.harvestDate && !g.waiting ? Math.round(dayNum(plot.harvestDate) - dayNum(today)) : null;
     return { id: plot.id, crop: plot.crop, name: plot.name, count: plot.plantCount || plot.qty || 0, stage: g.index, progress: g.progress, estimated: g.estimated, left, status: plot.status };
   };
@@ -695,7 +698,12 @@ function benchSlatted(g, M, bx, bz, bw, bd, y = .8) {
   for (let i = 0; i < n; i++) slats.push({ p: [bx, y, bz - bd / 2 + (i + .5) * (bd / n)], s: [bw, 1, .72] });
   instances(g, rboxGeo(1, .04, bd / n, .015, 1), M.wood, slats);
 }
-function plantAt(ctx, name, stage, x, z, y, size) { ctx.plants.push({ name, stage, x, y, z, s: cropScale(size, stage, name), ry: srand(x * 7 + z * 13) * 6.28 }); }
+function plantAt(ctx, name, stage, x, z, y, size) {
+  // Slight, stable variation gives rows a lived-in appearance without changing
+  // planting positions or letting the visual growth change between renders.
+  const variation = .94 + srand(x * 19 + z * 37 + 4) * .12;
+  ctx.plants.push({ name, stage, x, y, z, s: cropScale(size, stage, name) * variation, ry: srand(x * 7 + z * 13) * 6.28 });
+}
 
 function buildZone(z, ctx) {
   const { data, crops, M } = ctx;
@@ -703,7 +711,7 @@ function buildZone(z, ctx) {
   const w = z.wM, d = z.hM, cx = w / 2, cz = d / 2, plant = isPlantZone(z.type), oval = z.shape === "oval", off = [z.xM, z.yM];
   const tag = (m) => { m.userData.zoneId = z.id; return m; }; // taps use the zone hit box, not the detail meshes
   const plots = data.garden?.plots || [];
-  const grown = plant ? plantingsOf(z, plots, crops, ctx.todayKey) : { plants: [], rows: [] };
+  const grown = plant ? plantingsOf(z, plots, crops, ctx.todayKey, ctx.actualToday) : { plants: [], rows: [] };
   let plants = grown.plants; const prows = grown.rows;
   let floor = 0, housing = null;
   if (z.type === "raised" || z.type === "herbs" || z.type === "veg") {
@@ -738,11 +746,16 @@ function buildZone(z, ctx) {
     if (!potted.length) { const nx = Math.max(1, Math.floor(w / .8)), nz = Math.max(1, Math.floor(d / .8)); for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) potted.push({ x: ((i + .5) * w) / nx, y: ((j + .5) * d) / nz, size: .6 }); }
     potted.forEach((p) => {
       const r = Math.max(.16, Math.min(.34, (p.size || .6) * .42));
-      tag(tube(g, r, r * .78, .34, M.pot, p.x, .17, p.y, { seg: 18 }));
+      if (ctx.env === "balcony") {
+        disc(g, r * 1.12, M.potRim, p.x, .018, p.y, { seg: 24 });
+        ring(g, r * 1.12, .018, M.potRim, p.x, .028, p.y, { tube: 6, seg: 24, cast: false });
+      }
+      tag(tube(g, r, r * .78, .34, M.pot, p.x, .17, p.y, { seg: 24, open: ctx.env === "balcony" }));
+      if (ctx.env === "balcony") tube(g, r * .96, r * .86, .07, flat(PAL.potRim, { side: THREE.DoubleSide }), p.x, .305, p.y, { seg: 24, open: true, cast: false });
       ring(g, r, .028, M.potRim, p.x, .34, p.y, { tube: 7, seg: 20, cast: false });
-      disc(g, r * .9, M.soil(PAL.soilDark), p.x, .345, p.y, { seg: 14 });
+      disc(g, r * .9, M.soil(PAL.soilDark), p.x, ctx.env === "balcony" ? .29 : .345, p.y, { seg: 24 });
     });
-    floor = .34;
+    floor = ctx.env === "balcony" ? .29 : .34;
   } else if (z.type === "orchard" || z.type === "pasture") {
     const pm = M.lawn(z.type === "orchard" ? PAL.orchard : PAL.pasture);
     if (oval && z.type === "pasture") {
@@ -1022,12 +1035,20 @@ const GROUNDS = hexN(GROUND_TONES); // shared with the flat map (palette.js)
 /* a balcony: the building's cream wall behind it (with a glazed door and a window), a pale slab edge and a
    slim rounded metal railing — capsule posts, a chunky rounded handrail — on the three open sides */
 function balconyEdge(world, ctx, fW, fH, M) {
+  // Separate the terrace from the surrounding ground without adding textures.
+  rbox(world, fW + .2, .24, fH + .2, M.stoneDark, fW / 2, -.14, fH / 2, { r: .07 });
+  const nx = Math.max(1, Math.min(40, Math.ceil(fW / .75))), nz = Math.max(1, Math.min(40, Math.ceil(fH / .75))), tw = fW / nx, td = fH / nz;
+  for (let x = 0; x < nx; x++) for (let z = 0; z < nz; z++) {
+    rbox(world, tw - .018, .025, td - .018, (x + z) % 3 === 0 ? M.concreteSolid : M.stone, (x + .5) * tw, -.009, (z + .5) * td, { r: .009, seg: 1, cast: false });
+  }
   const wallH = 2.7, t = .3;
   rbox(world, fW + .9, wallH, t, M.cream, fW / 2, wallH / 2, -t / 2 - .05, { r: .08, seg: 2 });
   rbox(world, fW + 1.0, .14, t + .14, M.white, fW / 2, wallH + .02, -t / 2 - .05, { r: .05, cast: false });
   const dx = Math.min(fW * .25, 1.6), dW = 1.0, dH = 2.15;
   rbox(world, dW + .2, dH + .1, .1, M.green, dx, (dH + .1) / 2, .02, { r: .04 }); rbox(world, dW - .16, dH - .2, .04, M.winGlass, dx, dH / 2 + .02, .08, { r: .015, cast: false });
   rbox(world, .06, .2, .06, M.metal, dx + dW * .36, 1.0, .1, { r: .02, cast: false });
+  rbox(world, dW + .16, .06, .3, M.stoneDark, dx, .025, .12, { r: .025, cast: false });
+  rbox(world, fW, .13, .05, M.trim, fW / 2, .065, .015, { r: .015, cast: false });
   for (let k = 0; k < Math.min(3, Math.floor((fW - dx - 1.4) / 2.2)); k++) { const wx = dx + 1.9 + k * 2.2; rbox(world, 1.1, 1.15, .1, M.trim, wx, 1.55, .02, { r: .04 }); rbox(world, .9, .95, .04, M.winGlass, wx, 1.55, .08, { r: .015, cast: false }); rbox(world, 1.3, .1, .22, M.trim, wx, .94, .1, { r: .04, cast: false }); }
   rbox(world, fW + .5, .16, .5, M.concreteSolid, fW / 2, -.06, fH + .1, { r: .06, cast: false }); // slab nose
   [[[0, 0], [0, fH]], [[fW, 0], [fW, fH]], [[0, fH], [fW, fH]]].forEach(([a, b]) => {
@@ -1036,6 +1057,22 @@ function balconyEdge(world, ctx, fW, fH, M) {
     const nb = Math.max(2, Math.round(len / .14)); for (let j = 1; j < nb; j++) { const u = j / nb; ctx.fences.rail.bars.push({ p: [a[0] + (b[0] - a[0]) * u, .52, a[1] + (b[1] - a[1]) * u] }); }
     ctx.fences.rail.rails.push({ p: [(a[0] + b[0]) / 2, 1.04, (a[1] + b[1]) / 2], ry, s: [len + .1, 1, 1] }, { p: [(a[0] + b[0]) / 2, .1, (a[1] + b[1]) / 2], ry, s: [len, .6, .6] });
   });
+}
+function balconyHangingPot(world, ctx, x, z, seed, M) {
+  const angle = srand(seed) * Math.PI * 2, px = x + Math.cos(angle) * .45, pz = z - Math.sin(angle) * .45;
+  pill(world, [x, 0, z], [x, 1.75, z], .045, M.woodDark, { seg: 8 });
+  pill(world, [x, 1.7, z], [px, 1.7, pz], .03, M.woodDark, { seg: 8 });
+  const swing = new THREE.Group(); swing.position.set(px, 1.7, pz); world.add(swing);
+  for (let i = 0; i < 3; i++) {
+    const a = i * Math.PI * 2 / 3;
+    pill(swing, [0, 0, 0], [Math.cos(a) * .15, -.28, Math.sin(a) * .15], .006, M.metal, { seg: 5 });
+  }
+  tube(swing, .16, .12, .2, M.pot, 0, -.38, 0, { seg: 20 });
+  ring(swing, .16, .02, M.potRim, 0, -.28, 0, { tube: 8, seg: 24 });
+  disc(swing, .145, M.soil(PAL.soilDark), 0, -.29, 0, { seg: 20 });
+  buildCrops(swing, [{ name: "Strawberry", stage: 5, x: 0, y: -.29, z: 0, s: .36, ry: angle }], TIME);
+  swing.traverse((mesh) => { if (mesh.isMesh) ctx.keep.push(mesh); });
+  (ctx.hanging ||= []).push({ group: swing, phase: srand(seed + 11) * Math.PI * 2 });
 }
 function buildWorld(ctx) {
   const { data, zones, roads, fW, fH, margin, env, M } = ctx;
@@ -1107,6 +1144,7 @@ function buildWorld(ctx) {
   const addPlant = (name, stage, x, z, y, size) => plantAt(ctx, name, stage, x, z, y, size);
   (data.ornaments || []).forEach((o, i) => {
     const seed = (o.id ? o.id.length : 1) + i;
+    if (balcony && o.type === "hangpot") { balconyHangingPot(world, ctx, o.xM, o.yM, seed, M); return; }
     if (o.type === "tree") { tree(world, o.xM, o.yM, .95, seed, M); return; }
     if (o.type === "shed") { const g = new THREE.Group(); g.position.set(o.xM - .7, 0, o.yM - .55); building(g, 1.4, 1.1, "storage", M, { off: [o.xM - .7, o.yM - .55] }); world.add(g); return; }
     const fn = ORNAMENTS[o.type] || ORNAMENTS.bench;
@@ -1263,7 +1301,7 @@ class FarmControls {
     dom.addEventListener("pointerup", this.onUp); dom.addEventListener("pointercancel", this.onUp);
     dom.addEventListener("wheel", this.onWheel, { passive: false }); dom.addEventListener("keydown", this.onKey);
     dom.addEventListener("contextmenu", this.onBlock); dom.addEventListener("gesturestart", this.onBlock);
-    dom.tabIndex = 0; dom.style.outline = "none"; dom.style.cursor = "grab";
+    dom.tabIndex = 0; dom.style.cursor = "grab";
   }
   dispose() {
     const d = this.dom; cancelAnimationFrame(this.raf); clearTimeout(this.idleTimer);
@@ -1368,6 +1406,7 @@ class FarmControls {
   }
   stopMotion() { this.anim = null; this.inertia = null; }
   startInertia() {
+    if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const s = this.samples; if (s.length < 2) return;
     const now = performance.now(), last = s[s.length - 1]; let first = s[0];
     for (const q of s) if (now - q[0] <= 90) { first = q; break; }
@@ -1411,6 +1450,14 @@ class FarmControls {
     if (ms) this.animateTo(to, ms); else { this.target.copy(to.target); this.dist = to.dist; this.clampView(); this.update(); this.changed(); }
   }
   zoomBy(factor, ms = 300) { this.zoomAt(this.size.w / 2, this.size.h / 2, factor, ms); }
+  focusZone(zone) {
+    const target = new THREE.Vector3(zone.xM + zone.wM / 2, 0, zone.yM + zone.hM / 2);
+    // Keep the whole footprint in view, including on portrait screens.
+    const aspect = this.size.w / Math.max(1, this.size.h);
+    const extent = Math.max(zone.wM / Math.min(1, aspect), zone.hM);
+    const dist = Math.min(this.fitDist || this.dist, extent * 4.5);
+    this.animateTo({ target, dist: clamp(dist, this.lim.minDist, this.lim.maxDist) }, 550);
+  }
   onWheel(e) {
     if (!this.enabled) return;
     if (this.cooperative && !e.ctrlKey && !e.metaKey) { this.hooks.coop?.("wheel"); return; } // plain scrolling keeps scrolling the page
@@ -1464,6 +1511,14 @@ export default function Grove3D(props) {
   const jobs = Object.values(tasksByZone).reduce((n, l) => n + (l?.length || 0), 0);
   const [ahead, setAhead] = useState(0); // growth preview: days from today
   const [timeOpen, setTimeOpen] = useState(false);
+  const [focusId, setFocusId] = useState("");
+  const [motionReduced, setMotionReduced] = useState(() => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  useEffect(() => {
+    if (typeof matchMedia !== "function") return;
+    const query = matchMedia("(prefers-reduced-motion: reduce)"), update = () => setMotionReduced(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   // Read per render so the stages move on after midnight (App re-renders on
   // its day tick); the memo only folds in the growth-preview offset.
   const today = todayLocalKey();
@@ -1472,44 +1527,54 @@ export default function Grove3D(props) {
   const [busy, setBusy] = useState(true);
   const [coop, setCoop] = useState(null); // "touch" | "wheel" | null — short hint when a page gesture hit the inline map
   const sceneKey = useMemo(
-    () => JSON.stringify([zones, data.garden?.plots, data.livestock?.animals, data.ornaments, data.mapLines, data.mapStyle, data.region, roads, fW, fH, margin, env, pathTexture, roadWidth, todayKey]),
-    [zones, data.garden?.plots, data.livestock?.animals, data.ornaments, data.mapLines, data.mapStyle, data.region, roads, fW, fH, margin, env, pathTexture, roadWidth, todayKey],
+    () => JSON.stringify([zones, data.garden?.plots, data.livestock?.animals, data.ornaments, data.mapLines, data.mapStyle, data.region, roads, fW, fH, margin, env, pathTexture, roadWidth, growthSceneStages(data.garden?.plots, crops, todayKey, today)]),
+    [zones, data.garden?.plots, data.livestock?.animals, data.ornaments, data.mapLines, data.mapStyle, data.region, roads, fW, fH, margin, env, pathTexture, roadWidth, crops, todayKey, today],
   );
   // growth stages per zone (for the dots under the names) and a farm-wide summary for the time panel
   const stageInfo = useMemo(() => {
     const byZone = {}, totals = [0, 0, 0, 0, 0, 0];
     (data.garden?.plots || []).forEach((pl) => {
       if (pl.status === "harvested" || !pl.zone) return;
-      const st = growthOf(pl, crops?.get?.(pl.crop), todayKey).index;
+      const st = previewGrowthOf(pl, crops?.get?.(pl.crop), todayKey, today).index;
       (byZone[pl.zone] = byZone[pl.zone] || []).push(st); totals[st]++;
     });
     return { byZone, totals };
-  }, [data.garden?.plots, crops, todayKey]);
+  }, [data.garden?.plots, crops, todayKey, today]);
   // tapped planted row → the crop card (top-left) + every row of that crop highlighted on the map
-  const [picked, setPicked] = useState(null);
+  const [pickedBase, setPicked] = useState(null);
+  const picked = useMemo(() => pickedBase && rowAtDate(pickedBase, data.garden?.plots, crops, todayKey, today), [pickedBase, data.garden?.plots, crops, todayKey, today]);
   const pickRow = (row) => { if (!row) { setPicked(null); return; } setPicked({ ...row, color: crops?.get?.(row.crop)?.color }); latest.current.showTip?.(null); };
   const pickInfo = useMemo(() => {
     if (!picked) return null;
     const c = crops?.get?.(picked.crop), rows = (data.garden?.plots || []).filter((p) => p.crop === picked.crop && p.status !== "harvested" && p.zone);
     let plants = 0, soonest = null; const stages = [0, 0, 0, 0, 0, 0], areas = [];
     rows.forEach((p) => {
-      const g = growthOf(p, c, todayKey); stages[g.index]++; plants += p.plantCount || p.qty || 0;
+      const g = previewGrowthOf(p, c, todayKey, today); stages[g.index]++; plants += p.plantCount || p.qty || 0;
       const zn = zones.find((z) => z.id === p.zone)?.name; if (zn && !areas.includes(zn)) areas.push(zn);
       if (p.harvestDate && !g.waiting) { const left = Math.round(dayNum(p.harvestDate) - dayNum(todayKey)); if (soonest == null || left < soonest) soonest = left; }
     });
     return { c, rows: rows.length, plants, areas, stages, soonest };
-  }, [picked, data.garden?.plots, crops, zones, todayKey]);
+  }, [picked, data.garden?.plots, crops, zones, todayKey, today]);
   const showTip = (hit, x, y) => {
     const el = tipRef.current; if (!el) return;
     if (!hit) { el.style.display = "none"; return; }
-    const r = hit.userData.plot, when = r.stage === 5 ? "in its harvest window" : r.left == null ? STAGES[r.stage] : r.left > 0 ? `${STAGES[r.stage]} · harvest in ${r.left} d` : `${STAGES[r.stage]} · past harvest date`;
-    el.innerHTML = `<b>${r.crop}</b> <i style="background:${STAGE_CSS[r.stage]}"></i><br>${when}${r.count ? ` · ${r.count} plants` : ""}${r.estimated ? "" : " · observed"}<br><span style="opacity:.72">${r.zone} · tap for details</span>`;
+    const r = rowAtDate(hit.userData.plot, data.garden?.plots, crops, todayKey, today), when = r.stage === 5 ? "in its harvest window" : r.left == null ? STAGES[r.stage] : r.left > 0 ? `${STAGES[r.stage]} · harvest in ${r.left} d` : `${STAGES[r.stage]} · past harvest date`;
+    const title = document.createElement("b"), stage = document.createElement("div"), dot = document.createElement("i"), detail = document.createElement("span");
+    title.textContent = r.crop; dot.style.background = STAGE_CSS[r.stage];
+    stage.append(dot, document.createTextNode(`${when}${r.count ? ` · ${r.count} plants` : ""}${r.estimated ? (ahead ? " · estimated" : "") : " · observed"}`));
+    detail.textContent = `${r.zone} · click for details`; el.replaceChildren(title, stage, detail);
     el.style.display = ""; const w = el.offsetWidth, hw = host.current ? host.current.clientWidth : 600;
     el.style.left = `${Math.max(4, Math.min(hw - w - 4, x + 14))}px`; el.style.top = `${Math.max(4, y - el.offsetHeight - 12)}px`;
   };
   const dismissHint = () => { setHint(false); try { sessionStorage.setItem("g3-hint", "1"); } catch { /* private mode */ } };
   const showCoop = (kind) => setCoop(kind);
-  useEffect(() => { latest.current = { ...props, dismissHint, showCoop, showTip, pickRow, todayKey, liveSky, lat, lng, skyOverride, preview }; }); // the engine reads the newest props from here
+  const ctl = (f) => { const st = state.current; if (st?.controls) f(st.controls, st); };
+  function focusAndOpen(event, zone, scatterPoint = null) {
+    setFocusId(String(zone.id));
+    ctl((c, st) => { c.focusZone(zone); st.reactToZone?.(zone, scatterPoint); });
+    onZoneOpen?.(event, zone);
+  }
+  useEffect(() => { latest.current = { ...props, dismissHint, showCoop, showTip, pickRow, focusAndOpen, clearFocus: () => setFocusId(""), todayKey, actualToday: today, liveSky, lat, lng, skyOverride, preview, focusId }; }); // the engine reads the newest props from here
   useEffect(() => { if (!coop) return; const t = setTimeout(() => setCoop(null), 1800); return () => clearTimeout(t); }, [coop]);
   // renderer, lights and controls: created once
   useEffect(() => {
@@ -1572,9 +1637,23 @@ export default function Grove3D(props) {
     let lastNow = 0;
     st.render = (now = performance.now()) => {
       dirty = false;
+      if (st.growthAnim) {
+        const a = st.growthAnim, elapsed = now - a.start, axis = new THREE.Vector3(), next = new THREE.Matrix4();
+        a.items.forEach(({ mesh, index, matrix, start, delay }) => { const amount = ease(growthTransitionProgress(elapsed, delay)); axis.set(1, start + (1 - start) * amount, 1); mesh.setMatrixAt(index, next.copy(matrix).scale(axis)); mesh.instanceMatrix.needsUpdate = true; });
+        if (elapsed >= GROWTH_DURATION_MS + GROWTH_STAGGER_MS) st.growthAnim = null;
+      }
+      if (st.selectionAnim) {
+        const a = st.selectionAnim, progress = clamp((now - a.start) / 360, 0, 1), scale = 1 + .035 * (1 - ease(progress));
+        a.group.scale.set(scale, 1, scale); a.group.position.set(a.cx * (1 - scale), 0, a.cz * (1 - scale));
+        if (progress >= 1) st.selectionAnim = null;
+      }
       // shared clock for the shader effects; the harvest halo breathes; clouds drift downwind
       if (animOn) { const dt = lastNow ? Math.min(.1, (now - lastNow) / 1000) : 0; TIME.value = now / 1000; WX.drift.value += dt * (.3 + .3 * WIND.value.z); }
       lastNow = now; WX.center.value.copy(controls.target);
+      st.hanging?.forEach(({ group, phase }) => {
+        const swing = st.reduced ? 0 : Math.sin(TIME.value * 1.35 + phase) * (.012 + WIND.value.z * .025);
+        group.rotation.x = swing * WIND.value.y; group.rotation.z = -swing * WIND.value.x;
+      });
       if (st.M) st.M.glow.emissiveIntensity = .45 + .3 * Math.sin(TIME.value * 2.2);
       renderer.render(scene, camera); st.calls = renderer.info.render.calls;
       // zone names hang just above the front edge of the thing they name (the footprint edge nearest the
@@ -1582,19 +1661,23 @@ export default function Grove3D(props) {
       // pending jobs → biggest footprint, no overlaps, far-out size threshold) lives in labels.js
       const ls = (controls.fitDist ? clamp(controls.fitDist / controls.dist, .68, 1.15) : 1) * (S.W < 520 ? .85 : 1), far = ls < .8;
       if (far !== st.far) { st.far = far; el.classList.toggle("g3-far", far); }
-      const nodes = latest.current.preview || !labels.current ? [] : Array.from(labels.current.children), items = [], byId = new Map();
-      nodes.forEach((n) => {
-        const a = st.anchors[n.dataset.zone]; if (!a) return;
-        let minX = 1e9, maxX = -1e9; const pts = a.corners.map(([x, z]) => { const q = project(x, 0, z, pv); minX = Math.min(minX, q.x); maxX = Math.max(maxX, q.x); return q; });
-        pts.sort((u, v) => v.y - u.y); const f0 = pts[0], f1 = pts[1], c = project(a.cx, 0, a.cz, pv); // the two lowest points on screen = the front edge
-        const badge = !!n.querySelector(".g3-badge");
-        byId.set(n.dataset.zone, n);
-        items.push({ id: n.dataset.zone, x: (f0.x + f1.x) / 2, y: (f0.y + f1.y) / 2, cx: c.x, cy: c.y, on: f0.on && f1.on && c.on, px: maxX - minX, w: a.w * ls, h: 20 * ls, badge: badge ? 24 * ls : 0, area: a.area, sel: a.sel, jobs: badge ? 1 : 0 });
-      });
-      placeLabels(items, { W: S.W, H: S.H, far, mobile: st.coarse }).forEach(({ id, x, y, show }) => {
-        const n = byId.get(id);
-        n.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%) translateY(-2px) scale(${ls.toFixed(3)})`; n.style.display = show ? "" : "none";
-      });
+      const view = [controls.target.x, controls.target.z, controls.dist, controls.theta, controls.phi, S.W, S.H, latest.current.preview].join("|");
+      if (st.labelsDirty || view !== st.labelView) {
+        st.labelsDirty = false; st.labelView = view;
+        const nodes = latest.current.preview || !labels.current ? [] : Array.from(labels.current.children), items = [], byId = new Map();
+        nodes.forEach((n) => {
+          const a = st.anchors[n.dataset.zone]; if (!a) return;
+          let minX = 1e9, maxX = -1e9; const pts = a.corners.map(([x, z]) => { const q = project(x, 0, z, pv); minX = Math.min(minX, q.x); maxX = Math.max(maxX, q.x); return q; });
+          pts.sort((u, v) => v.y - u.y); const f0 = pts[0], f1 = pts[1], c = project(a.cx, 0, a.cz, pv); // the two lowest points on screen = the front edge
+          const badge = !!n.querySelector(".g3-badge");
+          byId.set(n.dataset.zone, n);
+          items.push({ id: n.dataset.zone, x: (f0.x + f1.x) / 2, y: (f0.y + f1.y) / 2, cx: c.x, cy: c.y, on: f0.on && f1.on && c.on, px: maxX - minX, w: a.w * ls, h: 20 * ls, badge: badge ? 24 * ls : 0, area: a.area, sel: a.sel, jobs: badge ? 1 : 0 });
+        });
+        placeLabels(items, { W: S.W, H: S.H, far, mobile: st.coarse }).forEach(({ id, x, y, show }) => {
+          const n = byId.get(id);
+          n.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%) translateY(-2px) scale(${ls.toFixed(3)})`; n.style.display = show ? "" : "none";
+        });
+      }
     };
     st.requestRender = () => { dirty = true; if (queued || animOn) return; queued = true; requestAnimationFrame(() => { queued = false; if (state.current === st && dirty) st.render(); }); };
     // the animation loop runs only while the map is on screen and the tab is visible; idle frames are
@@ -1606,7 +1689,7 @@ export default function Grove3D(props) {
       animRaf = requestAnimationFrame(frame);
     };
     st.setAnim = () => {
-      const want = !reduced && inView && !document.hidden && !!st.world;
+      const want = !st.reduced && inView && !document.hidden && !!st.world;
       if (want === animOn) return;
       animOn = want; st.animating = want;
       if (want) { lastFrame = 0; animRaf = requestAnimationFrame(frame); } else { cancelAnimationFrame(animRaf); animRaf = 0; }
@@ -1620,18 +1703,22 @@ export default function Grove3D(props) {
       interact: (on) => { renderer.setPixelRatio(on ? LOW : DPR); st.requestRender(); },
       first: () => latest.current.dismissHint?.(),
       coop: (kind) => latest.current.showCoop?.(kind),
-      reset: () => st.reset(true),
+      reset: () => { latest.current.clearFocus?.(); st.reset(true); },
       tap: (x, y, e) => {
         const P = latest.current; if (!P.interactive || !P.onZoneOpen) return false;
         ptr.set((x / S.W) * 2 - 1, -(y / S.H) * 2 + 1); ray.setFromCamera(ptr, camera);
         const row = ray.intersectObjects(st.plotHits, false)[0];
-        if (row) { P.pickRow?.(row.object.userData.plot); return true; }
+        if (row) {
+          P.pickRow?.(row.object.userData.plot);
+          const zone = P.zones.find((z) => z.id === row.object.userData.plot.zoneId);
+          if (zone) { setFocusId(String(zone.id)); controls.focusZone(zone); }
+          return true;
+        }
         P.pickRow?.(null); // ground or a zone: the crop card closes
         const hit = ray.intersectObjects(st.hits, false)[0];
         if (!hit) return false;
         const z = P.zones.find((q) => q.id === hit.object.userData.zoneId); if (!z) return false;
-        if (z.type === "coop" && st.brain && st.herdMesh) { const idxs = []; st.brain.animals.forEach((a, i) => { if (a.kind === "bird" && (st.herdItems || [])[i]?.zone === z.id) idxs.push(a.idx); }); if (idxs.length) { applyLegs(st.herdMesh, st.brain.scatter(idxs, hit.point.x, hit.point.z, TIME.value)); st.requestRender(); } }
-        P.onZoneOpen(e, z); return true;
+        P.focusAndOpen(e, z, z.type === "coop" ? hit.point : null); return true;
       },
     });
     st.controls = controls; controls.setCooperative(!fullRef.current);
@@ -1656,6 +1743,8 @@ export default function Grove3D(props) {
       renderer.shadowMap.needsUpdate = true;
     };
     st.select = (id) => {
+      const animateSelection = id && id !== st.selectedArea && !st.reduced;
+      st.selectedArea = id || null; st.selectionAnim = null;
       if (st.highlight) { scene.remove(st.highlight); st.highlight.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); st.highlight = null; }
       const hit = id && st.hits.find((h) => h.userData.zoneId === id);
       if (hit) {
@@ -1663,8 +1752,40 @@ export default function Grove3D(props) {
         plane(g, w, d, M.select, cx, .03, cz, { receive: false });
         [[cx, cz - d / 2, w, .12], [cx, cz + d / 2, w, .12], [cx - w / 2, cz, .12, d], [cx + w / 2, cz, .12, d]].forEach(([x, z, bw, bd]) => rbox(g, bw, .06, bd, M.selectEdge, x, .04, z, { r: .025, cast: false, receive: false }));
         scene.add(g); st.highlight = g;
+        if (animateSelection) st.selectionAnim = { group: g, cx, cz, start: performance.now() };
       }
       Object.entries(st.anchors).forEach(([zid, a]) => { a.sel = zid === id ? 1 : 0; });
+      st.labelsDirty = true;
+      st.requestRender();
+    };
+    // A thin outline makes the actual plot or building footprint discoverable
+    // without adding permanent decoration or changing the live-sky lighting.
+    const hoverMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .8, depthWrite: false });
+    st.hoverZone = (id) => {
+      if (st.hoverId === id) return;
+      if (st.hoverOutline) { scene.remove(st.hoverOutline); st.hoverOutline.geometry.dispose(); st.hoverOutline = null; }
+      st.hoverId = id || null;
+      const zone = id && latest.current.zones.find((z) => z.id === id);
+      if (zone && latest.current.interactive !== false && !latest.current.preview) {
+        const pad = .12, x0 = zone.xM - pad, x1 = zone.xM + zone.wM + pad, z0 = zone.yM - pad, z1 = zone.yM + zone.hM + pad;
+        const geometry = new THREE.BufferGeometry().setFromPoints([[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]].map(([x, z]) => new THREE.Vector3(x, .09, z)));
+        st.hoverOutline = new THREE.Line(geometry, hoverMaterial); st.hoverOutline.renderOrder = 18; scene.add(st.hoverOutline);
+      }
+      st.requestRender();
+    };
+    // Keep the row under the pointer distinct from its surrounding area.
+    const rowHoverMaterial = new THREE.LineBasicMaterial({ color: 0xf7c552, transparent: true, opacity: .95, depthWrite: false });
+    st.hoverRow = (hit) => {
+      if (st.hoverRowHit === hit) return;
+      if (st.rowHoverOutline) { scene.remove(st.rowHoverOutline); st.rowHoverOutline.geometry.dispose(); st.rowHoverOutline = null; }
+      st.hoverRowHit = hit || null;
+      if (hit && latest.current.interactive !== false && !latest.current.preview) {
+        st.world.updateMatrixWorld(true);
+        const p = hit.getWorldPosition(new THREE.Vector3()), q = hit.geometry.parameters, pad = .06;
+        const x0 = p.x - q.width / 2 - pad, x1 = p.x + q.width / 2 + pad, z0 = p.z - q.depth / 2 - pad, z1 = p.z + q.depth / 2 + pad, y = p.y - q.height / 2 + .1;
+        const geometry = new THREE.BufferGeometry().setFromPoints([[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]].map(([x, z]) => new THREE.Vector3(x, y, z)));
+        st.rowHoverOutline = new THREE.Line(geometry, rowHoverMaterial); st.rowHoverOutline.renderOrder = 19; scene.add(st.rowHoverOutline);
+      }
       st.requestRender();
     };
     // crop group: every planted row of the tapped crop lights up in the crop's colour, the tapped row with a thicker edge
@@ -1703,15 +1824,21 @@ export default function Grove3D(props) {
       const r = renderer.domElement.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
       ptr.set((x / S.W) * 2 - 1, -(y / S.H) * 2 + 1); ray.setFromCamera(ptr, camera);
       const hit = ray.intersectObjects(st.plotHits, false)[0];
+      const zoneHit = hit ? null : ray.intersectObjects(st.hits, false)[0];
+      st.hoverZone(hit?.object.userData.plot.zoneId || zoneHit?.object.userData.zoneId || null);
+      st.hoverRow(hit?.object || null);
+      renderer.domElement.style.cursor = (hit || zoneHit) && latest.current.interactive !== false ? "pointer" : "grab";
       clearTimeout(hoverTimer); latest.current.showTip?.(hit ? hit.object : null, x, y);
     };
-    const onLeave = () => { clearTimeout(hoverTimer); hoverTimer = setTimeout(() => latest.current.showTip?.(null), 80); };
+    const onLeave = () => { clearTimeout(hoverTimer); hoverTimer = setTimeout(() => { latest.current.showTip?.(null); st.hoverZone(null); st.hoverRow(null); if (!controls.pointers.size) renderer.domElement.style.cursor = "grab"; }, 80); };
     renderer.domElement.addEventListener("pointermove", onHover); renderer.domElement.addEventListener("pointerleave", onLeave); renderer.domElement.addEventListener("pointerdown", onLeave);
     const ro = new ResizeObserver(() => st.size()); ro.observe(el);
     return () => {
       animOn = false; cancelAnimationFrame(animRaf); io?.disconnect(); document.removeEventListener("visibilitychange", onVis);
       ro.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("webglcontextlost", lost);
       renderer.domElement.removeEventListener("pointermove", onHover); renderer.domElement.removeEventListener("pointerleave", onLeave); renderer.domElement.removeEventListener("pointerdown", onLeave); clearTimeout(hoverTimer);
+      if (st.hoverOutline) st.hoverOutline.geometry.dispose(); hoverMaterial.dispose();
+      if (st.rowHoverOutline) st.rowHoverOutline.geometry.dispose(); rowHoverMaterial.dispose();
       if (st.world) disposeWorld(st.world);
       if (st.fx?.clouds) { st.fx.clouds.geometry.dispose(); st.fx.clouds.material.dispose(); } if (st.fx?.precip) { st.fx.precip.dispose(); st.fx.precip.geometry.dispose(); }
       renderer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement); state.current = null;
@@ -1721,27 +1848,57 @@ export default function Grove3D(props) {
   useEffect(() => {
     const st = state.current; if (!st) return;
     const P = latest.current;
+    st.reduced = motionReduced;
+    if (motionReduced) { st.controls.stopMotion(); st.selectionAnim = null; }
+    st.hoverZone?.(null); st.hoverRow?.(null);
     if (st.world) { st.scene.remove(st.world); disposeWorld(st.world); }
     st.hits = []; st.plotHits = []; st.M = materials(); latest.current.showTip?.(null);
     const dimsChanged = !st.dims || st.dims.fW !== P.fW || st.dims.fH !== P.fH || st.dims.margin !== P.margin;
     st.dims = { fW: P.fW, fH: P.fH, margin: P.margin };
-    const ctx = { data: P.data, zones: P.zones, roads: P.roads, crops: P.crops, fW: P.fW, fH: P.fH, margin: P.margin, env: P.env, pathTexture: P.pathTexture, roadWidth: P.roadWidth, todayKey: P.todayKey || todayLocalKey(), hits: st.hits, plotHits: st.plotHits, M: st.M,
+    const ctx = { data: P.data, zones: P.zones, roads: P.roads, crops: P.crops, fW: P.fW, fH: P.fH, margin: P.margin, env: P.env, pathTexture: P.pathTexture, roadWidth: P.roadWidth, todayKey: P.todayKey || todayLocalKey(), actualToday: P.actualToday, hits: st.hits, plotHits: st.plotHits, M: st.M,
       plants: [], tufts: [], pots: [], herd: [], fruit: new Map(), fruitDrop: new Map(), details: [], motion: { smoke: [], bees: [] }, vanes: [], keep: [], device: { mobile: st.mobile, reduced: st.reduced }, fences: { plain: { posts: [], rails: [] }, picket: { posts: [], caps: [], rails: [] }, rail: { posts: [], bars: [], rails: [] } }, growth: { glows: [], poles: [], tags: [[], [], [], [], [], []] } };
-    const t0 = performance.now(); st.world = buildWorld(ctx); st.herd = ctx.herd; st.vanes = ctx.vanes; st.buildMs = performance.now() - t0;
+    const t0 = performance.now(); st.world = buildWorld(ctx); st.herd = ctx.herd; st.vanes = ctx.vanes; st.hanging = ctx.hanging || []; st.buildMs = performance.now() - t0;
+    // Only animate plants whose stage actually changed as the preview date moves.
+    // Other farm edits and the initial render should never make the garden jump.
+    const nextStages = new Map(), changed = [], animateGrowth = !st.reduced && st.cropStages && st.cropDay !== P.todayKey;
+    st.world.traverse((mesh) => {
+      if (!mesh.userData.cropItems) return;
+      mesh.userData.cropItems.forEach(({ key, stage }, index) => {
+        nextStages.set(key, stage);
+        if (animateGrowth && st.cropStages.get(key) !== stage) {
+          const matrix = new THREE.Matrix4(); mesh.getMatrixAt(index, matrix);
+          changed.push({ mesh, index, matrix, start: growthTransitionStart(st.cropStages.get(key), stage), delay: growthTransitionDelay(key) });
+        }
+      });
+    });
+    st.cropStages = nextStages; st.cropDay = P.todayKey;
+    st.growthAnim = changed.length ? { start: performance.now(), items: changed } : null;
     st.vanes.forEach((v) => { v.rotation.y = vaneAngle(st.sky.windDir); });
+    const herdLayout = JSON.stringify(ctx.herd), keepBrain = st.brain && st.herdLayout === herdLayout;
     st.herdMesh = ctx.herdMesh || null; st.fauna = ctx.fauna || null; st.brainAt = 0; st.herdItems = ctx.herd;
-    st.brain = ctx.herd.length ? createBrain(ctx.herd.map((it, idx) => ({ idx, species: it.type, ...speciesInfo(it.type), x: it.x, z: it.z, heading: it.heading, arena: it.arena, home: it.home, water: it.water, seed: it.seed }))) : null;
-    if (st.brain) applyLegs(st.herdMesh, st.brain.tick(TIME.value, { night: st.sky.night, reduced: st.reduced })); // everyone gets a first leg (stand) at their spot
+    st.brain = keepBrain ? st.brain : ctx.herd.length ? createBrain(ctx.herd.map((it, idx) => ({ idx, species: it.type, ...speciesInfo(it.type), x: it.x, z: it.z, heading: it.heading, arena: it.arena, home: it.home, water: it.water, seed: it.seed }))) : null;
+    st.herdLayout = herdLayout;
+    if (st.brain) applyLegs(st.herdMesh, keepBrain ? st.brain.snapshot() : st.brain.tick(TIME.value, { night: st.sky.night, reduced: st.reduced }));
+    st.reactToZone = (zone, scatterPoint = null) => {
+      if (st.reduced || !st.brain || !st.herdMesh) return;
+      const indices = st.brain.animals.filter((animal, i) => st.herdItems[i]?.zone === zone.id && (!scatterPoint || animal.kind === "bird")).map((animal) => animal.idx);
+      if (!indices.length) return;
+      const legs = scatterPoint
+        ? st.brain.scatter(indices, scatterPoint.x, scatterPoint.z, TIME.value)
+        : st.brain.look(indices, zone.xM + zone.wM / 2, zone.yM + zone.hM / 2, TIME.value);
+      applyLegs(st.herdMesh, legs);
+      st.requestRender();
+    };
     st.scene.add(st.world);
-    st.anchors = Object.fromEntries(P.zones.map((z) => [z.id, { cx: z.xM + z.wM / 2, cz: z.yM + z.hM / 2, h: 0, corners: [[z.xM, z.yM], [z.xM + z.wM, z.yM], [z.xM + z.wM, z.yM + z.hM], [z.xM, z.yM + z.hM]], area: z.wM * z.hM, sel: 0, w: Math.min(23, z.name.length) * 6 + 16 }]));
+    st.anchors = Object.fromEntries(P.zones.map((z) => [z.id, { cx: z.xM + z.wM / 2, cz: z.yM + z.hM / 2, h: 0, corners: [[z.xM, z.yM], [z.xM + z.wM, z.yM], [z.xM + z.wM, z.yM + z.hM], [z.xM, z.yM + z.hM]], area: z.wM * z.hM, sel: 0, w: Math.min(23, z.name.length) * 6 + 16 + (/^\d+$/.test(z.name.trim()) ? 0 : 15) }]));
     st.hits.forEach((h) => { const a = st.anchors[h.userData.zoneId]; if (a) a.h = Math.min(6, h.userData.bounds.h); }); // label height: roof ridge, bed edge…
     st.setupSun(); st.fx.cloudKey = ""; st.fx.precipKey = ""; st.setWeatherFx(st.sky);
     if (dimsChanged) st.fitted = false;
-    st.size(); st.select(P.selectedId); setBusy(false); st.setAnim();
-    const t = setTimeout(() => { st.renderer.shadowMap.needsUpdate = true; st.requestRender(); }, 600);
+    st.size(); st.select(P.selectedId || P.focusId); setBusy(false); st.setAnim();
+    const t = setTimeout(() => { st.renderer.shadowMap.needsUpdate = true; st.requestRender(); }, GROWTH_DURATION_MS + GROWTH_STAGGER_MS + 100);
     return () => clearTimeout(t);
-  }, [sceneKey]);
-  useEffect(() => { state.current?.select(selectedId); }, [selectedId]);
+  }, [sceneKey, motionReduced]);
+  useEffect(() => { state.current?.select(selectedId || focusId); }, [selectedId, focusId]);
   // the sky follows the clock: recomputed once a minute (shadows re-render then), and at once when the
   // weather, the Live sky setting, the town or a harness override changes
   const overrideKey = JSON.stringify(skyOverride);
@@ -1761,10 +1918,11 @@ export default function Grove3D(props) {
     return () => clearInterval(id);
   }, [weather, liveSky, lat, lng, overrideKey]);
   useEffect(() => { state.current?.pick?.(picked); }, [picked, sceneKey]);
-  useEffect(() => { state.current?.requestRender(); }, [tasksByZone]);
+  useEffect(() => { if (state.current) { state.current.labelsDirty = true; state.current.requestRender(); } }, [tasksByZone, ahead]);
   // full-screen mode: the map takes the whole viewport, page scroll locked, Escape closes
   useEffect(() => {
     fullRef.current = full; const st = state.current, el = host.current, isPreview = mobile && !full;
+    setFocusId("");
     st?.controls?.setCooperative(!full);
     st?.controls?.setEnabled(!isPreview); // the preview tile takes no gestures: one tap opens full screen
     // Open on `click`, not `pointerup`: the browser fires click after pointerup, and if full screen were already
@@ -1784,7 +1942,6 @@ export default function Grove3D(props) {
     return () => { window.removeEventListener("keydown", key); if (el) { el.removeEventListener("pointerdown", down); el.removeEventListener("pointercancel", cancel); el.removeEventListener("click", click); } if (full) { document.body.style.overflow = prev === "hidden" ? "" : prev; document.body.classList.remove("g3-full-open"); } };
   }, [full, mobile]);
   useEffect(() => { if (!hint) return; const t = setTimeout(() => latest.current.dismissHint?.(), 6000); return () => clearTimeout(t); }, [hint]);
-  const ctl = (f) => { const st = state.current; if (st?.controls) f(st.controls, st); };
   const hostStyle = full
     ? { position: "fixed", inset: 0, zIndex: 6500, overflow: "hidden", touchAction: "none", background: "#b4c69d" }
     : { position: "relative", width: "100%", overflow: "hidden", touchAction: "pan-y" };
@@ -1793,9 +1950,15 @@ export default function Grove3D(props) {
       <div ref={labels} className="g3-labels" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }}>
         {!preview && zones.map((z) => {
           const list = tasksByZone[z.id] || [];
+          const AreaIcon = AREA_ICONS[z.type] || MapPin, isNumber = /^\d+$/.test(z.name.trim());
           return (
-            <div key={z.id} data-zone={z.id} className={`g3-label${selectedId === z.id ? " on" : ""}`} style={{ position: "absolute", left: 0, top: 0, display: "none", pointerEvents: "auto", whiteSpace: "nowrap" }}>
-              <button type="button" className="g3-pill" onClick={(e) => onZoneOpen && onZoneOpen(e, z)}>{z.name.length > 23 ? z.name.slice(0, 22) + "…" : z.name}</button>
+            <div key={z.id} data-zone={z.id} className={`g3-label${(selectedId || focusId) === z.id ? " on" : ""}`} style={{ position: "absolute", left: 0, top: 0, display: "none", pointerEvents: "auto", whiteSpace: "nowrap" }}>
+              <button type="button" className="g3-pill" onClick={(e) => focusAndOpen(e, z)}
+                onPointerEnter={(e) => { if (e.pointerType !== "touch") ctl((c, st) => st.hoverZone?.(z.id)); }}
+                onPointerLeave={(e) => { if (document.activeElement !== e.currentTarget) ctl((c, st) => st.hoverZone?.(null)); }}
+                onFocus={() => ctl((c, st) => st.hoverZone?.(z.id))} onBlur={() => ctl((c, st) => st.hoverZone?.(null))}>
+                {!isNumber && <AreaIcon size={11} aria-hidden="true" />}{z.name.length > 23 ? z.name.slice(0, 22) + "…" : z.name}
+              </button>
               {(stageInfo.byZone[z.id] || []).length > 0 && (
                 <span className="g3-dots" aria-hidden="true">{(stageInfo.byZone[z.id] || []).slice(0, 8).map((st, i) => <i key={i} style={{ background: STAGE_CSS[st] }} />)}</span>
               )}
@@ -1816,12 +1979,24 @@ export default function Grove3D(props) {
         </div>
       )}
       {!preview && ahead > 0 && <div className="g3-preview" role="status">Preview · {new Date(todayKey + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" })} · in {ahead} days</div>}
+      {!preview && zones.length > 0 && <label className="g3-find">
+        <span className="g3-sr-only">Find an area on the map</span>
+        <select aria-label="Find an area on the map" value={focusId} onChange={(e) => {
+          const id = e.target.value, zone = zones.find((item) => String(item.id) === id);
+          setFocusId(id);
+          if (zone) ctl((c, st) => { c.focusZone(zone); st.reactToZone?.(zone); });
+          else ctl((c, st) => st.reset(true));
+        }}>
+          <option value="">{env === "farm" ? "Whole farm" : env === "balcony" ? "Whole balcony" : "Whole garden"}</option>
+          {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+        </select>
+      </label>}
       {!preview && <div className="g3-ctl" role="group" aria-label="Map view controls">
         {/* Visible words under the icons (UX audit 2026-09-28: a calendar icon didn't say "growth preview"). */}
-        <button type="button" className="g3-btn g3-lbl" aria-label="Growth preview and legend" title="See how your plants grow over the coming weeks" aria-pressed={timeOpen} onClick={() => setTimeOpen(!timeOpen)}><Sprout size={17} /><span aria-hidden="true">Growth</span></button>
+        <button type="button" className="g3-btn g3-lbl" aria-label="Growth preview and legend" title="See how your plants grow over the coming weeks" aria-pressed={timeOpen} onClick={() => { if (timeOpen) setAhead(0); setTimeOpen(!timeOpen); }}><Sprout size={17} /><span aria-hidden="true">Growth</span></button>
         <button type="button" className="g3-btn g3-zoom" aria-label="Zoom in" title="Zoom in" onClick={() => ctl((c) => c.zoomBy(.66))}><Plus size={18} /></button>
         <button type="button" className="g3-btn g3-zoom" aria-label="Zoom out" title="Zoom out" onClick={() => ctl((c) => c.zoomBy(1 / .66))}><Minus size={18} /></button>
-        <button type="button" className="g3-btn g3-lbl" aria-label="Reset view" title="Show the whole map again" onClick={() => ctl((c, st) => st.reset(true))}><Compass size={17} /><span aria-hidden="true">Reset</span></button>
+        <button type="button" className="g3-btn g3-lbl" aria-label="Reset view" title="Show the whole map again" onClick={() => { setFocusId(""); ctl((c, st) => st.reset(true)); }}><Compass size={17} /><span aria-hidden="true">Reset</span></button>
         <button type="button" className="g3-btn g3-lbl" aria-label={full ? "Exit full screen" : "Full screen map"} title={full ? "Exit full screen" : "Open the map full screen"} aria-pressed={full} onClick={() => setFull(!full)}>{full ? <Minimize2 size={17} /> : <Maximize2 size={17} />}<span aria-hidden="true">{full ? "Exit" : "Expand"}</span></button>
       </div>}
       {full && <button type="button" className="g3-btn g3-close" aria-label="Close full screen map" onClick={() => setFull(false)}><X size={20} /></button>}
@@ -1830,7 +2005,7 @@ export default function Grove3D(props) {
           <div className="g3-time-row">
             <strong>{ahead ? `In ${ahead} days` : "Today"}</strong>
             {[[0, "Today"], [14, "+2 wk"], [30, "+1 mo"], [60, "+2 mo"], [90, "+3 mo"]].map(([d, l]) => (
-              <button key={d} type="button" className={`g3-chip${ahead === d ? " on" : ""}`} onClick={() => setAhead(d)}>{l}</button>
+              <button key={d} type="button" className={`g3-chip${ahead === d ? " on" : ""}`} aria-pressed={ahead === d} onClick={() => setAhead(d)}>{l}</button>
             ))}
           </div>
           <input type="range" min="0" max="120" step="1" value={ahead} aria-label="Days from today" onChange={(e) => setAhead(Number(e.target.value))} />
@@ -1839,16 +2014,17 @@ export default function Grove3D(props) {
               <span key={name}><i style={{ background: STAGE_CSS[i] }} />{name}{stageInfo.totals[i] ? ` ${stageInfo.totals[i]}` : ""}</span>
             ))}
           </div>
+          {ahead > 0 && <div className="g3-estimate">Future growth is an estimate</div>}
         </div>
       )}
       {!preview && picked && pickInfo && (
         <div className="g3-crop" role="dialog" aria-label={`${picked.crop} details`}>
           <div className="g3-crop-head">
-            <span className="g3-crop-emoji" aria-hidden="true">{pickInfo.c?.emoji || "🌱"}</span>
+            <span className="g3-crop-art" aria-hidden="true"><PlantArt crop={picked.crop} stage={picked.stage} size={48} /></span>
             <div><strong>{picked.crop}</strong><small>{picked.zone}{picked.count ? ` · ${picked.count} plants` : ""}</small></div>
             <button type="button" className="g3-crop-x" aria-label="Close crop details" onClick={() => pickRow(null)}><X size={15} /></button>
           </div>
-          <div className="g3-crop-stage"><i style={{ background: STAGE_CSS[picked.stage] }} />{picked.stage === 5 ? "In its harvest window" : picked.left == null ? STAGES[picked.stage] : picked.left > 0 ? `${STAGES[picked.stage]} · harvest in ${picked.left} d` : `${STAGES[picked.stage]} · past harvest date`}{picked.estimated ? "" : " · observed"}</div>
+          <div className="g3-crop-stage"><i style={{ background: STAGE_CSS[picked.stage] }} />{picked.stage === 5 ? "In its harvest window" : picked.left == null ? STAGES[picked.stage] : picked.left > 0 ? `${STAGES[picked.stage]} · harvest in ${picked.left} d` : `${STAGES[picked.stage]} · past harvest date`}{picked.estimated ? (ahead ? " · estimated" : "") : " · observed"}</div>
           <div className="g3-crop-group"><strong>{pickInfo.rows} row{pickInfo.rows === 1 ? "" : "s"} highlighted</strong>{pickInfo.plants ? ` · ${pickInfo.plants} plants` : ""}{pickInfo.areas.length ? ` · ${pickInfo.areas.join(", ")}` : ""}{pickInfo.soonest != null ? ` · first harvest ${pickInfo.soonest > 0 ? `in ${pickInfo.soonest} d` : "now"}` : ""}</div>
           {pickInfo.rows > 1 && <div className="g3-legend g3-crop-stages">{STAGES.map((n, i) => pickInfo.stages[i] ? <span key={n}><i style={{ background: STAGE_CSS[i] }} />{n} {pickInfo.stages[i]}</span> : null)}</div>}
           {pickInfo.c && (

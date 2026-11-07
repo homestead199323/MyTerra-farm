@@ -216,7 +216,7 @@ function animalGeometry(type, variant) { // one geometry per species and colour 
 const GLSL_HEAD = `uniform float uTime; attribute vec4 g3a; attribute vec4 g3b; attribute vec4 g3p; attribute vec4 g3q; attribute float g3y; attribute vec4 g3l1; attribute vec4 g3l2;
 mat3 g3rx(float a){ float c=cos(a), s=sin(a); return mat3(1.,0.,0., 0.,c,s, 0.,-s,c); }
 mat3 g3ry(float a){ float c=cos(a), s=sin(a); return mat3(c,0.,-s, 0.,1.,0., s,0.,c); }
-// legs (herd-brain.js): g3l1 = (fromX, fromZ, toX, toZ), g3l2 = (t0, t1, mode, param); g3b = (phase, bodyH, heading, 0)
+// legs (herd-brain.js): g3l1 = (fromX, fromZ, toX, toZ), g3l2 = (t0, t1, mode, param); g3b = (phase, bodyH, heading, previous heading)
 // modes: 0 stand, 1 graze/peck, 2 walk, 3 lie, 4 swim, 5 scatter, 6 inside (hidden)
 void g3pose(out mat3 Rp, out mat3 Rh, out vec3 off, out float vis, out float lie) {
   float part = g3p.x, kind = g3a.w, ph = g3b.x, H = g3b.y;
@@ -241,7 +241,8 @@ void g3pose(out mat3 Rp, out mat3 Rh, out vec3 off, out float vis, out float lie
   float tailA = sin(uTime * 1.4 + ph * 6.2832) * .32 + sin(uTime * 3.3 + ph * 4.) * .1 + (mode == 5. ? .5 : 0.);
   float a = part == 1. ? headA : (part >= 3. && part <= 6.) ? (kind == 2. ? 0. : swing) : 0.;
   Rp = part == 7. ? g3ry(tailA) : g3rx(a);
-  Rh = g3ry(g3b.z);
+  float turn = atan(sin(g3b.z - g3b.w), cos(g3b.z - g3b.w));
+  Rh = g3ry(g3b.w + turn * smoothstep(t0, t0 + .45, uTime));
   float y = g3y + bob - lie * .35 * H + swim * (param - g3y + sin(uTime * 1.7 + ph * 6.) * .02);
   off = vec3(pos.x, y, pos.y);
   vis = mode == 6. ? 0. : 1.;
@@ -286,7 +287,7 @@ export function buildHerd(items, TIME) {
     const g = animalGeometry(it.type, variant).clone(), n = g.attributes.position.count;
     const gait = 6.2832 * S.walk / (S.L * (S.kind === KIND.bird ? .32 : .5)), stride = S.kind === KIND.bird ? .45 : .32, graze = S.graze ?? 0, bobH = S.kind === KIND.hopper ? S.L * .22 : S.L * .012;
     const a = new Float32Array(n * 4), b = new Float32Array(n * 4), q = new Float32Array(n * 4), l1 = new Float32Array(n * 4), l2 = new Float32Array(n * 4), ph = r();
-    for (let i = 0; i < n; i++) { a.set([it.x, it.z, it.heading, S.kind], i * 4); b.set([ph, S.H || S.L * .6, it.heading, 0], i * 4); q.set([gait, stride, graze, bobH], i * 4); l1.set([it.x, it.z, it.x, it.z], i * 4); l2.set([0, 1, 0, 0], i * 4); }
+    for (let i = 0; i < n; i++) { a.set([it.x, it.z, it.heading, S.kind], i * 4); b.set([ph, S.H || S.L * .6, it.heading, it.heading], i * 4); q.set([gait, stride, graze, bobH], i * 4); l1.set([it.x, it.z, it.x, it.z], i * 4); l2.set([0, 1, 0, 0], i * 4); }
     g.setAttribute("g3a", new THREE.BufferAttribute(a, 4)); g.setAttribute("g3b", new THREE.BufferAttribute(b, 4)); g.setAttribute("g3q", new THREE.BufferAttribute(q, 4));
     g.setAttribute("g3l1", new THREE.BufferAttribute(l1, 4)); g.setAttribute("g3l2", new THREE.BufferAttribute(l2, 4));
     g.setAttribute("g3y", new THREE.BufferAttribute(new Float32Array(n).fill(it.y || 0), 1));
@@ -304,7 +305,10 @@ export function applyLegs(herd, legs) {
   legs.forEach((leg) => {
     const rg = ranges[leg.idx]; if (!rg) return;
     const A1 = l1.array, A2 = l2.array, B = b.array;
-    for (let i = rg.start, e = rg.start + rg.count; i < e; i++) { const k = i * 4; A1[k] = leg.from[0]; A1[k + 1] = leg.from[1]; A1[k + 2] = leg.to[0]; A1[k + 3] = leg.to[1]; A2[k] = leg.t0; A2[k + 1] = leg.t1; A2[k + 2] = leg.mode; A2[k + 3] = leg.param; B[k + 2] = leg.heading; }
+    const first = rg.start * 4, t = Math.max(0, Math.min(1, (leg.t0 - A2[first]) / .45)), eased = t * t * (3 - 2 * t);
+    const delta = Math.atan2(Math.sin(B[first + 2] - B[first + 3]), Math.cos(B[first + 2] - B[first + 3]));
+    const previousHeading = B[first + 3] + delta * eased;
+    for (let i = rg.start, e = rg.start + rg.count; i < e; i++) { const k = i * 4; A1[k] = leg.from[0]; A1[k + 1] = leg.from[1]; A1[k + 2] = leg.to[0]; A1[k + 3] = leg.to[1]; A2[k] = leg.t0; A2[k + 1] = leg.t1; A2[k + 2] = leg.mode; A2[k + 3] = leg.param; B[k + 2] = leg.heading; B[k + 3] = previousHeading; }
     l1.addUpdateRange(rg.start * 4, rg.count * 4); l2.addUpdateRange(rg.start * 4, rg.count * 4); b.addUpdateRange(rg.start * 4, rg.count * 4);
   });
   l1.needsUpdate = true; l2.needsUpdate = true; b.needsUpdate = true;

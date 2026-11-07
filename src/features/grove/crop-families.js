@@ -7,7 +7,7 @@ export const FAMILIES = [
   [/eggplant|aubergine/, "bush", { leaf: 0x6a9f6c, fruit: 0x5a3b7c, fr: .075, n: 3, stake: true, tall: 1.9, shape: "egg" }],
   [/okra/, "bush", { leaf: 0x66b06a, fruit: 0x7cc46a, fr: .05, n: 6, stake: false, tall: 2.8, shape: "pod" }],
   [/potato/, "bush", { leaf: 0x5ba562, fruit: 0xfafafa, fr: .035, n: 6, stake: false, tall: 1.3, flower: true }],
-  [/lettuce|endive|rocket|arugula|lamb/, "leafy", { leaf: 0x95d37d, tip: 0xcdef9f, n: 10, up: .55 }],
+  [/lettuce|endive|rocket|arugula|lamb/, "leafy", { leaf: 0x95d37d, tip: 0xcdef9f, n: 10, up: .55, rosette: true }],
   [/spinach/, "leafy", { leaf: 0x4e9d55, tip: 0x7cc472, n: 9, up: .5 }],
   [/chard/, "leafy", { leaf: 0x3f8f4e, tip: 0x6fbb6a, stem: 0xd9443a, n: 8, up: .85, tall: 1.4 }],
   [/kale/, "leafy", { leaf: 0x5a9a7f, tip: 0x8dc4a2, n: 9, up: .9, tall: 1.5 }],

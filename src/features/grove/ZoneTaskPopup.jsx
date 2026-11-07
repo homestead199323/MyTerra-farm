@@ -77,7 +77,7 @@ function TaskTile({ task, data, index, done, onDone, onOpen }) {
         {!done && action.final && <small className="q-tp-final">{action.final}</small>}
       </div>
       {done ? (
-        <span className="q-tp-reward">
+        <span className="q-tp-reward" role="status" aria-live="polite">
           <Check size={15} />
           {done}
         </span>
@@ -104,7 +104,7 @@ function TaskTile({ task, data, index, done, onDone, onOpen }) {
  * (eggs, milk and harvests go to the pantry); the list is a snapshot so finished jobs
  * stay visible with their reward until the popup closes.
  */
-export default function ZoneTaskPopup({ zone, tasks, data, setData, onClose, onOpenTasks, onOpenZone }) {
+export default function ZoneTaskPopup({ zone, tasks, data, setData, onClose, onOpenTasks, onOpenZone, onCompleted }) {
   const [list] = useState(tasks);
   const [done, setDone] = useState({});
   const sheet = useRef(null),
@@ -131,6 +131,7 @@ export default function ZoneTaskPopup({ zone, tasks, data, setData, onClose, onO
     dataRef.current = next;
     setData(next);
     setDone((d) => ({ ...d, [task.key]: reward }));
+    onCompleted?.();
     buzz(finished + 1 === total ? [18, 40, 28] : 14);
   }
   const zt = ZT_MAP.get(zone.type);

@@ -397,9 +397,17 @@ export default function GroveScene({
     drag = useRef(null),
     moved = useRef(false);
   const [ownTaskZone, setOwnTaskZone] = useState(null);
+  const [completionNotice, setCompletionNotice] = useState(null);
+  const completedJobs = useRef(0);
   const [drawHover, setDrawHover] = useState(null);
   const taskZone = onTaskZone ? taskZoneId : ownTaskZone,
     setTaskZone = onTaskZone || setOwnTaskZone;
+  useEffect(() => { completedJobs.current = 0; }, [taskZone]);
+  useEffect(() => {
+    if (!completionNotice) return undefined;
+    const timer = setTimeout(() => setCompletionNotice(null), 4000);
+    return () => clearTimeout(timer);
+  }, [completionNotice]);
   const [selected, setSelected] = useState(null),
     [zoom, setZoom] = useState(1),
     [screenWidth, setScreenWidth] = useState(800);
@@ -1199,6 +1207,9 @@ export default function GroveScene({
         </div>
         )}
       </div>
+      {completionNotice && <div className="g3-completion" role="status">
+        <span aria-hidden="true">✓</span> {completionNotice.count} {completionNotice.count === 1 ? "job" : "jobs"} completed in {completionNotice.name}
+      </div>}
       {zones.length === 0 && (
         <div className="mt-empty-cta">
           <p>Your space is empty. Answer a few questions and MyTerra draws a starter bed and plans your first week — or place everything yourself.</p>
@@ -1214,7 +1225,11 @@ export default function GroveScene({
           tasks={tasksByZone[taskZone] || []}
           data={data}
           setData={setData}
-          onClose={() => setTaskZone(null)}
+          onClose={() => {
+            if (completedJobs.current > 0) setCompletionNotice({ count: completedJobs.current, name: zones.find((z) => z.id === taskZone)?.name || "this area" });
+            setTaskZone(null);
+          }}
+          onCompleted={() => { completedJobs.current += 1; }}
           onOpenTasks={onOpenTasks}
           onOpenZone={() => setSelected(taskZone)}
         />

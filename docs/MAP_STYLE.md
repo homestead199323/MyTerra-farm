@@ -20,6 +20,7 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - **Farm:** clipped hedge, post-and-rail fence, stone gate pillars and a green gate, a drive, mailbox, tree border, scarecrow, tractor by the barn.
 - **Garden (backyard):** the same hedge, fence and gate — no scarecrow, no tractor.
 - **Balcony:** a stone slab against the building's cream wall (green glazed door, white-framed windows) with a slim rounded railing — capsule posts, thin balusters, a chunky white handrail — on the three open sides. No hedge, fence, gate, pillars, drive, mailbox, wheelbarrow, grass or wild flowers.
+- Balcony detail: shallow rounded floor tiles with narrow joints, a visible slab edge, wall skirting and a door threshold. Container pots have matching saucers. Existing hanging-pot ornaments hang from three fine supports; the pot and plant swing together gently about the suspension point, following wind strength and direction. Reduced motion leaves them still. Floor tiles are merged by material and capped at 40 × 40.
 
 ## 3. Palette (`TOY` in `palette.js` — the one source for both views; `toy.js` turns it into `PAL` numbers for three.js)
 - **Backdrop / fog:** sage `#b4c69d` — the land fades into it far away (fog starts well beyond the farm); the canvas background is the same colour.
@@ -42,6 +43,7 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - The light above is the **fixed afternoon** (`FIXED_SKY`, "Live sky: off" in Settings → Ground & paths). With Live sky on, the sun follows the local clock and the town's latitude (`data.cityGeo`): four presets blended by solar elevation — high (today's look), low (`#ffe2bd`, longer soft shadows), dusk/dawn (`#ffb876`, `#d9c2b2` sky) and night (a `#9fb3d6` "moon" from the mirrored azimuth 40° up, `#5b6a86` sky, exposure 0.8). Night never goes darker than that; window glass and the porch lamp glow warm (`NIGHT` uniform, `nightGlow()` in toy.js). Shadows re-render once a minute.
 - Today's weather (Open-Meteo current conditions) flattens the light when cloudy or foggy (less sun, more sky, fainter shadows, nearer fog) and brings **toy clouds**: 3–6 merged rounded white blobs at 16–20 m drifting downwind, **never casting shadows**. Rain is pale instanced streaks, snow slow white flakes, both falling through a box round the camera target; none under reduced motion, half as many on phones.
 - **Wind** is one uniform (`WIND`: direction the air moves toward, strength 0.15–1 from km/h ÷ 45). Tree, hedge and crop sway scale with it and travel downwind as a gust wave; smoke bends with it; the barn cupola vane turns into it.
+- Crop sway converts world wind into each plant's local orientation, with stable variations in flutter and flexibility. Pond waves follow the wind, with surface normals derived from the same wave as the displacement. Neither changes the sky or lighting presets.
 
 ## 5. Motion (all in the vertex shader, one shared clock)
 - Tree crowns and hedges sway (tops only). Crops sway above 40 cm. Smoke rises, grows and fades. Bees hover. Harvest frames breathe. Pond water ripples gently (×3 in rain). A ripe fruit tree drops a fruit now and then (it rolls, rests, fades).
@@ -50,6 +52,11 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 
 ## 6. Growth and status
 - Crops are modelled per family and **per stage**: sprout (sown) → seedling → growing → maturing with small green fruit → harvest window with ripe fruit in full colour. Fruit colour appears only in the harvest window; so does the gold frame round a row and the gold ring round a tree.
+- Planted instances have a small, deterministic size variation so a row feels organic. Their positions, spacing and stage stay tied to the grower's actual planting; the same plant keeps its variation across preview dates.
+- Lettuce-family plants add a folded inner rosette as they grow; radishes have broad leaves and visible root shoulders; tomatoes carry leaves on visible branches; strawberries have three-leaf clusters and low runners. The same growth-stage and detail-tier budgets apply to these models.
+- In the growth preview, plants whose stage changes settle into their new size with a short, stable stagger. Backward previews settle from a larger size; reduced motion switches immediately.
+- Changing the system reduced-motion preference while the map is open also stops ambient motion and camera inertia, without requiring a page reload.
+- A recorded stage remains the source of truth today. A future preview projects from that stage and labels the result as an estimate; it never changes the recorded observation.
 - Row markers: a wooden pole with a rounded tag in the stage colour.
 - Selection: a gold rounded frame. Crop pick: the crop's own colour, lighter.
 
@@ -64,7 +71,10 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 ## 7. UI over the map (`.g3-*` in `quiet.css`)
 - Floating panels (growth preview, crop card) never run under the control column; zone labels are clamped inside the view and drop out when their area's centre leaves it.
 - The same white cards as the rest of the app: `var(--color-card)`, hairline `var(--color-border)`, `var(--shadow)`-style soft shadow, brand green for selected / pressed, orange job badges. Dark mode follows the tokens. Never dark translucent pills.
-- Zone name pills hang 2 px above the **front edge** of the footprint (the edge nearest the viewer), never on a roof. Placement is `labels.js`: selected → pending jobs → biggest footprint; a placed pill rejects overlaps; far out (`ls < .8`) a zone needs 28 px of screen width for a name, 64 px on phones; selected and job-bearing zones always get one.
+- Zone name pills hang 2 px above the **front edge** of the footprint (the edge nearest the viewer), never on a roof. Labels include small matching line icons, except numbered beds, which stay compact. Placement is `labels.js`: selected → pending jobs → biggest footprint; neighbouring labels can shift one row to avoid a collision, and a viewport-sized budget prevents dense farms from being covered. Far out (`ls < .8`) a zone needs 28 px of screen width for a name, 64 px on phones; selected and job-bearing zones take priority. The area selector can focus any area, including one whose label is hidden.
+- A thin white footprint follows a mouse hover or keyboard focus, showing which area can be opened. The selected area retains its gold frame; neither effect changes the scene's lighting.
+- Hovering a planted row adds a gold row outline and a compact crop card with its stage and area; pointer feedback distinguishes selectable areas from the ground.
+- Selecting a planted row focuses its bed and shows the crop's stage-specific picture. An area selection briefly settles into its gold outline; reduced motion displays it immediately.
 
 ## 7b. Phones (2026-10-25) — coarse pointer only (`isCoarse()` → host class `g3-coarse`; harness `?coarse=1`)
 - Inline on the home screen the map is a **live preview tile** (aspect ≥ 4:3): no gestures, no pills, no controls, no scroll hint; an "Open map" pill (`.g3-open`) with a job-count badge; one tap anywhere opens full screen; closing it returns to the whole-farm home view. The render-quality tier (`mobile`: coarse pointer OR short screen) is separate and unchanged.

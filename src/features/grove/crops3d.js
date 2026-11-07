@@ -22,6 +22,7 @@ import { cropFamily } from "./crop-families";
 export { cropFamily };
 
 /* ---------- families (unit footprint: x/z within ±.5, y up) ---------- */
+// Keep each family’s random layout stable across stages so growth feels continuous.
 function leaves(P, o, grow, { n = o.n || 9, d = .3, up = o.up ?? .6, lx = .21, ly = .08, lz = .38, y0 = .12, tall = o.tall || 1, r } = {}) {
   const rr = r || rng(n * 7 + 1), col = new THREE.Color(o.leaf), tip = o.tip ? new THREE.Color(o.tip) : col.clone().lerp(WHITE, .3), H = (lz + y0) * grow * tall;
   n = Math.round(n * (P.detail < .7 ? .7 : 1)); // lighter models carry fewer leaves
@@ -34,9 +35,13 @@ function leaves(P, o, grow, { n = o.n || 9, d = .3, up = o.up ?? .6, lx = .21, l
   }
   P.sphere(.1 * grow, col.clone().lerp(tip, .5), { pos: [0, .08 * grow, 0], seg: 9, rings: 6 });
 }
-function leafy(P, o, stage) { leaves(P, o, GROW[stage]); }
+function leafy(P, o, stage) {
+  const grow = GROW[stage];
+  leaves(P, o, grow, o.rosette ? { n: stage === 2 ? 3 : stage === 3 ? 7 : 10, lx: .23, ly: .045, lz: .34 } : {});
+  if (o.rosette && stage >= 3) leaves(P, { ...o, leaf: o.tip, up: 1.1 }, grow * (stage === 3 ? .42 : .65), { n: 5, d: .12, lx: .18, ly: .045, lz: .27, y0: .2 });
+}
 function head(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 5 + 2), head = new THREE.Color(o.head);
+  const grow = GROW[stage], rr = rng(27), head = new THREE.Color(o.head);
   leaves(P, { leaf: o.leaf, n: 7, up: .35 }, grow, { d: .33, lx: .2, ly: .06, lz: .32, y0: .04, r: rr });
   if (stage < 3) return;
   const hs = stage === 3 ? .55 : 1, top = lit(.6, .18);
@@ -53,21 +58,22 @@ function head(P, o, stage) {
   }
 }
 function root(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 3 + 7), n = o.feathery ? 13 : 9, tall = o.tall || 1, col = new THREE.Color(o.leaf), tip = col.clone().lerp(WHITE, .35), H = .7 * grow * tall;
+  const grow = GROW[stage], rr = rng(22), n = o.small ? (stage === 2 ? 3 : stage === 3 ? 5 : 7) : o.feathery ? 13 : 9, tall = o.tall || 1, col = new THREE.Color(o.leaf), tip = col.clone().lerp(WHITE, .35), H = (o.small ? .5 : .7) * grow * tall;
   const paint = (x, y, z, c) => c.clone().lerp(tip, clamp01(y / H) * .8);
   for (let i = 0; i < n; i++) {
     const a = (i / n) * 6.28 + rr() * .6, t = .18 + rr() * .3, h = H * (.7 + rr() * .4), end = [Math.sin(a) * Math.sin(t) * h, Math.cos(t) * h, Math.cos(a) * Math.sin(t) * h];
     P.stem([Math.sin(a) * .03, 0, Math.cos(a) * .03], end, (o.feathery ? .018 : .03) * grow, .006, o.leaf, { seg: 6, paint });
-    if (!o.feathery) P.sphere([.06 * grow, .025 * grow, .12 * grow], col, { pos: [end[0] * .85, end[1] * .85, end[2] * .85], rot: [-(1.2 - t), a, 0], paint, seg: 7, rings: 5 });
+    if (!o.feathery) P.sphere([(o.small ? .11 : .06) * grow, .025 * grow, (o.small ? .2 : .12) * grow], col, { pos: [end[0] * .85, end[1] * .85, end[2] * .85], rot: [-(1.2 - t), a, 0], paint, seg: 10, rings: 7 });
     if (o.stem) P.stem([Math.sin(a) * .03, 0, Math.cos(a) * .03], [end[0] * .5, end[1] * .5, end[2] * .5], .03 * grow, .02 * grow, o.stem, { seg: 6 });
   }
-  if (stage < 5 || !o.root) return;
-  // the root shows at the crown in the harvest window
-  if (o.shape === "cone") P.cyl(.085, .07, .05, o.root, { pos: [0, .025, 0], seg: 12 });
-  else { const r = o.small ? .08 : .12; P.sphere(r, o.root, { pos: [0, r * .45, 0], seg: 12, rings: 9, paint: o.cap ? (x, y, z, c) => (y > r * .6 ? new THREE.Color(o.cap) : c) : null }); }
+  if (stage < 4 || !o.root) return;
+  // A smaller crown appears as the root matures, then reaches full size at harvest.
+  const crown = stage === 4 ? .65 : 1;
+  if (o.shape === "cone") P.cyl(.085 * crown, .07 * crown, .05 * crown, o.root, { pos: [0, .025 * crown, 0], seg: 12 });
+  else { const r = (o.small ? .115 : .12) * crown; P.sphere(r, o.root, { pos: [0, r * .55, 0], seg: 14, rings: 10, paint: o.cap ? (x, y, z, c) => (y > r * .6 ? new THREE.Color(o.cap) : c) : null }); }
 }
 function allium(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 11 + 3), col = new THREE.Color(o.leaf), tip = col.clone().lerp(WHITE, .3), H = (o.leek ? .6 : .5) * grow;
+  const grow = GROW[stage], rr = rng(58), col = new THREE.Color(o.leaf), tip = col.clone().lerp(WHITE, .3), H = (o.leek ? .6 : .5) * grow;
   const paint = (x, y, z, c) => c.clone().lerp(tip, clamp01(y / H) * .7);
   if (o.leek) {
     P.cyl(.055 * grow, .07 * grow, .28 * grow, o.bulb, { pos: [0, .14 * grow, 0], seg: 12 });
@@ -78,11 +84,18 @@ function allium(P, o, stage) {
   if (stage >= 5) P.sphere([.1, .085, .1], o.bulb, { pos: [0, .04, 0], seg: 12, rings: 8 });
 }
 function bush(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 13 + 5), H = (o.tall || 1.6) * grow, col = new THREE.Color(o.leaf), paint = lit(H, .2);
+  const grow = GROW[stage], rr = rng(70), H = (o.tall || 1.6) * grow, col = new THREE.Color(o.leaf), paint = lit(H, .2);
   if (o.stake && stage >= 3) P.caps(.025, Math.max(.3, H * 1.05), 0x8f6b4c, { pos: [.05, Math.max(.3, H * 1.05) / 2 + .02, -.05], cap: 2, seg: 7 });
   P.stem([0, 0, 0], [0, H * .8, 0], .04 * grow, .02 * grow, 0x5f8f55, { seg: 7 });
   const blobs = stage >= 4 ? 5 : stage === 3 ? 4 : 2;
-  for (let i = 0; i < blobs; i++) { const a = i * 2.1 + rr() * .6, y = H * (.22 + (i / blobs) * .62), d = .17 * grow; P.sphere([.36 * grow, .27 * grow, .36 * grow], col, { pos: [Math.sin(a) * d, y, Math.cos(a) * d], paint, seg: 12, rings: 8 }); }
+  for (let i = 0; i < blobs; i++) {
+    const a = i * 2.1 + rr() * .6, y = H * (.22 + (i / blobs) * .62), d = .17 * grow;
+    if (o.fruit === 0xe3493a) {
+      const end = [Math.sin(a) * .43 * grow, y + .1 * grow, Math.cos(a) * .43 * grow];
+      P.stem([0, y, 0], end, .024 * grow, .012 * grow, o.leaf, { seg: 7 });
+      for (let k = 0; k < 3; k++) { const t = .4 + k * .3; P.sphere([.12 * grow, .035 * grow, .19 * grow], col, { pos: [end[0] * t, y + .1 * grow * t, end[2] * t], rot: [-.3, a + (k % 2 ? .6 : -.6), 0], paint, seg: 10, rings: 7 }); }
+    } else P.sphere([.36 * grow, .27 * grow, .36 * grow], col, { pos: [Math.sin(a) * d, y, Math.cos(a) * d], paint, seg: 12, rings: 8 });
+  }
   if (stage < 4) return;
   const fruits = Array.isArray(o.fruit) ? o.fruit : [o.fruit], ripe = stage === 5;
   for (let i = 0; i < o.n; i++) {
@@ -96,7 +109,7 @@ function bush(P, o, stage) {
   }
 }
 function vine(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 17 + 11), col = new THREE.Color(o.leaf), paint = lit(.25, .22), n = stage >= 4 ? 7 : stage === 3 ? 5 : 3;
+  const grow = GROW[stage], rr = rng(96), col = new THREE.Color(o.leaf), paint = lit(.25, .22), n = stage >= 4 ? 7 : stage === 3 ? 5 : 3;
   for (let i = 0; i < n; i++) { const a = (i / n) * 6.28 + rr() * .7, d = (.12 + rr() * .33) * grow; P.stem([0, .02, 0], [Math.sin(a) * d, .05, Math.cos(a) * d], .02 * grow, .012 * grow, 0x6f9f5a, { seg: 5 }); P.sphere([.17 * grow, .07 * grow, .17 * grow], col, { pos: [Math.sin(a) * d, .12 * grow, Math.cos(a) * d], rot: [(rr() - .5) * .4, a, 0], paint, seg: 10, rings: 7 }); }
   if (stage < 4) return;
   const ripe = stage === 5, f = new THREE.Color(o.fruit), c = ripe ? f : f.clone().lerp(GREEN_FRUIT, .6), s = ripe ? 1 : .55, a = rr() * 6.28, px = Math.sin(a) * .22, pz = Math.cos(a) * .22;
@@ -108,7 +121,7 @@ function vine(P, o, stage) {
   else { const r = .22 * s, stripes = o.stripe ? (x, y, z, cc) => (Math.sin(Math.atan2(z - pz, x - px) * 7) > .3 ? new THREE.Color(o.stripe) : cc) : lit(.4, .2); P.sphere([r, r * .85, r], c, { pos: [px, r * .8, pz], seg: 16, rings: 10, paint: stripes }); }
 }
 function climber(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 19 + 13), col = new THREE.Color(o.leaf), H = (o.poles ? 1.9 : o.low ? .9 : 1.6) * grow, paint = lit(H, .22);
+  const grow = GROW[stage], rr = rng(108), col = new THREE.Color(o.leaf), H = (o.poles ? 1.9 : o.low ? .9 : 1.6) * grow, paint = lit(H, .22);
   if (o.poles) { // one cane per plant, the vine spiralling up it
     P.caps(.03, 1.95, 0x8f6b4c, { pos: [0, 1.0, 0], cap: 2, seg: 7 });
     const n = stage >= 4 ? 7 : stage === 3 ? 4 : 2;
@@ -126,7 +139,7 @@ function climber(P, o, stage) {
   }
 }
 function stalk(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 23 + 17), col = new THREE.Color(o.leaf);
+  const grow = GROW[stage], rr = rng(132), col = new THREE.Color(o.leaf);
   if (o.kind === "corn") {
     const H = 3.0 * grow, paint = lit(H, .2);
     P.stem([0, 0, 0], [0, H, 0], .05, .025, 0x7fb86a, { seg: 8 });
@@ -158,7 +171,7 @@ function stalk(P, o, stage) {
   }
 }
 function herb(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 29 + 19), col = new THREE.Color(o.leaf), n = o.small ? 9 : 7, R = (o.small ? .32 : .26) * grow, H = (o.tall || 1) * .32 * grow, paint = lit(H, .25);
+  const grow = GROW[stage], rr = rng(164), col = new THREE.Color(o.leaf), n = o.small ? 9 : 7, R = (o.small ? .32 : .26) * grow, H = (o.tall || 1) * .32 * grow, paint = lit(H, .25);
   if (o.spiky) { for (let i = 0; i < 11; i++) { const a = rr() * 6.28, d = rr() * .26 * grow, h = H * (1.2 + rr() * .8); P.stem([Math.sin(a) * d, 0, Math.cos(a) * d], [Math.sin(a) * d * 1.3, h, Math.cos(a) * d * 1.3], .03 * grow, .02 * grow, col, { seg: 6, paint: lit(h, .3) }); } return; }
   for (let i = 0; i < n; i++) { const a = (i / n) * 6.28 + rr() * .5, d = R * (.4 + rr() * .6); P.sphere([.15 * grow, (o.small ? .07 : .12) * grow, .15 * grow], col, { pos: [Math.sin(a) * d, (o.small ? .06 : .11) * grow, Math.cos(a) * d], paint, seg: 10, rings: 7 }); }
   P.sphere([.16 * grow, .13 * grow, .16 * grow], col, { pos: [0, H * .55, 0], paint, seg: 10, rings: 7 });
@@ -167,9 +180,15 @@ function herb(P, o, stage) {
   if (o.dots) for (let i = 0; i < 9; i++) { const a = rr() * 6.28, d = rr() * .25, h = .2 + rr() * .18; P.stem([Math.sin(a) * d, .1, Math.cos(a) * d], [Math.sin(a) * d, h, Math.cos(a) * d], .01, .008, 0x7fb07a, { seg: 4 }); P.sphere([.045, .018, .045], o.dots, { pos: [Math.sin(a) * d, h, Math.cos(a) * d], seg: 8, rings: 4 }); P.sphere(.018, o.centre, { pos: [Math.sin(a) * d, h + .012, Math.cos(a) * d], seg: 6, rings: 4 }); }
 }
 function berry(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 31 + 23), col = new THREE.Color(o.leaf), ripe = stage === 5, f = new THREE.Color(o.fruit), fc = ripe ? f : f.clone().lerp(GREEN_FRUIT, .7);
+  const grow = GROW[stage], rr = rng(178), col = new THREE.Color(o.leaf), ripe = stage === 5, f = new THREE.Color(o.fruit), fc = ripe ? f : f.clone().lerp(GREEN_FRUIT, .7);
   if (o.kind === "low") {
-    leaves(P, { leaf: o.leaf, n: 8, up: .4 }, grow, { d: .27, lx: .15, ly: .05, lz: .22, y0: .06, r: rr });
+    const clusters = stage === 2 ? 2 : stage === 3 ? 3 : 4;
+    for (let i = 0; i < clusters; i++) {
+      const a = i * 2.4, x = Math.sin(a) * .25 * grow, z = Math.cos(a) * .25 * grow, y = .16 * grow;
+      P.stem([0, .025, 0], [x, y, z], .018 * grow, .01 * grow, o.leaf, { seg: 6 });
+      for (let k = -1; k <= 1; k++) { const b = a + k * .85; P.sphere([.09 * grow, .025 * grow, .13 * grow], col, { pos: [x + Math.sin(b) * .07 * grow, y, z + Math.cos(b) * .07 * grow], rot: [-.2, b, 0], seg: 10, rings: 7 }); }
+    }
+    if (stage >= 3) for (let i = 0; i < 2; i++) { const a = i * 3.4 + .6, x = Math.sin(a) * .48 * grow, z = Math.cos(a) * .48 * grow; P.stem([0, .025, 0], [x, .025, z], .012, .007, o.leaf, { seg: 6 }); P.sphere([.07, .025, .1], col, { pos: [x, .04, z], rot: [0, a, 0], seg: 9, rings: 6 }); }
     if (stage >= 4) for (let i = 0; i < 6; i++) { const a = rr() * 6.28, d = .18 + rr() * .2; P.sphere([.045, .055, .045], fc, { pos: [Math.sin(a) * d, .04, Math.cos(a) * d], seg: 8, rings: 6 }); }
     return;
   }
@@ -189,16 +208,16 @@ function berry(P, o, stage) {
   }
 }
 function spears(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 37 + 29), H = 1.1 * grow, tip = new THREE.Color(0x8e6ea8), col = new THREE.Color(0x7cbd6c);
+  const grow = GROW[stage], rr = rng(214), H = 1.1 * grow, tip = new THREE.Color(0x8e6ea8), col = new THREE.Color(0x7cbd6c);
   for (let i = 0; i < 8; i++) { const a = rr() * 6.28, d = rr() * .2, h = H * (.6 + rr() * .5), lean = .08; P.caps(.028, h, col, { pos: [Math.sin(a) * d, h / 2, Math.cos(a) * d], rot: [lean, a, 0], cap: 2, seg: 7, paint: (x, y, z, c) => c.clone().lerp(tip, clamp01((y - h * .8) / (h * .2)) * .8) }); }
   if (stage >= 4) for (let i = 0; i < 5; i++) { const a = rr() * 6.28, d = rr() * .25; P.sphere([.1, .08, .1], 0x9ccf84, { pos: [Math.sin(a) * d, H * 1.05, Math.cos(a) * d], seg: 8, rings: 6 }); }
 }
 function rhubarb(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 41 + 31), n = stage >= 4 ? 6 : 4;
+  const grow = GROW[stage], rr = rng(236), n = stage >= 4 ? 6 : 4;
   for (let i = 0; i < n; i++) { const a = (i / n) * 6.28 + rr() * .4, d = .24 * grow, h = .32 * grow; P.stem([Math.sin(a) * .04, 0, Math.cos(a) * .04], [Math.sin(a) * d, h, Math.cos(a) * d], .04 * grow, .03 * grow, 0xd9453f, { seg: 7 }); P.sphere([.26 * grow, .09 * grow, .3 * grow], 0x5fa352, { pos: [Math.sin(a) * d * 1.2, h + .04, Math.cos(a) * d * 1.2], rot: [-.35, a, 0], paint: lit(h + .2, .2), seg: 11, rings: 8 }); }
 }
 function artichoke(P, o, stage) {
-  const grow = GROW[stage], rr = rng(stage * 43 + 37);
+  const grow = GROW[stage], rr = rng(252);
   leaves(P, { leaf: 0x8fae8c, tip: 0xbacfb6, n: 10, up: .95 }, grow, { d: .3, lx: .09, ly: .03, lz: .42, y0: .06, tall: 1.4, r: rr });
   if (stage < 4) return;
   const s = stage === 5 ? 1 : .6;
@@ -238,11 +257,18 @@ export function cropMaterials(TIME) {
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nuniform float uTime; uniform vec3 uWind;")
       .replace("#include <begin_vertex>", `#include <begin_vertex>
-{ vec3 g3c = instanceMatrix[3].xyz; float g3ph = dot(g3c.xz, uWind.xy) * .35 - uTime * (1.2 + uWind.z * 1.8);
-  float g3w = sin(g3ph + g3c.x * .4) + .5 * sin(uTime * 2.6 + g3c.z * 1.3);
-  transformed.xz += (uWind.xy * (.7 + .3 * g3w) * .5 + vec2(g3w * .5, 0.)) * smoothstep(.0, .5, position.y) * .035 * (.5 + uWind.z) * 2.; }`);
+{ vec3 g3c = instanceMatrix[3].xyz;
+  float g3seed = fract(sin(dot(g3c.xz, vec2(12.9898, 78.233))) * 43758.5453);
+  float g3ph = dot(g3c.xz, uWind.xy) * .35 - uTime * (1.2 + uWind.z * 1.8);
+  float g3gust = .65 + .35 * sin(g3ph);
+  float g3flutter = sin(uTime * (2.1 + g3seed) + g3seed * 6.283);
+  vec2 g3world = uWind.xy * (.35 + .45 * g3gust) + vec2(-uWind.y, uWind.x) * g3flutter * .12;
+  // Convert the shared world wind to the plant's rotated local axes.
+  vec2 g3local = vec2(dot(g3world, normalize(instanceMatrix[0].xz)), dot(g3world, normalize(instanceMatrix[2].xz)));
+  float g3bend = smoothstep(.02, .65, position.y);
+  transformed.xz += g3local * g3bend * .06 * (.5 + uWind.z) * (.8 + .4 * g3seed); }`);
   };
-  cropMat.customProgramCacheKey = () => "g3crop";
+  cropMat.customProgramCacheKey = () => "g3crop-wind-v2";
   cropDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
   return { mat: cropMat, depth: cropDepth };
 }
@@ -255,6 +281,8 @@ export function buildCrops(g, items, TIME) {
   byKey.forEach((list) => {
     const geo = cropGeometry(list[0].name, list[0].stage, list[0].lod || 0), im = new THREE.InstancedMesh(geo, mat, list.length);
     list.forEach((it, i) => { P.set(it.x, it.y, it.z); E.set(0, it.ry || 0, 0); Q.setFromEuler(E); S.setScalar(it.s); M4.compose(P, Q, S); im.setMatrixAt(i, M4); });
+    // Retain identities so a changed growth stage can animate independently of its neighbours.
+    im.userData.cropItems = list.map((it) => ({ key: `${it.name}|${it.x.toFixed(3)}|${it.y.toFixed(3)}|${it.z.toFixed(3)}`, stage: it.stage }));
     im.instanceMatrix.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; g.add(im);
   });
 }

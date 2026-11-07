@@ -99,7 +99,7 @@ export function render(job) {
     return [{ file: `crop-${job.slug}.webp`, url: stage(g, { frame, el: 28 }) }];
   }
   if (job.kind === "animal") {
-    const herd = buildHerd([{ type: job.name, x: 0, z: 0, heading: 0, arena: null, seed: 3, variant: 0 }], TIME);
+    const { mesh: herd } = buildHerd([{ type: job.name, x: 0, z: 0, heading: 0, arena: null, seed: 3, variant: 0 }], TIME);
     const q = herd.geometry.attributes.g3q; for (let i = 0; i < q.count; i++) q.setZ(i, 0); // no grazing: head up, standing
     const g = new THREE.Group(); g.add(herd); herd.geometry.computeBoundingBox();
     const frame = herd.geometry.boundingBox.clone();
@@ -115,3 +115,17 @@ export function render(job) {
 }
 window.__icons = { jobs, render };
 document.title = "icons ready";
+// A visible export control also supports browser-driven asset regeneration.
+const exportButton = document.createElement("button");
+exportButton.textContent = "Render updated crop and area pictures";
+document.body.appendChild(exportButton);
+exportButton.addEventListener("click", async () => {
+  exportButton.disabled = true;
+  const selected = jobs.filter((j) => j.kind === "zone" || (j.kind === "crop" && /^(tomato|lettuce|carrot|parsnip|beet|radish|turnip|fennel|strawberry)$/.test(j.name)));
+  const files = [];
+  for (const job of selected) { files.push(...render(job)); await new Promise((resolve) => requestAnimationFrame(resolve)); }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([JSON.stringify(files)], { type: "application/json" }));
+  link.download = "myterra-model-pictures.json"; link.textContent = `Download ${files.length} updated pictures`;
+  document.body.appendChild(link); exportButton.textContent = "Pictures ready";
+});
