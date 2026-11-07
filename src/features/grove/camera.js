@@ -68,3 +68,18 @@ export function sceneFrame(farmW, farmH, mapStyle) {
   const box = projectBox(cam, -margin, -margin, fW + margin, fH + margin, cam.on ? Math.max(4, margin * 1.4) : 0);
   return { margin, cam, box, vbW: box.w, vbH: box.h, ratio: box.w / box.h };
 }
+
+/* The Farm Designer always draws the farm flat from above (GroveScene: edit mode is never 3D),
+   so its letterbox uses the flat frame whatever the map's View setting is. */
+export function designerFrame(farmW, farmH) {
+  return sceneFrame(farmW, farmH, { camera: "flat" });
+}
+
+/* Size the designer's scene box so the map (aspect `ratio`) plus the scene's own chrome
+   (border, margins, bottom bar: chromeW x chromeH px) fits inside availW x availH. */
+export function fitDesignerStage({ availW, availH, ratio, chromeW = 0, chromeH = 0 }) {
+  let w = Math.max(0, availW - chromeW), h = w / ratio;
+  const maxH = Math.max(0, availH - chromeH);
+  if (h > maxH) { h = maxH; w = h * ratio; }
+  return { w: Math.floor(w + chromeW), h: Math.floor(h + chromeH) };
+}

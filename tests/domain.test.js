@@ -5,6 +5,7 @@ import './herd-brain.test.js';
 import './animal-animation.test.js';
 import './gestures.test.js';
 import './labels.test.js';
+import './designer-fit.test.js';
 import './growth-preview.test.js';
 import './crop-detail.test.js';
 import './toy.test.js';

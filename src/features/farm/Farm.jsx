@@ -21,7 +21,7 @@ import PlotOverlay from "./PlotOverlay";
 import GroveScene from "../grove/GroveScene";
 import {ORNAMENT_TYPES,ornamentTypesFor,MAX_ORNAMENTS} from "../quiet/ornaments";
 import { resolveEnvironment } from "../../lib/environment";
-import { sceneFrame } from "../grove/camera";
+import { designerFrame, fitDesignerStage } from "../grove/camera";
 import FarmIcon from "../../components/FarmIcon";
 import { PALETTE_DRAG_TYPE } from "./living/ZonePalette";
 import { isPlantZone } from "./living/visuals";
@@ -153,6 +153,8 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
   const [tutorialDismissed, setTutorialDismissed] = useState(!!data.designerTutorialSeen);
   const [stageFit, setStageFit] = useState({w: 0, h: 0});
   const stageRef = useRef(null);
+  const sceneBoxRef = useRef(null);   // the box holding GroveScene: its size minus the svg's = the scene's chrome
+  const measureRef = useRef(null);
   const ORN_IDS = new Set(ORNAMENT_TYPES.map(o => o.id));
   /* Stage 4b (brief §7): decor tray only offers env-appropriate items;
      ORN_IDS stays the superset so already-placed decor keeps working */
@@ -305,25 +307,36 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
   /* ── Letterbox fit: size the scene box to fit the stage while keeping
      the projector's exact aspect, so GroveScene's client-px → viewBox
      pointer math (drag / resize / tap-to-place) stays valid. ── */
-  const camera = data.mapStyle ? data.mapStyle.camera : undefined;
-  const PROJ = useMemo(function() { return sceneFrame(farmW, farmH, { camera: camera }); }, [farmW, farmH, camera]);
+  /* The designer draws the farm flat from above even when the map's View is 3D, so fit to the
+     flat frame (the tilted 3D frame made tall farms overflow: 2026-11-07). The scene's border,
+     margins and bottom bar (chrome) are measured off the rendered box so the whole map fits. */
+  const PROJ = useMemo(function() { return designerFrame(farmW, farmH); }, [farmW, farmH]);
   useEffect(function() {
     const el = stageRef.current;
     if (!el) return;
+    let observedBox = null;
     function measure() {
       const r = el.getBoundingClientRect();
-      const availW = Math.max(0, r.width - 16);
-      const availH = Math.max(0, r.height - 16);
-      const ratio = PROJ.vbW / PROJ.vbH;
-      let w = availW, h = w / ratio;
-      if (h > availH) { h = availH; w = h * ratio; }
-      setStageFit({w: Math.floor(w), h: Math.floor(h)});
+      const box = sceneBoxRef.current, svg = box && box.querySelector("svg");
+      let chromeW = 0, chromeH = 0;
+      if (box && svg) {
+        const b = box.getBoundingClientRect(), v = svg.getBoundingClientRect();
+        chromeW = Math.max(0, b.width - v.width);
+        chromeH = Math.max(0, b.height - v.height);
+      }
+      const next = fitDesignerStage({ availW: Math.max(0, r.width - 16), availH: Math.max(0, r.height - 16), ratio: PROJ.vbW / PROJ.vbH, chromeW: chromeW, chromeH: chromeH });
+      setStageFit(function(prev) { return prev.w === next.w && prev.h === next.h ? prev : next; });
+      if (box && box !== observedBox) { ro.observe(box); observedBox = box; }
     }
-    measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return function() { ro.disconnect(); };
+    measureRef.current = measure;
+    measure();
+    return function() { ro.disconnect(); measureRef.current = null; };
   }, [PROJ]);
+  // the scene box only exists once a first size is known: measure again so its chrome is counted
+  const hasStage = stageFit.w > 0;
+  useEffect(function() { if (hasStage && measureRef.current) measureRef.current(); }, [hasStage]);
 
   const zoneCounts = (data.zones || []).reduce(function(acc, z) {
     acc[z.type] = (acc[z.type] || 0) + 1;
@@ -375,7 +388,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
       <div ref={stageRef} style={{flex:1, minHeight:0, position:"relative", display:"flex",
         alignItems:"center", justifyContent:"center", overflow:"hidden"}}>
         {stageFit.w > 0 && (
-          <div style={{width:stageFit.w, maxWidth:"100%"}}>
+          <div ref={sceneBoxRef} style={{width:stageFit.w, maxWidth:"100%"}}>
             <GroveScene
               data={groveData}
               showEditButton={false}
