@@ -14,11 +14,8 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
-import { HorizontalTiltShiftShader } from "three/examples/jsm/shaders/HorizontalTiltShiftShader.js";
-import { VerticalTiltShiftShader } from "three/examples/jsm/shaders/VerticalTiltShiftShader.js";
 import { N8AOPass } from "n8ao";
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent } from "./gestures";
@@ -1675,10 +1672,9 @@ export default function Grove3D(props) {
     renderer.domElement.addEventListener("webglcontextlost", lost);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(FIXED_SKY.fog);
-    scene.fog = new THREE.Fog(FIXED_SKY.fog, 30, 120);
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .22; pmrem.dispose();
     const camera = new THREE.PerspectiveCamera(CAM.fov, 1, 1, 4000);
-    let composer = null, n8aoPass = null, bloomPass = null, hTiltPass = null, vTiltPass = null;
+    let composer = null, n8aoPass = null, bloomPass = null;
     try {
       composer = new EffectComposer(renderer);
       n8aoPass = new N8AOPass(scene, camera, 512, 512);
@@ -1693,15 +1689,6 @@ export default function Grove3D(props) {
 
       bloomPass = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.18, 0.4, 0.88);
       composer.addPass(bloomPass);
-
-      hTiltPass = new ShaderPass(HorizontalTiltShiftShader);
-      vTiltPass = new ShaderPass(VerticalTiltShiftShader);
-      hTiltPass.uniforms.h.value = 1.8 / 512;
-      hTiltPass.uniforms.r.value = 0.5;
-      vTiltPass.uniforms.v.value = 1.8 / 512;
-      vTiltPass.uniforms.r.value = 0.5;
-      composer.addPass(hTiltPass);
-      composer.addPass(vTiltPass);
 
       const outputPass = new OutputPass();
       composer.addPass(outputPass);
@@ -1728,11 +1715,7 @@ export default function Grove3D(props) {
       sun.color.set(s.sunColor); sun.intensity = s.sunIntensity; sun.shadow.intensity = s.shadowIntensity;
       renderer.toneMappingExposure = s.exposure; scene.environmentIntensity = s.envIntensity;
       scene.background = new THREE.Color(s.fog);
-      if (!scene.fog) scene.fog = new THREE.Fog(s.fog, (st.fogRange?.near || 30) * (s.fogNear ?? 1), st.fogRange?.far || 120);
-      else {
-        scene.fog.color.set(s.fog);
-        if (st.fogRange) { scene.fog.near = st.fogRange.near * (s.fogNear ?? 1); scene.fog.far = st.fogRange.far; }
-      }
+      if (st.fogRange) scene.fog = new THREE.Fog(s.fog, st.fogRange.near * (s.fogNear ?? 1), st.fogRange.far);
       NIGHT.value = clamp((3 - s.elevation) / 9, 0, 1); // windows and lamps come on as the sun sets
       WIND.value.set(s.windDir[0], s.windDir[1], s.windStrength); WX.ripple.value = s.precip === "rain" ? 3 : 1;
       (st.vanes || []).forEach((v) => { v.rotation.y = vaneAngle(s.windDir); });
@@ -1852,8 +1835,6 @@ export default function Grove3D(props) {
         composer.setPixelRatio(renderer.getPixelRatio());
         if (n8aoPass) n8aoPass.setSize(S.W, S.H);
         if (bloomPass?.resolution) bloomPass.resolution.set(S.W, S.H);
-        if (hTiltPass) hTiltPass.uniforms.h.value = 1.8 / Math.max(1, S.W);
-        if (vTiltPass) vTiltPass.uniforms.v.value = 1.8 / Math.max(1, S.H);
       }
       if ((!st.fitted || latest.current.preview) && st.dims) { st.reset(false); st.fitted = true; }
       else {
@@ -1865,15 +1846,8 @@ export default function Grove3D(props) {
     };
     st.reset = (animate, zoom = 1) => {
       const { fW, fH, margin } = st.dims; controls.fit(fW, fH, margin, animate, zoom);
-      const near = Math.max(10, controls.fitDist * 1.05);
-      const far = Math.max(near + 15, controls.fitDist * 2.8);
-      st.fogRange = { near, far };
-      if (!scene.fog) scene.fog = new THREE.Fog(st.sky.fog, near * (st.sky.fogNear ?? 1), far);
-      else {
-        scene.fog.color.set(st.sky.fog);
-        scene.fog.near = near * (st.sky.fogNear ?? 1);
-        scene.fog.far = far;
-      }
+      const far = Math.min(controls.fitDist * 5.0, Math.max(fW, fH) * 16 * .9), near = Math.min(controls.fitDist * 2.4, far / 1.4);
+      st.fogRange = { near, far }; scene.fog = new THREE.Fog(st.sky.fog, near * (st.sky.fogNear ?? 1), far); // the ground fades into the backdrop beyond the farthest allowed zoom-out
       st.requestRender();
     };
     st.setupSun = () => {
