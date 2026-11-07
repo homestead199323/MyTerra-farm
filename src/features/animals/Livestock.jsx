@@ -3,7 +3,8 @@ import { C, SX } from "../../lib/theme";
 import { uid } from "../../lib/storage";
 import { appendLog, todayLocalKey, markTaskDone } from "../../lib/utils";
 import { addStock } from "../../lib/inventory";
-import { recordProduce } from "../../lib/memory";
+import { recordProduce, subtractProduce } from "../../lib/memory";
+import { toast } from "../../lib/toast";
 import { LDB } from "../../data/livestock";
 import { BREEDS } from "../../data/breeds";
 import { Btn, Card, Inp, Sel, Overlay } from "../../components/ui";
@@ -23,10 +24,14 @@ function Livestock({data, setData}) {
   const breedOptions = BREEDS[form.type] || [];
   const selectedBreed = breedOptions.find(b => b.name === form.breed);
 
+  // Count: whole number 1–10,000. Cost: optional, 0–1,000,000 (typos like 1e12 would wreck Money and Insights).
+  const MAX_HEAD=10000, MAX_COST=1000000;
+  const countN=+form.count, costN=form.cost===""?0:+form.cost;
+  const addErr=!Number.isInteger(countN)||countN<1?"Enter a whole number of animals, 1 or more.":countN>MAX_HEAD?`That's more than ${MAX_HEAD.toLocaleString()} animals — check the count.`:!Number.isFinite(costN)||costN<0?"Cost can't be negative.":costN>MAX_COST?"That cost looks too high — check the number.":"";
   const add=()=>{
-    if(!Number.isInteger(+form.count)||+form.count<1)return;
-    const nd={...data,livestock:{...data.livestock,animals:[...data.livestock.animals,{...form,id:uid(),count:+form.count||1}]},log:appendLog(data.log,{text:`🐄 Added ${form.count} ${form.type}${form.breed?` (${form.breed})`:""}`})};
-    if(form.cost&&+form.cost>0)nd.costs={...(data.costs||{}),items:[...(data.costs?.items||[]),{id:uid(),type:"expense",amount:+form.cost,label:`${form.type}${form.breed?` ${form.breed}`:""}`,date:todayLocalKey(),cat:"Animals",for:`species:${form.type}`,capital:true}]};
+    if(addErr)return;
+    const nd={...data,livestock:{...data.livestock,animals:[...data.livestock.animals,{...form,id:uid(),count:countN,cost:costN>0?String(Math.round(costN*100)/100):""}]},log:appendLog(data.log,{text:`🐄 Added ${form.count} ${form.type}${form.breed?` (${form.breed})`:""}`})};
+    if(costN>0)nd.costs={...(data.costs||{}),items:[...(data.costs?.items||[]),{id:uid(),type:"expense",amount:Math.round(costN*100)/100,label:`${form.type}${form.breed?` ${form.breed}`:""}`,date:todayLocalKey(),cat:"Animals",for:`species:${form.type}`,capital:true}]};
     setData(nd);setForm({name:"",type:"Chicken",breed:"",count:"1",cost:"",zone:""});setShowAdd(false);
   };
   // del moved into AnimalOverlay component — no longer needed here
@@ -50,7 +55,14 @@ function Livestock({data, setData}) {
     setShowCollect(null);setCollectQty("");
   };
 
-  const kill=a=>{const db=LDB[a.type];if(!db)return;const q=+kQ||1;if(!Number.isInteger(q)||q<1||q>a.count)return;const mp=db.out.Meat;if(!mp)return;const mq=Math.round(mp.p*q*10)/10;setData({...recordProduce(data,a.type,"meatKg",mq,todayLocalKey(),true),livestock:{...data.livestock,animals:data.livestock.animals.map(x=>x.id===a.id?(x.count-q<=0?null:{...x,count:x.count-q}):x).filter(Boolean)},pantry:addStock(data,{name:`${a.type} Meat`,category:"Meat",qty:mq,unit:"kg",source:"livestock",storageNote:mp.s},todayLocalKey()).pantry,log:appendLog(data.log,{text:`🔪 ${q} ${a.type} → ${mq}kg`})});setShowK(null);};
+  // How many to process: a whole number from 1 to the group size (a typed 0 or blank no longer means 1).
+  const killQ=k=>{const q=+String(kQ).trim();return String(kQ).trim()!==""&&Number.isInteger(q)&&q>=1&&k&&q<=k.count?q:0;};
+  const kill=a=>{const db=LDB[a.type];if(!db)return;const q=killQ(a);if(!q)return;const mp=db.out.Meat;if(!mp)return;const mq=Math.round(mp.p*q*10)/10;const today=todayLocalKey();
+    const stocked=addStock(data,{name:`${a.type} Meat`,category:"Meat",qty:mq,unit:"kg",source:"livestock",storageNote:mp.s},today);const items=stocked.pantry?.items||[];const lotId=items.length?items[items.length-1].id:null;
+    setData({...recordProduce(data,a.type,"meatKg",mq,today,true),livestock:{...data.livestock,animals:data.livestock.animals.map(x=>x.id===a.id?(x.count-q<=0?null:{...x,count:x.count-q}):x).filter(Boolean)},pantry:stocked.pantry,log:appendLog(data.log,{text:`🔪 ${q} ${a.type} → ${mq}kg`})});setShowK(null);
+    // Undo puts the animals back and takes out what is left of that meat lot, on the farm as it is now.
+    toast(`${q} ${a.type} processed`,{detail:`+${mq} kg added to your pantry`,actionLabel:"Undo",onAction:()=>setData(d=>{const animals=d.livestock?.animals||[];const has=animals.some(x=>x.id===a.id);const back=has?animals.map(x=>x.id===a.id?{...x,count:x.count+q}:x):[...animals,{...a,count:q}];const pantry=d.pantry||{items:[]};const left=(pantry.items||[]).map(it=>{if(it.id!==lotId)return it;const r=Math.round(((Number(it.qty)||0)-mq)*1000)/1000;return r>0?{...it,qty:r}:null;}).filter(Boolean);return{...subtractProduce(d,a.type,"meatKg",mq,today,true),livestock:{...d.livestock,animals:back},pantry:{...pantry,items:left}};})});
+  };
   const sa=sel?data.livestock.animals.find(a=>a.id===sel):null;
 
   return (
@@ -92,8 +104,9 @@ function Livestock({data, setData}) {
       {/* Process/Kill Modal */}
       {showK&&<Overlay title={`🔪 Process ${showK.name||showK.type}`} onClose={()=>setShowK(null)}>
         <Inp label={`Qty (max ${showK.count})`} type="number" min="1" max={showK.count} value={kQ} onChange={e=>setKQ(e.target.value)}/>
-        {LDB[showK.type]?.out.Meat&&<div style={{fontSize:13,marginBottom:12}}>Estimated: <strong>{Math.round(LDB[showK.type].out.Meat.p*(+kQ||1)*10)/10}kg</strong> meat</div>}
-        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowK(null)}>Cancel</Btn><Btn v="danger" onClick={()=>kill(showK)}>Process</Btn></div>
+        {!killQ(showK)&&<p role="alert" style={{fontSize:12,color:C.red,margin:"-6px 0 10px"}}>Enter a whole number from 1 to {showK.count}.</p>}
+        {LDB[showK.type]?.out.Meat&&killQ(showK)>0&&<div style={{fontSize:13,marginBottom:12}}>Estimated: <strong>{Math.round(LDB[showK.type].out.Meat.p*killQ(showK)*10)/10}kg</strong> meat</div>}
+        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowK(null)}>Cancel</Btn><Btn v="danger" disabled={!killQ(showK)} onClick={()=>kill(showK)}>Process</Btn></div>
       </Overlay>}
 
       {/* Add Animal Modal — with breed dropdown */}
@@ -109,7 +122,8 @@ function Livestock({data, setData}) {
           <Inp label="Count" type="number" min="1" value={form.count} onChange={e=>setForm({...form,count:e.target.value})}/>
           <Inp label={`Cost (${currencySymbol(data).trim()})`} type="number" value={form.cost} onChange={e=>setForm({...form,cost:e.target.value})}/>
         </div>
-        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowAdd(false)}>Cancel</Btn><Btn onClick={add} disabled={!Number.isInteger(+form.count)||+form.count<1}>Add</Btn></div>
+        {addErr&&form.count!==""&&<p role="alert" style={{fontSize:12,color:C.red,margin:"-4px 0 10px"}}>{addErr}</p>}
+        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowAdd(false)}>Cancel</Btn><Btn onClick={add} disabled={!!addErr}>Add</Btn></div>
       </Overlay>}
     </div>
   );

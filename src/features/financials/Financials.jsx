@@ -32,7 +32,13 @@ export default function Financials({data, setData}) {
   },[data.livestock,data.zones]);
   const forLabel=v=>{if(!v)return "";const o=forOptions.find(x=>x.value===v);return o?o.label:"";};
   const items = useMemo(() => data.costs?.items || [], [data.costs?.items]);
-  const add=()=>{if(!form.amount||!form.label||+form.amount<=0)return;const date=DATE_RE.test(form.date||"")?form.date:todayLocalKey();setData({...data,costs:{...(data.costs||{}),items:[...items,{...form,date,id:uid(),amount:Math.abs(+form.amount)}]}});setForm({type:"expense",amount:"",label:"",cat:"Seeds",date:todayLocalKey(),for:""});setShowAdd(false);};
+  // Tapping Add with something missing says what to fix instead of doing nothing.
+  // Amounts are stored to the cent; anything over 10 million is treated as a typo.
+  const [addErr,setAddErr]=useState("");
+  const add=()=>{const amt=Math.round(Number(String(form.amount).replace(",","."))*100)/100;
+    const err=!(amt>0)?"Enter an amount greater than zero.":amt>10000000?"That amount looks too high — check the number.":!String(form.label||"").trim()?"Add a short description, e.g. “Seed potatoes”.":"";
+    if(err){setAddErr(err);return;}
+    const date=DATE_RE.test(form.date||"")?form.date:todayLocalKey();setData({...data,costs:{...(data.costs||{}),items:[...items,{...form,label:form.label.trim(),date,id:uid(),amount:amt}]}});setForm({type:"expense",amount:"",label:"",cat:"Seeds",date:todayLocalKey(),for:""});setAddErr("");setShowAdd(false);};
   // Open the Add sheet with today's date (not the date the page was mounted on).
   const openAdd=()=>{setForm(f=>({...f,date:todayLocalKey()}));setShowAdd(true);};
   // Deleting a pantry sale puts the sold stock back in the pantry.
@@ -188,11 +194,12 @@ export default function Financials({data, setData}) {
       )}
       {showAdd&&<Overlay title="Add Entry" onClose={()=>setShowAdd(false)}>
         <div style={{display:"flex",gap:8,marginBottom:14}}>{["expense","income"].map(t=><Card key={t} onClick={()=>setForm({...form,type:t})} active={form.type===t} style={{flex:1,textAlign:"center",cursor:"pointer"}}><div style={SX.s20}>{t==="expense"?"📤":"📥"}</div><div style={{fontSize:13,fontWeight:600,marginTop:4}}>{t==="expense"?"Expense":"Income"}</div></Card>)}</div>
-        <Inp label="Amount" type="number" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})}/>
-        <Inp label="Description" value={form.label} onChange={e=>setForm({...form,label:e.target.value})}/>
+        <Inp label="Amount" type="number" min="0" step="0.01" value={form.amount} onChange={e=>{setAddErr("");setForm({...form,amount:e.target.value});}}/>
+        <Inp label="Description" value={form.label} onChange={e=>{setAddErr("");setForm({...form,label:e.target.value});}}/>
         <div style={SX.grid2}><Sel label="Category" value={form.cat} onChange={e=>setForm({...form,cat:e.target.value})} options={["Seeds","Tools","Feed","Animals","Fuel","Infrastructure","Produce Sales","Stock purchases","Other"]}/><Inp label="Date" type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
         {form.type==="expense"&&forOptions.length>1&&<Sel label="For (optional)" value={form.for} onChange={e=>setForm({...form,for:e.target.value})} options={forOptions}/>}
-        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowAdd(false)}>Cancel</Btn><Btn onClick={add}>Add</Btn></div>
+        {addErr&&<p role="alert" style={{fontSize:12,color:C.red,margin:"0 0 10px"}}>{addErr}</p>}
+        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>{setAddErr("");setShowAdd(false);}}>Cancel</Btn><Btn onClick={add}>Add</Btn></div>
       </Overlay>}
     </div>
   );
