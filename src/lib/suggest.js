@@ -79,7 +79,9 @@ export function sowTiming(crop, region, date) {
 /**
  * suggestCrops(profile, region, opts) → ranked CROPS subset.
  * Consumes: environment, sunlight, experience, household.dislikes, assets.
- * opts: { limit (default 9), date (default now) | month (0-11), relaxIfEmpty (default true) }
+ * opts: { limit (default 9), date (default now) | month (0-11), relaxIfEmpty (default true),
+ *         maxSpacingCm — leave out crops whose plant spacing is wider than the bed
+ *         (onboarding: a 1.2 m starter bed can't hold a blackberry that needs 2 m+) }
  * Order: sowable now/soon first; then (off-season) crops whose window opens
  * within 4 months; then, if still thin, sun is relaxed (shade-tolerant first).
  */
@@ -97,8 +99,13 @@ export function suggestCrops(profile, region, opts) {
   else if (exp === "some") allowedDifficulty = ["easy", "medium"];
   else allowedDifficulty = ["easy", "medium", "hard"];
 
+  var maxSpacing = Number(o.maxSpacingCm) > 0 ? Number(o.maxSpacingCm) : 0;
   function passes(c) {
     if (dislikes.includes(c.name)) return false;
+    if (maxSpacing) {
+      var rcs = getRegionalCrop(c, region) || c;
+      if ((Number(rcs.spacing) || Number(c.spacing) || 0) > maxSpacing) return false;
+    }
     if (containersOnly && !CONTAINER_FRIENDLY.includes(c.name)) return false;
     var dr = difficultyRank(c.name);
     if (dr === 0 && !allowedDifficulty.includes("easy")) return false;

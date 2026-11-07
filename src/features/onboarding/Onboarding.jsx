@@ -266,7 +266,10 @@ function ScreenDimensions({ environment, unit, setUnit, lenStr, setLenStr, widSt
   var widM = unit === "imperial" ? ftToM(wid) : wid;
   var areaM2 = r1(lenM * widM);
   var needCovered = environment === "balcony";
-  var ok = len > 0 && wid > 0 && (!needCovered || !!covered);
+  // A side over 5 km (or a balcony over 100 m) is a typo, not a space: say so instead of building a 100 km map.
+  var maxSide = environment === "balcony" ? 100 : 5000;
+  var tooBig = lenM > maxSide || widM > maxSide;
+  var ok = len > 0 && wid > 0 && !tooBig && (!needCovered || !!covered);
   var envName = environment === "balcony" ? "balcony" : environment === "backyard" ? "garden" : "land";
   return (
     <>
@@ -292,7 +295,9 @@ function ScreenDimensions({ environment, unit, setUnit, lenStr, setLenStr, widSt
         </div>
       </div>
       <div style={{...S.hint, marginBottom:16}}>
-        {areaM2 > 0 ? "That's about " + areaM2 + " m² of " + envName + "." : "We'll size your map from this."}
+        {tooBig
+          ? <span role="alert" style={{color:C.red}}>{"That's more than " + (environment === "balcony" ? "100 m" : "5 km") + " on one side — check the numbers" + (unit === "metric" ? " (metres, not centimetres)." : ".")}</span>
+          : areaM2 > 0 ? "That's about " + areaM2 + " m² of " + envName + "." : "We'll size your map from this."}
       </div>
       {needCovered && (
         <div style={{marginBottom:20}}>
@@ -709,7 +714,7 @@ function ScreenPlan({ draft, region, onFinish, onBack }) {
       </div>
       {later.length > 0 && (
         <div style={{...S.hint, fontSize:12, marginBottom:20}}>
-          📅 Coming up: {later.map(function(p){ return p.crop + " (" + waitingLabel(p, todayLocalKey()).toLowerCase() + ")"; }).join(", ")}. We'll remind you when it's time.
+          📅 Coming up: {later.map(function(p){ var w = waitingLabel(p, todayLocalKey()); return p.crop + " (" + w.charAt(0).toLowerCase() + w.slice(1) + ")"; }).join(", ")}. We'll remind you when it's time.
         </div>
       )}
       <button style={S.btnPrimary(true)} onClick={onFinish}>Start farming 🌱</button>
@@ -848,15 +853,17 @@ export default function Onboarding({ onComplete }) {
     };
   }, [environment, sunlight, experience, people, use, dislikes, assets]);
 
-  var suggestions = useMemo(function() {
-    return suggestCrops(profileDraft, region, { limit: 9 }).map(function(c) {
-      return { crop: c, info: describeSuggestion(c, profileDraft, region) };
-    });
-  }, [profileDraft, region]);
-
   var zonePlan = useMemo(function() {
     return buildStarterZone(environment || "farm", lenM > 0 ? lenM : 6, widM > 0 ? widM : 4, timeBudget);
   }, [environment, lenM, widM, timeBudget]);
+
+  // Only plants that physically fit the starter bed (its short side, in cm).
+  var bedCm = Math.round(Math.min(zonePlan.wM, zonePlan.hM) * 100);
+  var suggestions = useMemo(function() {
+    return suggestCrops(profileDraft, region, { limit: 9, maxSpacingCm: bedCm }).map(function(c) {
+      return { crop: c, info: describeSuggestion(c, profileDraft, region) };
+    });
+  }, [profileDraft, region, bedCm]);
 
   var draft = useMemo(function() {
     return buildDraft({
