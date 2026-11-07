@@ -53,7 +53,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
       : ["veg", "raised", "greenhouse", "container", "herbs", "orchard"].includes(z.type),
   );
   const choices = crops.filter(
-    (c) => (!zone || cropFitsZone(c, zone)) && c.name.toLowerCase().includes(query.toLowerCase()),
+    (c) => (!zone || cropFitsZone(c, zone)) && c.name.toLowerCase().includes(query.trim().toLowerCase()),
   );
   const varieties = crop ? getRegionalVarieties(crop.name, data.region) : [],
     variety = varieties.find((v) => v.name === form.variety);

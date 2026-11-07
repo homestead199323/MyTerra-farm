@@ -19,7 +19,8 @@ function Manuals({data}) {
   const [s,setS]=useState("");const [sel,setSel]=useState(null);const [tab,setTab]=useState("crops");
   const rgCrops = rCR(data && data.region);
   const curRegion = REGION_MAP.get((data && data.region) || "western_europe");
-  const fil=rgCrops.filter(c=>!s||c.name.toLowerCase().includes(s.toLowerCase()));
+  const q=s.trim().toLowerCase(); // spaces alone are not a search
+  const fil=rgCrops.filter(c=>!q||c.name.toLowerCase().includes(q));
   const mn=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   // The seasonal calendar moved to Plan (Launch Stage 5); SeasonalCalendar is still exported from here.
   const TABS=[{id:"crops",l:"🌱 Crops"},{id:"animals",l:"🐄 Animals"},{id:"preserving",l:"🫙 Preserving"},{id:"projects",l:"🔨 Projects"}];
@@ -47,7 +48,7 @@ function Manuals({data}) {
             </div>
           </div>
         ))}</div>
-        {fil.length===0 && <Card style={{textAlign:"center",padding:"40px 24px",marginTop:12}}><div style={{fontSize:40,marginBottom:8}}>🔍</div><div style={SX.s15Bold}>No crops match "{s}"</div><div style={{color:C.t2,marginTop:4,fontSize:12}}>Try a different name or browse the full list</div></Card>}
+        {fil.length===0 && <Card style={{textAlign:"center",padding:"40px 24px",marginTop:12}}><div style={{fontSize:40,marginBottom:8}}>🔍</div><div style={SX.s15Bold}>No crops match "{s.trim()}"</div><div style={{color:C.t2,marginTop:4,fontSize:12}}>Try a different name or browse the full list</div></Card>}
         {sel&&<Overlay ariaLabel={sel.name} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={sel.name} emoji={sel.emoji} size={24}/>{sel.name}</span>} onClose={()=>setSel(null)} wide>
           {sel && <div style={{background:C.tGreen2,borderRadius:C.rs,padding:10,marginBottom:12,border:`1px solid ${C.tGreenBandBd}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:4}}><span style={{fontSize:13,fontWeight:700,color:C.green}}>🌱 Crop Data</span>{sel.pH&&<Pill>pH {sel.pH}</Pill>}</div></div>}
           <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}><Pill c="#fff" bg={sel.color}>{sel.cat}</Pill><Pill>☀ {sel.sun}</Pill><Pill>💧 {sel.waterFreq}</Pill>{sel?.pH ? <Pill>pH {sel.pH}</Pill> : null}</div>
