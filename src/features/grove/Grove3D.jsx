@@ -31,7 +31,7 @@ import { createBrain } from "./herd-brain";
 import { buildSwallows, buildButterflies, swallowCount, butterflyCount } from "./fauna-fx";
 import { GROUND_TONES, pathTones } from "./palette";
 import { TREE_RE } from "./crop-families";
-import { PAL, STAGE_COLOR, NIGHT, WIND, setDetail, nightGlow, nightTint, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
+import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, nightGlow, nightTint, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
@@ -103,7 +103,7 @@ function materials() {
     lawn: (color = PAL.lawn) => L(color, 6), soil: (color = PAL.soil) => L(color, 6), gravel: L(PAL.gravel, 6), stoneFloor: (color = PAL.stone) => L(color, 6), concrete: L(PAL.concrete, 6), earth: (color = PAL.earth) => L(color, 6), pavers: L(0xe7e3da, 5), hay: flat(PAL.hay, { rough: .95 }), hayFloor: L(PAL.straw, 7),
     // structure
     cream: flat(PAL.cream), white: flat(PAL.white), trim: flat(PAL.trim, { rough: .8 }), panel: flat(PAL.panel), stone: flat(PAL.stone), stoneDark: flat(PAL.stoneDark), rock: flat(PAL.rock), concreteSolid: flat(PAL.concrete),
-    wood: flat(PAL.wood), woodMid: flat(PAL.woodMid), woodDark: flat(PAL.woodDark), woodPale: flat(PAL.woodPale), bark: flat(0x9a7656),
+    wood: flat(PAL.wood), woodMid: flat(PAL.woodMid), woodDark: flat(PAL.woodDark), woodPale: flat(PAL.woodPale), bark: flat(0x8a5a36),
     terracotta: flat(PAL.terracotta), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: flat(PAL.zinc, { rough: .6, metal: .15 }), metal: flat(PAL.metal, { rough: .5, metal: .3 }), dark: flat(PAL.dark), ink: flat(0x4a3f36),
     barn: flat(PAL.barn), barnDark: flat(PAL.barnDark), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
     glass: nightTint(nightGlow(flat(PAL.glass, { transparent: true, opacity: .34, rough: .12, physical: true, env: 1.5, side: THREE.DoubleSide, depthWrite: false }), 2.0), .8, [1, .62, .25]), // the greenhouse glows warm after dark
@@ -244,7 +244,7 @@ function gate(g, x, z, width, ry, M, { pickets = false } = {}) {
 function hedge(g, segs, M, { h = 1.4, t = .8 } = {}) { // a clipped hedge: one rounded pill per run
   segs.forEach(([a, b]) => {
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]); if (len < .3) return;
-    rbox(g, len + t * .5, h, t, M.hedge, (a[0] + b[0]) / 2, h / 2 - .02, (a[1] + b[1]) / 2, { ry: Math.atan2(-(b[1] - a[1]), b[0] - a[0]), r: Math.min(h, t) * .42, seg: 2 });
+    rbox(g, len + t * .5, h, t, M.hedge, (a[0] + b[0]) / 2, h / 2 - .02, (a[1] + b[1]) / 2, { ry: Math.atan2(-(b[1] - a[1]), b[0] - a[0]), r: Math.min(h, t) * .48, seg: DETAIL.value >= 1 ? 3 : 2 }); // look A: a fully rounded, plump top
   });
 }
 function shelter(g, x, z, w, d, M, ry = 0) { // open-sided field shelter: chunky capsule posts, a rounded plank back wall, a thick rounded mono-pitch roof
@@ -302,6 +302,15 @@ function fixtures(w, d) { // places a mesh on a face of a w × d footprint: f = 
   };
 }
 const rm = (w, h, d, mat, r) => new THREE.Mesh(rboxGeo(w, h, d, r), mat);
+/* look A: vertical board battens on a red plank wall, one thin darker strip every ~0.42 m, skipping openings.
+   The wall runs from (x0, z0) to (x1, z1); out = its outward normal; skip = [[from, to], …] in metres along the wall. */
+function battens(g, x0, z0, x1, z1, y0, h, mat, out, skip = []) {
+  const len = Math.hypot(x1 - x0, z1 - z0), n = Math.floor(len / .42), ry = Math.atan2(-(z1 - z0), x1 - x0);
+  for (let i = 1; i < n; i++) {
+    const s = (i / n) * len; if (skip.some(([a, b]) => s > a - .08 && s < b + .08)) continue;
+    box(g, .05, h, .035, mat, x0 + (x1 - x0) * i / n + out[0] * .025, y0 + h / 2, z0 + (z1 - z0) * i / n + out[1] * .025, { ry, cast: false });
+  }
+}
 function windowAt(dg, put, f, u, y, W, Hh, M, { shutters = false, sill = true } = {}) {
   dg.add(put(rm(W + .2, Hh + .2, .1, M.trim, .035), f, u, y, .04));
   dg.add(put(rm(W, Hh, .04, M.winGlass, .012), f, u, y, .085));
@@ -425,6 +434,11 @@ function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, 
     doorAt(dg, put, "S", wide ? -w * .18 : 0, .95, Math.min(1.95, H - .3), "shed", M, d);
     if (wide) windowAt(dg, put, "S", w * .25, H * .58, .7, .7, M, { sill: true });
     if (d > 2.6) windowAt(dg, put, "W", 0, H * .58, .7, .7, M, { sill: true });
+    { // look A: red board walls with darker battens (the door and windows stay clear)
+      const by = .36, bh = H - .44, du = cx + (wide ? -w * .18 : 0), sk = [[du - .55, du + .55]]; if (wide) sk.push([cx + w * .25 - .45, cx + w * .25 + .45]);
+      battens(g, 0, d, w, d, by, bh, M.barnDark, [0, 1], sk); battens(g, 0, 0, 0, d, by, bh, M.barnDark, [-1, 0], d > 2.6 ? [[cz - .45, cz + .45]] : []);
+      battens(g, w, 0, w, d, by, bh, M.barnDark, [1, 0]); battens(g, 0, 0, w, 0, by, bh, M.barnDark, [0, -1]);
+    }
     // white corner boards and a crate stack beside the shed
     [[0, 0], [w, 0], [0, d], [w, d]].forEach(([x, zz]) => rbox(g, .14, H - .1, .14, M.trim, x, H / 2 - .05, zz, { r: .05, cast: false }));
     if (ctx) ctx.details.push({ kind: "crates", x: off[0] + w + .55, z: off[1] + d * .3, ry: .3 });
@@ -541,6 +555,9 @@ function barnZone(g, z, ctx, tag) {
   tag(rbox(g, bw, wh, t, wallMat, cx, base + wh / 2, t / 2, { r: .03, seg: 1 }));
   tag(rbox(g, t, wh, bd, wallMat, t / 2, base + wh / 2, bcz, { r: .03, seg: 1 })); tag(rbox(g, t, wh, bd, wallMat, bw - t / 2, base + wh / 2, bcz, { r: .03, seg: 1 }));
   slabWall(bw, wh, [{ x0: cx - dw / 2, x1: cx + dw / 2, h: dh - base }], (u, y0, uw, uh) => tag(rbox(g, uw, uh, t, wallMat, u + uw / 2, base + y0 + uh / 2, bd - t / 2, { r: .03, seg: 1 })));
+  { const bh = wh - .1; // look A: board battens on the red walls, clear of the big doorway
+    battens(g, 0, bd, bw, bd, base, bh, M.barnDark, [0, 1], [[cx - dw / 2, cx + dw / 2]]); battens(g, 0, 0, 0, bd, base, bh, M.barnDark, [-1, 0]);
+    battens(g, bw, 0, bw, bd, base, bh, M.barnDark, [1, 0]); battens(g, 0, 0, bw, 0, base, bh, M.barnDark, [0, -1]); }
   [[0, 0], [bw, 0], [0, bd], [bw, bd]].forEach(([x, zz]) => rbox(g, .18, H, .18, trim, x, H / 2, zz, { r: .06, cast: false }));
   if (!small && bw >= 7) { const sr = Math.min(.9, bd * .16); silo(g, bw - sr - .4, -sr - .45, { r: sr, h: H + 1.4 }); } // a feed silo behind the barn, by the back corner
   const rise = Math.min(bw, bd) / 2 * .7;

@@ -27,7 +27,7 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - **Ground (look A):** sunny olive meadow `#a8a95a` with patches `#9b9e51` / dry `#bcb46f`; the property inside the hedge `#a2ae5c` with soft irregular lusher/drier patches painted into the vertices (no stripes); lawn `#9dad58`, pasture `#a1ac5a`, orchard `#96a654`. Grass tufts (`#6f9440`) are scattered on the open ground inside AND outside the hedge (fewer on phones).
 - **Paths:** warm cream `#eee3cb` with a `#dccdae` edge, round ends. Settings → Path color: *Warm sand* `#e8d8b9` / *Slate* `#bfc4be` override the material's own tone.
 - **Soil:** rich brown `#7a5237` (raised beds, rows), dark `#5f3f2a`, lighter `#957155` for in-ground beds, `#b69f82` trampled earth.
-- **Buildings:** cream walls `#f2ebdd`, white trims; roofs terracotta `#cf8260` or light slate `#87909a`; barn red `#c7624f` with white boards; sheds and stores barn red with white trim (look A).
+- **Buildings:** cream walls `#f2ebdd`, white trims; roofs terracotta `#cf8260` or light slate `#87909a`; barn red `#c7624f` with white boards; sheds and stores barn red with white trim (look A). Red plank walls (barns, sheds, stores) carry thin darker `#ad5041` board battens every ~0.42 m, clear of doors and windows (`battens()`). The clipped hedge has a fully rounded top (bevel ≈ half its thickness). Tree trunks are warm brown `#8a5a36`.
 - **Wood:** `#cfae82` / `#b68e63` / `#7c5a3d`. Stone `#d3cfc5`. Zinc `#c6cdd0`.
 - **Water** `#7cc0d6`, **glass** `#daf2ef`, **hay** `#e4c66f`, **smoke** `#f2f0ec`.
 - **Foliage:** four leaf greens `#628f3e #548237 #749b48 #477732` (lit ≈ the target picture's `#567f38`), silvery olive `#7d916a`, deep citrus `#33733d`, hedge `#3f7634`.
