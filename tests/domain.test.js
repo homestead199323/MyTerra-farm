@@ -904,3 +904,35 @@ test('Starter map: farm canvas is the real land (capped), owned assets are place
   const small=buildStarterZone('backyard',6,4,'min15');
   for(const r of starterAssetZones('backyard',['greenhouse','coop','fruit_trees','compost'],small)) assert(r.xM+r.wM<=small.farmW&&r.yM+r.hM<=small.farmH);
 });
+
+// QA pass 2026-11-07 — popup amounts, failed crops, empty egg rounds, starter-bed fit.
+import {checkAmount,parseAmount} from '../src/features/grove/zone-tasks.js';
+test('Zone popup amounts: blank = estimate, 0 = nothing, negatives and typos are caught',()=>{
+  const eggs={key:'species-Chicken-eggs',type:'eggs',speciesType:'Chicken',headCount:3};
+  const harvest={key:'plot-lettuce-harvest',type:'harvest',plotId:'lettuce'};
+  const ea=taskAction(eggs,fixture), ha=taskAction(harvest,fixture);
+  assert.equal(parseAmount('2,5'),2.5);assert.equal(parseAmount(' '),null);assert(Number.isNaN(parseAmount('abc')));
+  assert.deepEqual(checkAmount(harvest,ha,''),{ok:true});
+  assert.equal(checkAmount(harvest,ha,'0').zero,true);
+  assert.equal(checkAmount(harvest,ha,'-3').ok,false);
+  assert.equal(checkAmount(eggs,ea,'2.5').ok,false);
+  assert.equal(checkAmount(harvest,ha,'1e9').big,true);
+  assert.equal(checkAmount(harvest,ha,'4').big,false);
+  assert.equal(rewardText(harvest,ha,'0'),'Nothing picked');
+});
+test('A typed 0 records a failed harvest / an empty egg round instead of the estimate',()=>{
+  const h=applyTaskCompletion(fixture,{key:'plot-lettuce-harvest',type:'harvest',plotId:'lettuce'},0,{allowZero:true});
+  assert.equal((h.pantry?.items||[]).length,0);assert.equal(h.garden.plots.find(p=>p.id==='lettuce').status,'harvested');
+  const e=applyTaskCompletion(fixture,{key:'species-Chicken-eggs',type:'eggs',speciesType:'Chicken'},0,{allowZero:true});
+  assert.equal((e.pantry?.items||[]).length,0);assert(e.completions[todayLocalKey()].includes('species-Chicken-eggs'));
+  const one=applyTaskCompletion(fixture,{key:'species-Chicken-eggs',type:'eggs',speciesType:'Chicken'},1);
+  assert.match(one.log[one.log.length-1].text,/Collected 1 egg$/);
+});
+test('Starter-bed suggestions leave out plants wider than the bed',()=>{
+  const prof={environment:'backyard',experience:'beginner',sunlight:'5to7'};
+  const nov=suggestCrops(prof,'western_europe',{month:10});
+  const fit=suggestCrops(prof,'western_europe',{month:10,maxSpacingCm:120});
+  assert(nov.some(c=>c.name==='Blackberry'),'Plan screen still offers blackberry');
+  assert(!fit.some(c=>c.name==='Blackberry'),'a 1.2 m bed cannot hold a 2.5 m bramble');
+  assert(fit.length>=3);
+});
