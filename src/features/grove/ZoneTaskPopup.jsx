@@ -7,7 +7,7 @@ import { animalZone } from "../quiet/farm-model";
 import AnimalArt from "../quiet/AnimalArt";
 import PlantArt from "../quiet/PlantArt";
 import FarmIcon from "../../components/FarmIcon";
-import { taskAction, rewardText, taskGlyph } from "./zone-tasks";
+import { taskAction, rewardText, taskGlyph, checkAmount, parseAmount } from "./zone-tasks";
 import "./zone-tasks.css";
 
 const BURST = Array.from({ length: 14 }, (_, i) => ({
@@ -18,7 +18,8 @@ const BURST = Array.from({ length: 14 }, (_, i) => ({
 
 function buzz(ms) {
   try {
-    if (navigator.vibrate) navigator.vibrate(ms);
+    // Chrome refuses (and logs an error) before the first tap on the page.
+    if (navigator.vibrate && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate(ms);
   } catch {
     /* haptics are optional */
   }
@@ -36,12 +37,25 @@ function TaskArt({ task, data }) {
 function TaskTile({ task, data, index, done, onDone, onOpen }) {
   const action = taskAction(task, data);
   const [value, setValue] = useState(action.amount ? String(action.amount.value) : "");
+  // A second tap confirms an amount far above the estimate; an invalid one shows why.
+  const [warn, setWarn] = useState(null);
   const amount = action.amount;
   const step = amount?.step || 1;
   const nudge = (dir) => {
-    const n = Math.max(step, Math.round(((Number(value) || 0) + dir * step) * 10) / 10);
+    const n = Math.max(step, Math.round(((parseAmount(value) || 0) + dir * step) * 10) / 10);
     setValue(String(n));
+    setWarn(null);
     buzz(5);
+  };
+  const go = () => {
+    if (action.open) { onOpen(); return; }
+    const check = checkAmount(task, action, value);
+    if (!check.ok) { setWarn({ error: check.error }); return; }
+    if (check.big && !(warn && warn.big === value)) {
+      setWarn({ big: value, error: `That's far more than the usual ~${amount.value} ${amount.unit}. Check it, or tap ${action.verb} again to save it.` });
+      return;
+    }
+    onDone(task, rewardText(task, action, value), check.zero ? 0 : value, check.zero ? { allowZero: true } : undefined);
   };
   return (
     <li className={`q-tp-task${done ? " is-done" : ""}`} style={{ "--i": index }}>
@@ -66,7 +80,8 @@ function TaskTile({ task, data, index, done, onDone, onOpen }) {
               step={step}
               value={value}
               aria-label={`Amount in ${amount.unit}`}
-              onChange={(e) => setValue(e.target.value)}
+              aria-invalid={warn ? true : undefined}
+              onChange={(e) => { setValue(e.target.value); setWarn(null); }}
             />
             <span>{amount.unit}</span>
             <button type="button" aria-label={`More ${amount.unit}`} onClick={() => nudge(1)}>
@@ -74,7 +89,8 @@ function TaskTile({ task, data, index, done, onDone, onOpen }) {
             </button>
           </div>
         )}
-        {!done && action.final && <small className="q-tp-final">{action.final}</small>}
+        {!done && warn && <small className="q-tp-final" role="alert">{warn.error}</small>}
+        {!done && !warn && action.final && <small className="q-tp-final">{action.final}</small>}
       </div>
       {done ? (
         <span className="q-tp-reward" role="status" aria-live="polite">
@@ -85,7 +101,7 @@ function TaskTile({ task, data, index, done, onDone, onOpen }) {
         <button
           type="button"
           className="q-tp-go"
-          onClick={() => (action.open ? onOpen() : onDone(task, rewardText(task, action, value), value))}
+          onClick={go}
         >
           {action.verb}
         </button>
@@ -126,8 +142,8 @@ export default function ZoneTaskPopup({ zone, tasks, data, setData, onClose, onO
   const finished = list.filter((t) => done[t.key]).length,
     total = list.length,
     clear = total > 0 && finished === total;
-  function complete(task, reward, value) {
-    const next = applyTaskCompletion(dataRef.current, task, value);
+  function complete(task, reward, value, meta) {
+    const next = applyTaskCompletion(dataRef.current, task, value, meta);
     dataRef.current = next;
     setData(next);
     setDone((d) => ({ ...d, [task.key]: reward }));

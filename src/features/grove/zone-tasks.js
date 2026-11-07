@@ -108,9 +108,38 @@ export function taskAction(task, data) {
   return { verb, cheer: CHEERS[task.type] || "Done!" };
 }
 
+/** A typed amount as a number ("2,5" counts as 2.5); NaN when it isn't one, null when blank. */
+export function parseAmount(value) {
+  const raw = String(value == null ? "" : value).trim().replace(",", ".");
+  if (raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/**
+ * Checks the amount typed in the popup before a job is ticked.
+ * → { ok, zero, error, big }
+ *   blank → ok (MyTerra's estimate is used); 0 → ok + zero (nothing picked/collected);
+ *   negative or not a number → error; eggs must be whole; far above the estimate → big
+ *   (the caller asks for a second tap so a typo like 300 for 3.0 doesn't land in the pantry).
+ */
+export function checkAmount(task, action, value) {
+  const amount = action && action.amount;
+  if (!amount) return { ok: true };
+  const n = parseAmount(value);
+  if (n === null) return { ok: true };
+  if (Number.isNaN(n) || n < 0) return { ok: false, error: "Enter a number, 0 or more." };
+  if (task.type === "eggs" && !Number.isInteger(n)) return { ok: false, error: "Eggs are counted in whole numbers." };
+  if (n === 0) return { ok: true, zero: true };
+  const def = Number(amount.value) || 1;
+  const limit = Math.max(def * (task.type === "harvest" ? 50 : 20), task.type === "harvest" ? 200 : 100);
+  return { ok: true, big: n > limit, value: n };
+}
+
 /** Reward line shown when a task is completed from the popup. */
 export function rewardText(task, action, value) {
   if (!action.amount) return action.cheer || "Done!";
-  const n = Number(value) > 0 ? Number(value) : action.amount.value;
+  if (parseAmount(value) === 0) return task.type === "harvest" ? "Nothing picked" : "None today";
+  const n = parseAmount(value) > 0 ? parseAmount(value) : action.amount.value;
   return `+${n} ${action.amount.unit === "eggs" ? "" : action.amount.unit + " "}${action.amount.icon}`.replace("  ", " ");
 }

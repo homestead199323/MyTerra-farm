@@ -58,15 +58,22 @@ export function applyTaskCompletion(data, task, logValue, meta) {
 
   // Eggs — add to pantry, log.
   if (task.type === "eggs") {
+    // meta.allowZero: the user checked and there were none today — tick the job, add nothing.
+    if (meta && meta.allowZero && !(Number(logValue) > 0)) {
+      return markTaskDone({ ...data, log: appendLog(data.log, { text: "🥚 No eggs today" }) }, task.key);
+    }
     const count = Number(logValue) > 0 ? Math.round(Number(logValue)) : 1;
     const est = isEstimate(data, task, logValue, meta);
     const stocked = addStock(recordProduce(data, task.speciesType, "eggs", count, today, est), { name: (task.speciesType ? task.speciesType + " " : "") + "Eggs", category: "Eggs", qty: count, unit: "pcs", source: "livestock", storageNote: "Refrigerate within 2 hours of collection." }, today);
-    const next = { ...stocked, log: appendLog(data.log, { text: "🥚 Collected " + count + " eggs" }) };
+    const next = { ...stocked, log: appendLog(data.log, { text: "🥚 Collected " + count + (count === 1 ? " egg" : " eggs") }) };
     return markTaskDone(rememberTick(next, task.key, { d: today, kind: "eggs", sp: task.speciesType, q: count, est, ...lastIds(stocked) }), task.key);
   }
 
   // Milk — add litres to the pantry, log.
   if (task.type === "milk") {
+    if (meta && meta.allowZero && !(Number(logValue) > 0)) {
+      return markTaskDone({ ...data, log: appendLog(data.log, { text: "🥛 No milk today" }) }, task.key);
+    }
     const litres = Number(logValue) > 0 ? Math.round(Number(logValue) * 10) / 10 : (task.expected || 1);
     const est = isEstimate(data, task, logValue, meta);
     const stocked = addStock(recordProduce(data, task.speciesType, "milkL", litres, today, est), { name: (task.speciesType ? task.speciesType + " " : "") + "Milk", category: "Dairy", qty: litres, unit: "L", source: "livestock", storageNote: "Strain and chill below 4°C within 2 hours. Use within 3–5 days, or make cheese." }, today);

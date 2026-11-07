@@ -57,7 +57,8 @@ export function BadgeCelebration({ queue, onDismiss }) {
     if (!badge) { if (currentId) onDismiss(currentId); return; }
     // Try vibration — Android only, silently fails on iOS
     try {
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      // Chrome refuses vibration (and logs an error) until the page has been tapped once.
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function" && navigator.userActivation?.hasBeenActive !== false) {
         navigator.vibrate(reduceMotion ? 0 : 150);
       }
     } catch (e) { /* swallow */ }
