@@ -163,7 +163,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
   /* Stage 4c: balcony/backyard canvases are the real space and can be far
      smaller than a farm — a 10 m floor would lock balcony users out of
      editing their own dimensions (starter canvas can be 3×2 m). */
-  const sizeMin = mapEnv === "balcony" ? 2 : mapEnv === "backyard" ? 4 : 10;
+  const sizeMin = mapEnv === "balcony" ? 1 : mapEnv === "backyard" ? 2 : 10;
   const sizeLabel = mapEnv === "farm" ? "Total farm size" : "Total space size";
   function pickEnv(id) {
     if (id === mapEnv) return;

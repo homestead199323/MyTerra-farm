@@ -537,9 +537,11 @@ export default function GroveScene({
     });
     return out;
   }, [zones, labelUnit, selectedId, fW, fH]);
+  // Automatic paths: a farm's start at the gate (front edge), a garden's at the back door by the house
+  // (far edge). A balcony is one paved floor — no automatic paths, only ones the person draws.
   const roads = useMemo(
-    () => (data.roadsEnabled === false ? [] : accessPaths(zones, fW, fH, data.mapLines)),
-    [zones, fW, fH, data.roadsEnabled, data.mapLines],
+    () => (data.roadsEnabled === false || env === "balcony" ? [] : accessPaths(zones, fW, fH, data.mapLines, env === "backyard" ? { xM: fW / 2, yM: 0 } : null)),
+    [zones, fW, fH, data.roadsEnabled, data.mapLines, env],
   );
   const roadWidth = Math.max(0.25, Math.min(0.75, Math.min(fW, fH) * 0.04));
   // Drawn paths render exactly like the automatic ones (same width, colour and texture).
@@ -735,6 +737,12 @@ export default function GroveScene({
               <path d={`M0 0V${fH}H${fW}V0`} fill="none" stroke={TOY.zinc} strokeWidth=".1" strokeLinejoin="round" />
               <path d={`M0 0V${fH}H${fW}V0`} fill="none" stroke={TOY.trim} strokeWidth=".05" strokeLinejoin="round" />
             </g>
+          ) : env === "backyard" ? (
+            <g pointerEvents="none">
+              {/* a back garden: the house along the far edge (its patio is outside the measured garden), a white picket fence down both sides and across the bottom */}
+              <rect x="-.45" y={-Math.max(0.3, margin - 0.05)} width={fW + 0.9} height={Math.max(0.3, margin - 0.05)} rx=".06" fill={TOY.cream} filter={`url(#${id}-building-shadow)`} />
+              <Fence w={fW} h={fH} id={id} pickets top={false} />
+            </g>
           ) : (
             <g pointerEvents="none">
               {/* clipped hedge round the property, open at the entrance */}
@@ -755,7 +763,9 @@ export default function GroveScene({
           )}
           {env !== "balcony" &&
             Array.from({ length: Math.min(100, Math.ceil((fW + fH) / 2)) }, (_, i) => {
-              const edge = i % 4,
+              const edge = i % 4;
+              if (env === "backyard" && edge === 2) return null; // the house side
+              const
                 t = srand(i + 91),
                 r = margin * (0.48 + srand(i + 25) * 0.46);
               const x = edge === 0 ? -margin * 0.83 : edge === 1 ? fW + margin * 0.83 : t * fW;
@@ -1158,7 +1168,7 @@ export default function GroveScene({
               {`${scaleMetres} m`}
             </text>
           </g>
-          {env !== "balcony" && <g transform={`translate(${P(fW / 2, fH)[0]} ${P(fW / 2, fH)[1]})`} pointerEvents="none">
+          {env === "farm" && <g transform={`translate(${P(fW / 2, fH)[0]} ${P(fW / 2, fH)[1]})`} pointerEvents="none">
 
             <text
               transform={`translate(0 ${Math.max(0.3, 10 * labelUnit)}) scale(${labelUnit})`}

@@ -386,7 +386,7 @@ function gableRoof(g, cx, cz, w, d, H, rise, ov, roofMat, wallMat, alongX, capMa
     pts.forEach(([x, z]) => tube(g, .04, .04, H - .2, M.zinc, x, (H - .2) / 2 + .1, z, { seg: 8, cast: false }));
   }
 }
-function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, off = [0, 0] } = {}) {
+function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, off = [0, 0], yard = true } = {}) {
   const cx = w / 2, cz = d / 2, house = kind === "house", small = Math.min(w, d) < 4, alongX = w >= d;
   const H = house ? 3.0 : small ? 2.3 : 2.6;
   const wallMat = house ? M.cream : M.barn; // sheds and stores: barn red with white trim (look A)
@@ -422,13 +422,16 @@ function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, 
     pill(dg, [w / 2 - .12, .05, d / 2 + ov + .03], [w / 2 - .12, H + .02, d / 2 + ov + .03], .035, M.trim, { seg: 8, cast: false });
     solarPanels(g, cx, cz, w + 2 * ov, d + 2 * ov, H, rise, M);
     // paved apron with a clipped hedge border, round bushes at the corners and flowers by the door
+    // (not for the house behind a back garden: its patio and the garden fences take that place)
     const ap = 1.3;
+    if (yard) {
     plane(g, w + 2 * ap, d + 2 * ap, M.pavers, cx, .009, cz);
     const hx0 = -ap + .3, hx1 = w + ap - .3, hz0 = -ap + .3, hz1 = d + ap - .3, gapW = 2.2;
     hedge(g, [[[hx0, hz0], [hx1, hz0]], [[hx0, hz0], [hx0, hz1]], [[hx1, hz0], [hx1, hz1]], [[hx0, hz1], [cx - gapW / 2, hz1]], [[cx + gapW / 2, hz1], [hx1, hz1]]], M, { h: .55, t: .5 });
     [[hx0 + .7, hz0 + .7], [hx1 - .7, hz0 + .7], [hx0 + .7, hz1 - .7], [hx1 - .7, hz1 - .7]].forEach(([x, zz], i) => ORNAMENTS.bush(g, x, zz, { seed: i + 2, s: .8 }));
     ORNAMENTS.flowers(g, cx - door / 2 - .9, d + .55, { seed: 3, s: .7 }); ORNAMENTS.flowers(g, cx + door / 2 + .9, d + .55, { seed: 5, s: .7 });
     if (ctx) ctx.details.push({ kind: "barrel", x: off[0] + w + ap - .55, z: off[1] + d * .5 - .2, ry: 0 }, { kind: "birdbath", x: off[0] + hx0 + 1.7, z: off[1] + d + ap - .9 });
+    }
   } else {
     gableRoof(g, cx, cz, w, d, H, rise, .4, clay ? M.roofClay : M.roofSlate, wallMat, alongX, clay ? M.terracotta : M.slateDark, M);
     const wide = w > 2.4;
@@ -783,10 +786,36 @@ function buildZone(z, ctx) {
   } else if (z.type === "container") {
     const patio = plane(g, w, d, M.stoneFloor(0xe4e0d6), cx, .012, cz); tag(patio);
     plants = plants.slice(0, 30);
+    // the pot each plant would get, shrunk so neighbouring pots never overlap
+    const near = (p) => plants.reduce((m, q) => (q === p ? m : Math.min(m, Math.hypot(q.x - p.x, q.y - p.y))), 9);
+    const potR = (p) => Math.min(Math.max(.16, Math.min(.34, (p.size || .6) * .42)), near(p) * .47);
+    // A narrow strip (troughs along a railing or wall) or plants packed too close for their own pots: long
+    // rounded troughs, about a metre each, along the strip's length, with every plant inside them.
+    if (Math.min(w, d) <= .8 || plants.some((p) => potR(p) < .12)) {
+      const alongX = w >= d, L = alongX ? w : d, D = alongX ? d : w, nSeg = Math.max(1, Math.round(L / 1.0)), seg = L / nSeg, H = .32;
+      // A one-row strip along a balcony's front railing hangs ON the railing, just under the handrail, so the
+      // plants show above it instead of hiding behind the balusters (the usual European railing planter).
+      const hang = ctx.env === "balcony" && alongX && D <= .8 && z.yM + d >= ctx.fH - .45;
+      const nRows = hang ? 1 : Math.max(1, Math.round(D / .6)), rowD = D / nRows, tD = hang ? Math.min(.34, D) : Math.min(.5, rowD - .06);
+      const base = hang ? .6 : 0, hangC = hang ? (ctx.fH - z.yM) - .08 - tD / 2 : 0;
+      for (let r = 0; r < nRows; r++) for (let k = 0; k < nSeg; k++) {
+        const a = (k + .5) * seg, c = hang ? hangC : (r + .5) * rowD, x = alongX ? a : c, zz = alongX ? c : a, tl = seg - .07;
+        tag(rbox(g, alongX ? tl : tD, H, alongX ? tD : tl, M.pot, x, base + H / 2, zz, { r: .05 }));
+        rbox(g, (alongX ? tl : tD) + .03, .045, (alongX ? tD : tl) + .03, M.potRim, x, base + H - .01, zz, { r: .02, cast: false });
+        rbox(g, (alongX ? tl : tD) - .07, .03, (alongX ? tD : tl) - .07, M.soil(PAL.soilDark), x, base + H - .025, zz, { r: .012, cast: false });
+        if (hang) [-1, 1].forEach((sd) => { const bx = x + sd * (tl / 2 - .14); rbox(g, .05, .5, .05, M.zinc, bx, base + .25, zz + tD / 2 + .04, { r: .02, cast: false }); rbox(g, .05, .05, .16, M.zinc, bx, base + .47, zz + tD / 2 + .04, { r: .02, cast: false }); }); // hooks over the rail
+        else [-1, 1].forEach((sd) => rbox(g, alongX ? .08 : tD - .06, .03, alongX ? tD - .06 : .08, M.stoneDark, x + (alongX ? sd * (tl / 2 - .12) : 0), .015, zz + (alongX ? 0 : sd * (tl / 2 - .12)), { r: .012, cast: false })); // little feet
+      }
+      if (hang) { // the plants move into the hanging trough with it
+        const squeeze = (v) => hangC + (v - d / 2) * Math.max(0, tD - .12) / Math.max(.01, d);
+        plants.forEach((p) => { p.y = squeeze(p.y); }); prows.forEach((r) => { if (!r.vertical) r.c = squeeze(r.c); });
+      }
+      floor = base + H - .02;
+    } else {
     const potted = plants.length ? plants : [];
     if (!potted.length) { const nx = Math.max(1, Math.floor(w / .8)), nz = Math.max(1, Math.floor(d / .8)); for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) potted.push({ x: ((i + .5) * w) / nx, y: ((j + .5) * d) / nz, size: .6 }); }
     potted.forEach((p) => {
-      const r = Math.max(.16, Math.min(.34, (p.size || .6) * .42));
+      const r = plants.length ? potR(p) : Math.max(.16, Math.min(.34, (p.size || .6) * .42));
       if (ctx.env === "balcony") {
         disc(g, r * 1.12, M.potRim, p.x, .018, p.y, { seg: 24 });
         ring(g, r * 1.12, .018, M.potRim, p.x, .028, p.y, { tube: 6, seg: 24, cast: false });
@@ -797,6 +826,7 @@ function buildZone(z, ctx) {
       disc(g, r * .9, M.soil(PAL.soilDark), p.x, ctx.env === "balcony" ? .29 : .345, p.y, { seg: 24 });
     });
     floor = ctx.env === "balcony" ? .29 : .34;
+    }
   } else if (z.type === "orchard" || z.type === "pasture") {
     const pm = M.lawn(z.type === "orchard" ? PAL.orchard : PAL.pasture);
     if (oval && z.type === "pasture") {
@@ -1074,31 +1104,53 @@ function terrainGeo(fW, fH, E, height, colors, N = 84) {
 }
 const hexN = (v) => (Array.isArray(v) ? v.map(hexN) : typeof v === "string" ? parseInt(v.slice(1), 16) : Object.fromEntries(Object.entries(v).map(([k, x]) => [k, hexN(x)])));
 const GROUNDS = hexN(GROUND_TONES); // shared with the flat map (palette.js)
-/* a balcony: the building's cream wall behind it (with a glazed door and a window), a pale slab edge and a
-   slim rounded metal railing — capsule posts, a chunky rounded handrail — on the three open sides */
+/* a balcony: a slab jutting out of a tall cream apartment facade, two storeys above a courtyard lawn.
+   The facade runs past both ends of the balcony and down to the ground, with the neighbours' windows on
+   this floor and the floors below — so it reads as a balcony on a
+   building, not a box on the ground. Our own wall keeps its glazed door and windows; the slim rounded
+   metal railing (capsule posts, thin balusters, a chunky white handrail) runs along the three open sides. */
+const BALCONY_DROP = 6.2; // our floor to the courtyard: two storeys
+const STOREY = 3.1;
+function balconyRailing(ctx, fW, fH, y0) {
+  [[[0, 0], [0, fH]], [[fW, 0], [fW, fH]], [[0, fH], [fW, fH]]].forEach(([a, b]) => {
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(len / 1.2) + 1), ry = Math.atan2(-(b[1] - a[1]), b[0] - a[0]);
+    for (let j = 0; j < n; j++) { const u = j / (n - 1); ctx.fences.rail.posts.push({ p: [a[0] + (b[0] - a[0]) * u, y0 + .5, a[1] + (b[1] - a[1]) * u] }); }
+    const nb = Math.max(2, Math.round(len / .14)); for (let j = 1; j < nb; j++) { const u = j / nb; ctx.fences.rail.bars.push({ p: [a[0] + (b[0] - a[0]) * u, y0 + .52, a[1] + (b[1] - a[1]) * u] }); }
+    ctx.fences.rail.rails.push({ p: [(a[0] + b[0]) / 2, y0 + 1.04, (a[1] + b[1]) / 2], ry, s: [len + .1, 1, 1] }, { p: [(a[0] + b[0]) / 2, y0 + .1, (a[1] + b[1]) / 2], ry, s: [len, .6, .6] });
+  });
+}
 function balconyEdge(world, ctx, fW, fH, M) {
-  // Separate the terrace from the surrounding ground without adding textures.
+  // our slab: shallow rounded floor tiles with narrow joints on a pale slab with a visible nose
   rbox(world, fW + .2, .24, fH + .2, M.stoneDark, fW / 2, -.14, fH / 2, { r: .07 });
   const nx = Math.max(1, Math.min(40, Math.ceil(fW / .75))), nz = Math.max(1, Math.min(40, Math.ceil(fH / .75))), tw = fW / nx, td = fH / nz;
   for (let x = 0; x < nx; x++) for (let z = 0; z < nz; z++) {
     rbox(world, tw - .018, .025, td - .018, (x + z) % 3 === 0 ? M.concreteSolid : M.stone, (x + .5) * tw, -.009, (z + .5) * td, { r: .009, seg: 1, cast: false });
   }
-  const wallH = 2.7, t = .3;
-  rbox(world, fW + .9, wallH, t, M.cream, fW / 2, wallH / 2, -t / 2 - .05, { r: .08, seg: 2 });
-  rbox(world, fW + 1.0, .14, t + .14, M.white, fW / 2, wallH + .02, -t / 2 - .05, { r: .05, cast: false });
+  rbox(world, fW + .5, .16, .5, M.concreteSolid, fW / 2, -.06, fH + .1, { r: .06, cast: false }); // slab nose
+  // the facade: past both ends of the balcony, a storey above it (a parapet with a white coping) and down to the courtyard
+  const t = .3, wz = -t / 2 - .05, side = Math.max(2.6, Math.min(6, fW * .7)), x0 = -side, x1 = fW + side, top = STOREY, drop = BALCONY_DROP;
+  rbox(world, x1 - x0, top + drop, t, M.cream, (x0 + x1) / 2, (top - drop) / 2, wz, { r: .08, seg: 2 });
+  rbox(world, x1 - x0 + .1, .16, t + .16, M.white, (x0 + x1) / 2, top + .02, wz, { r: .05, cast: false });
+  [0, -STOREY].forEach((y) => rbox(world, x1 - x0 + .04, .12, .08, M.trim, (x0 + x1) / 2, y - .32, .02, { r: .03, cast: false })); // a white band at each floor line
+  const win = (wx, wy) => { rbox(world, 1.1, 1.15, .1, M.trim, wx, wy, .02, { r: .04 }); rbox(world, .9, .95, .04, M.winGlass, wx, wy, .08, { r: .015, cast: false }); rbox(world, 1.3, .1, .22, M.trim, wx, wy - .61, .1, { r: .04, cast: false }); };
+  // our own wall: a green glazed door, a threshold, skirting, and windows when there is room
   const dx = Math.min(fW * .25, 1.6), dW = 1.0, dH = 2.15;
   rbox(world, dW + .2, dH + .1, .1, M.green, dx, (dH + .1) / 2, .02, { r: .04 }); rbox(world, dW - .16, dH - .2, .04, M.winGlass, dx, dH / 2 + .02, .08, { r: .015, cast: false });
   rbox(world, .06, .2, .06, M.metal, dx + dW * .36, 1.0, .1, { r: .02, cast: false });
   rbox(world, dW + .16, .06, .3, M.stoneDark, dx, .025, .12, { r: .025, cast: false });
   rbox(world, fW, .13, .05, M.trim, fW / 2, .065, .015, { r: .015, cast: false });
-  for (let k = 0; k < Math.min(3, Math.floor((fW - dx - 1.4) / 2.2)); k++) { const wx = dx + 1.9 + k * 2.2; rbox(world, 1.1, 1.15, .1, M.trim, wx, 1.55, .02, { r: .04 }); rbox(world, .9, .95, .04, M.winGlass, wx, 1.55, .08, { r: .015, cast: false }); rbox(world, 1.3, .1, .22, M.trim, wx, .94, .1, { r: .04, cast: false }); }
-  rbox(world, fW + .5, .16, .5, M.concreteSolid, fW / 2, -.06, fH + .1, { r: .06, cast: false }); // slab nose
-  [[[0, 0], [0, fH]], [[fW, 0], [fW, fH]], [[0, fH], [fW, fH]]].forEach(([a, b]) => {
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(len / 1.2) + 1), ry = Math.atan2(-(b[1] - a[1]), b[0] - a[0]);
-    for (let j = 0; j < n; j++) { const u = j / (n - 1); ctx.fences.rail.posts.push({ p: [a[0] + (b[0] - a[0]) * u, .5, a[1] + (b[1] - a[1]) * u] }); }
-    const nb = Math.max(2, Math.round(len / .14)); for (let j = 1; j < nb; j++) { const u = j / nb; ctx.fences.rail.bars.push({ p: [a[0] + (b[0] - a[0]) * u, .52, a[1] + (b[1] - a[1]) * u] }); }
-    ctx.fences.rail.rails.push({ p: [(a[0] + b[0]) / 2, 1.04, (a[1] + b[1]) / 2], ry, s: [len + .1, 1, 1] }, { p: [(a[0] + b[0]) / 2, .1, (a[1] + b[1]) / 2], ry, s: [len, .6, .6] });
-  });
+  for (let k = 0; k < Math.min(3, Math.floor((fW - dx - 1.4) / 2.2)); k++) win(dx + 1.9 + k * 2.2, 1.55);
+  // the neighbours' windows on this floor, either side of the balcony
+  for (let wx = -1.2; wx > x0 + .7; wx -= 2.3) win(wx, 1.55);
+  for (let wx = fW + 1.2; wx < x1 - .7; wx += 2.3) win(wx, 1.55);
+  // the floors below: a row of windows each (not a second balcony — that read as "which one is mine?")
+  const n = Math.floor((x1 - x0 - 1.0) / 2.3), off = (x1 - x0 - (n - 1) * 2.3) / 2;
+  [-STOREY, -STOREY * 2].forEach((fy) => { for (let i = 0; i < n; i++) win(x0 + off + i * 2.3, fy + 1.55); });
+  balconyRailing(ctx, fW, fH, 0);
+  // the courtyard: a paved strip along the foot of the building, a few trees on the lawn in front
+  rbox(world, x1 - x0 + 4, .06, 1.6, M.concreteSolid, (x0 + x1) / 2, -drop + .03, .8, { r: .03, cast: false });
+  const nt = Math.max(2, Math.min(4, Math.round((x1 - x0) / 5)));
+  for (let i = 0; i < nt; i++) { const x = x0 + (i + .5) * (x1 - x0) / nt + (srand(i + 51) - .5) * 1.2, z = fH + 2.6 + srand(i + 57) * 3.2; tree(world, x, z, 1.35 + srand(i + 53) * .4, i + 61, M, -drop); }
 }
 function balconyHangingPot(world, ctx, x, z, seed, M) {
   const angle = srand(seed) * Math.PI * 2, px = x + Math.cos(angle) * .45, pz = z - Math.sin(angle) * .45;
@@ -1116,6 +1168,25 @@ function balconyHangingPot(world, ctx, x, z, seed, M) {
   swing.traverse((mesh) => { if (mesh.isMesh) ctx.keep.push(mesh); });
   (ctx.hanging ||= []).push({ group: swing, phase: srand(seed + 11) * Math.PI * 2 });
 }
+/* a back garden: the house stands along the far edge with a paved patio and a green back door onto the
+   garden; a white picket fence runs down both sides (from the house) and across the bottom. No hedge, no
+   farm gate, stone pillars, drive or mailbox — those belong to a farm. The patio sits outside the
+   garden's own measured area so the space the person typed stays all garden. */
+const GARDEN_PATIO = 1.8;
+function gardenEdge(world, ctx, fW, fH, M) {
+  const P = GARDEN_PATIO;
+  rbox(world, fW, .06, P, M.pavers, fW / 2, .03, -P / 2, { r: .02, cast: false });
+  rbox(world, fW, .07, .12, M.stoneDark, fW / 2, .035, -.04, { r: .03, cast: false }); // a low edging where the patio meets the lawn
+  fence(ctx, [[[0, -P], [0, fH]], [[fW, -P], [fW, fH]], [[0, fH], [fW, fH]]], { pickets: true });
+  const hw = Math.max(5, Math.min(11, fW * .8)), hd = Math.max(4.5, Math.min(7, hw * .7)), hx = fW / 2 - hw / 2, hz = -P - hd;
+  const hg = new THREE.Group(); hg.position.set(hx, 0, hz); world.add(hg);
+  building(hg, hw, hd, "house", M, { ctx, off: [hx, hz], yard: false });
+  // the neighbours' houses either side, so the row reads as a street of back gardens
+  [-1, 1].forEach((sd) => { const nx = sd < 0 ? hx - hw - .8 : hx + hw + .8, ng = new THREE.Group(); ng.position.set(nx, 0, hz); world.add(ng); building(ng, hw, hd, "house", M, { clay: true, yard: false }); });
+  // on the patio: a bench against the house and a water butt by the downpipe
+  ORNAMENTS.bench(world, fW / 2 + Math.min(hw / 2 - 1.1, 2.2), -P + .45, { ry: 0 }); // against the house, facing the garden
+  ctx.details.push({ kind: "barrel", x: hx + .45, z: -P + .4, ry: 0 });
+}
 function buildWorld(ctx) {
   const { data, zones, roads, fW, fH, margin, env, M } = ctx;
   ctx.focusBounds = new Map();
@@ -1123,10 +1194,13 @@ function buildWorld(ctx) {
   const E = Math.max(fW, fH) * 16;
   const heightAt = terrainHeightFn(fW, fH, margin); ctx.heightAt = heightAt;
   const style = data.mapStyle || {}, gm = style.groundMaterial || (env === "balcony" ? "stone" : "meadow");
-  const colors = gm === "meadow" ? (GROUNDS.meadow[style.groundColor] || GROUNDS.meadow.natural) : (GROUNDS[gm] || GROUNDS.stone);
+  // a balcony's own floor is its tiled slab; the land around it is the courtyard lawn two storeys down
+  const landGm = env === "balcony" ? "meadow" : gm;
+  const colors = landGm === "meadow" ? (GROUNDS.meadow[style.groundColor] || GROUNDS.meadow.natural) : (GROUNDS[landGm] || GROUNDS.stone);
   const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), texture(nightTint(flat(0xffffff, { rough: .96, vertexColors: true, variant: "land" }), .9, [.07, .12, .24]), "meadow"));
+  if (env === "balcony") ground.position.y = -BALCONY_DROP;
   ground.receiveShadow = true; world.add(ground); ctx.ground = ground;
-  if (gm === "meadow") {
+  if (gm === "meadow" && env !== "balcony") {
     // the property inside the hedge: a shade lighter than the meadow, with soft irregular patches painted into the
     // vertices (lusher and drier spots), the same way the outer meadow gets its variety — no stripes, no texture
     const base = new THREE.Color(colors[0] === PAL.meadow ? PAL.apron : colors[0]), lush = base.clone().lerp(new THREE.Color(colors[1]), .55), dry = base.clone().lerp(new THREE.Color(colors[2]), .45);
@@ -1142,14 +1216,15 @@ function buildWorld(ctx) {
   }
   // boundary by environment: a balcony is a slab against the building wall with a slim rounded railing;
   // a garden and a farm get the round-capped post-and-rail fence, stone gate pillars and a green gate
-  const gap = 2.4, balcony = env === "balcony", farm = env === "farm";
+  const gap = 2.4, balcony = env === "balcony", farm = env === "farm", garden = env === "backyard";
   if (balcony) balconyEdge(world, ctx, fW, fH, M);
+  else if (garden) gardenEdge(world, ctx, fW, fH, M);
   else {
     fence(ctx, [[[0, 0], [fW, 0]], [[0, 0], [0, fH]], [[fW, 0], [fW, fH]], [[0, fH], [fW / 2 - gap / 2 - .25, fH]], [[fW / 2 + gap / 2 + .25, fH], [fW, fH]]], { post: 1.0 });
     [-1, 1].forEach((s) => { const x = fW / 2 + s * (gap / 2 + .12); rbox(world, .5, 1.4, .5, M.stone, x, .7, fH, { r: .12 }); rbox(world, .62, .14, .62, M.stoneDark, x, 1.46, fH, { r: .05, cast: false }); ball(world, .17, M.stoneDark, x, 1.65, fH, { seg: 12, rings: 9 }); });
     gate(world, fW / 2, fH, gap - .3, 0, M);
   }
-  if (!balcony) {
+  if (farm) {
     const ho = .75, hg = gap / 2 + 1.1;
     hedge(world, [[[-ho, -ho], [fW + ho, -ho]], [[-ho, -ho], [-ho, fH + ho]], [[fW + ho, -ho], [fW + ho, fH + ho]], [[-ho, fH + ho], [fW / 2 - hg, fH + ho]], [[fW / 2 + hg, fH + ho], [fW + ho, fH + ho]]], M, { h: 1.3, t: .8 });
     ctx.details.push({ kind: "mailbox", x: fW / 2 + gap / 2 + 1.1, z: fH + 1.4, ry: 0 });
@@ -1157,7 +1232,7 @@ function buildWorld(ctx) {
     const nb = Math.min(10, Math.round((fW + fH) / 7));
     for (let i = 0; i < nb; i++) { const edge = i % 4, t = .12 + srand(i + 61) * .76, o = ho + 1.25; const x = edge === 0 ? -o : edge === 1 ? fW + o : t * fW, y = edge === 2 ? -o : edge === 3 ? fH + o : t * fH; if (edge === 3 && Math.abs(x - fW / 2) < 3) continue; ORNAMENTS.bush(world, x, y, { seed: i + 11, s: .7 + srand(i + 3) * .4 }); if (i % 2) ORNAMENTS.flowers(world, x + .8, y + .3, { seed: i + 21, s: .6 }); }
   }
-  const drive = balcony ? [] : [{ xM: fW / 2, yM: fH - .2 }, { xM: fW / 2, yM: fH + Math.max(margin * 1.6, 3) }];
+  const drive = farm ? [{ xM: fW / 2, yM: fH - .2 }, { xM: fW / 2, yM: fH + Math.max(margin * 1.6, 3) }] : [];
   // paths: pale rounded ribbons with a soft edge and round ends
   const [pathCol, edgeCol] = hexN(pathTones(ctx.pathTexture, style.pathColor)); // same tones as the flat map
   const roadMat = texture(layered(flat(pathCol, { rough: .95, side: THREE.DoubleSide }), 10), "gravel"), edgeMat = texture(layered(flat(edgeCol, { rough: .95, side: THREE.DoubleSide }), 8), "gravel"), rw = ctx.roadWidth;
@@ -1203,7 +1278,7 @@ function buildWorld(ctx) {
   // detail props: a wheelbarrow by the first bed, a scarecrow in the biggest vegetable area, and the
   // props the buildings asked for (rain barrel, bird bath, crates, tractor, mailbox) — only on open ground
   const beds = zones.filter((z) => z.type === "veg" || z.type === "raised" || z.type === "herbs");
-  if (beds.length && !balcony) { const b = beds[0]; ctx.details.push({ kind: "wheelbarrow", x: b.xM - .8, z: b.yM + Math.min(b.hM - .4, 1.2), ry: HPI * .9 }); }
+  if (beds.length && !balcony) { const b = beds[0], left = b.xM - .8, right = b.xM + b.wM + .8; ctx.details.push({ kind: "wheelbarrow", x: left >= .7 || right > fW - .7 ? left : right, z: b.yM + Math.min(b.hM - .4, 1.2), ry: HPI * .9 }); } // the side with room, clear of the boundary fence
   const bigVeg = farm && zones.filter((z) => z.type === "veg" && z.wM >= 3 && z.hM >= 3).sort((a, b) => b.wM * b.hM - a.wM * a.hM)[0];
   if (bigVeg) scarecrow(world, bigVeg.xM + bigVeg.wM - .5, bigVeg.yM + .5, { ry: .4 });
   const DETAIL = { wheelbarrow, barrel, crates, birdbath, mailbox, tractor };
@@ -1220,11 +1295,13 @@ function buildWorld(ctx) {
       const edge = i % 4, t = srand(i + 91), r = Math.max(1.05, margin * (.4 + srand(i + 25) * .42)), set = Math.max(margin * .83, r + .5) + 1.0;
       const x = edge === 0 ? -set : edge === 1 ? fW + set : t * fW;
       const y = edge === 2 ? -set : edge === 3 ? fH + set * 1.05 : t * fH;
-      if ((edge === 3 || edge === 2) && Math.abs(x - fW / 2) < 2.2) continue; // keep the entrance clear
+      if (farm && (edge === 3 || edge === 2) && Math.abs(x - fW / 2) < 2.2) continue; // keep the entrance clear
+      if (garden && edge === 2) continue; // the house stands on the far side
       tree(world, x, y, r, i, M);
     }
     const rocks = []; const nr = Math.min(28, Math.round((fW + fH) / 5));
-    for (let i = 0; i < nr; i++) { const edge = i % 4, t = srand(i + 301), s = .2 + srand(i + 77) * .3; const x = edge === 0 ? -margin * .5 : edge === 1 ? fW + margin * .5 : t * fW, y = edge === 2 ? -margin * .45 : edge === 3 ? fH + margin * .5 : t * fH; rocks.push({ p: [x, s * .5, y], ry: t * 6, s: [s * 1.2, s * .7, s] }); }
+    const rm = garden ? Math.max(margin, 2.4) : margin; // a garden's rocks lie out past the fence, never on it or on the patio
+    for (let i = 0; i < nr; i++) { const edge = i % 4, t = srand(i + 301), s = .2 + srand(i + 77) * .3; if (garden && edge === 2) continue; const x = edge === 0 ? -rm * .5 : edge === 1 ? fW + rm * .5 : t * fW, y = edge === 2 ? -rm * .45 : edge === 3 ? fH + rm * .5 : t * fH; rocks.push({ p: [x, s * .5, y], ry: t * 6, s: [s * 1.2, s * .7, s] }); }
     instances(world, sphereGeo(12, 9), M.rock, rocks);
     // clumps of trees and boulders out on the hills, thinning with distance
     const far = [], nc = Math.min(64, 24 + Math.round((fW + fH) / 3));
@@ -1245,21 +1322,22 @@ function buildWorld(ctx) {
     const herd = buildHerd(ctx.herd, TIME); if (herd) { world.add(herd.mesh); ctx.herdMesh = herd; }
     return world;
   }
-  const open = (i, seed) => { for (let k = 0; k < 6; k++) { const x = -margin * .6 + srand(seed + i * 3 + k) * (fW + margin * 1.2), y = -margin * .6 + srand(seed + i * 5 + k + 1) * (fH + margin * 1.2); if (!inZone(x, y) && !onRoad(x, y)) return [x, y]; } return [null, null]; };
+  const open = (i, seed) => { for (let k = 0; k < 6; k++) { const x = -margin * .6 + srand(seed + i * 3 + k) * (fW + margin * 1.2), y = -margin * .6 + srand(seed + i * 5 + k + 1) * (fH + margin * 1.2); if (!inZone(x, y) && !onRoad(x, y) && !(garden && y < .15)) return [x, y]; } return [null, null]; };
   tuftsIn(ctx, Math.min(320, Math.round(fW * fH / 5)), 17, (i) => open(i, 500));
   if (env !== "balcony") { // look A: tufts scattered over the meadow outside the hedge too (fewer on phones)
     const nOut = Math.min(ctx.device?.mobile ? 70 : 160, Math.round((fW + fH) * 2.2));
     for (let i = 0; i < nOut; i++) {
       const edge = i % 4, t = srand(i * 3 + 911), off = 2.2 + srand(i * 5 + 913) * margin * 1.5;
       const x = edge === 0 ? -off : edge === 1 ? fW + off : -margin + t * (fW + 2 * margin), y = edge === 2 ? -off : edge === 3 ? fH + off : -margin + t * (fH + 2 * margin);
-      if (edge === 3 && Math.abs(x - fW / 2) < 2.4) continue; // the drive stays clear
+      if (edge === 3 && farm && Math.abs(x - fW / 2) < 2.4) continue; // the drive stays clear
+      if (edge === 2 && garden) continue; // the patio and the house
       ctx.tufts.push({ p: [x, heightAt(x, y), y], ry: srand(i + 917) * 3, s: .8 + srand(i + 919) * .8 });
     }
   }
   const heads = PAL.flower.map(() => []), nf = Math.min(120, Math.round(fW * fH / 14));
   for (let i = 0; i < nf; i++) { const [x, y] = open(i, 900); if (x == null) continue; const s = .7 + srand(i + 41) * .6; ctx.tufts.push({ p: [x, 0, y], ry: srand(i + 43) * 3, s }); for (let k = 0; k < 3; k++) heads[(i + k) % heads.length].push({ p: [x + (srand(i * 3 + k) - .5) * .22, .2 * s + srand(i + k) * .08, y + (srand(i * 5 + k) - .5) * .22], s: .035 + srand(i * 7 + k) * .02 }); }
   if (env !== "balcony") { // look A: wildflower clumps and pebbles out in the meadow beyond the hedge (fewer on phones)
-    const mob = ctx.device?.mobile, ring = (i, seed) => { const edge = i % 4, t = srand(i * 3 + seed), o = 2.4 + srand(i * 5 + seed + 1) * margin * 1.4; const x = edge === 0 ? -o : edge === 1 ? fW + o : -margin + t * (fW + 2 * margin), y = edge === 2 ? -o : edge === 3 ? fH + o : -margin + t * (fH + 2 * margin); return edge === 3 && Math.abs(x - fW / 2) < 2.6 ? null : [x, y]; };
+    const mob = ctx.device?.mobile, ring = (i, seed) => { const edge = i % 4, t = srand(i * 3 + seed), o = 2.4 + srand(i * 5 + seed + 1) * margin * 1.4; const x = edge === 0 ? -o : edge === 1 ? fW + o : -margin + t * (fW + 2 * margin), y = edge === 2 ? -o : edge === 3 ? fH + o : -margin + t * (fH + 2 * margin); return (edge === 3 && farm && Math.abs(x - fW / 2) < 2.6) || (edge === 2 && garden) ? null : [x, y]; };
     const nfo = Math.min(mob ? 30 : 70, Math.round((fW + fH) * .9));
     for (let i = 0; i < nfo; i++) { const q = ring(i, 1301); if (!q) continue; const [x, y] = q, h0 = heightAt(x, y), s = .8 + srand(i + 1307) * .6; ctx.tufts.push({ p: [x, h0, y], ry: srand(i + 1309) * 3, s }); for (let k = 0; k < 4; k++) heads[(i * 2 + k) % heads.length].push({ p: [x + (srand(i * 3 + k + 1311) - .5) * .3, h0 + .2 * s + srand(i + k + 1313) * .08, y + (srand(i * 5 + k + 1317) - .5) * .3], s: .035 + srand(i * 7 + k + 1319) * .02 }); }
     const pebbles = [], np = Math.min(mob ? 50 : 120, Math.round((fW + fH) * 1.6));
@@ -1613,9 +1691,14 @@ class FarmControls {
     // a portrait screen looking at a landscape farm (or the reverse) turns the camera to look straight down
     // the farm's long axis (from the west), so the farm fills the screen's height instead of a 45 % band;
     // the usual 22° three-quarter view would project the turned farm to a near-square box
-    const portrait = this.size.h > this.size.w, turn = portrait !== (fH > fW);
-    const t = new THREE.Vector3(fW / 2, 0, fH / 2), theta = (turn ? -90 : CAM.az) * DEG, phi = CAM.el * DEG, mx = Math.max(margin * .6, 1.7), corners = [];
-    [[-mx, -mx], [fW + mx, -mx], [fW + mx, fH + mx], [-mx, fH + mx]].forEach(([x, z]) => corners.push(new THREE.Vector3(x, 0, z), new THREE.Vector3(x, 2.5, z)));
+    // A balcony is always seen from outside, looking at the building (never turned side-on), framed tight
+    // to the slab and its railing so it fills the screen; the facade and courtyard fill the rest.
+    // A garden is seen from its bottom fence toward the house, so the house, patio and lawn read as one back
+    // garden (turned side-on, the house became a strip of roofs down one edge); only a farm turns.
+    const balcony = this.env === "balcony", portrait = this.size.h > this.size.w, turn = this.env !== "balcony" && this.env !== "backyard" && portrait !== (fH > fW);
+    const t = new THREE.Vector3(fW / 2, 0, this.env === "backyard" ? fH / 2 - GARDEN_PATIO - 1.5 : fH / 2), theta = (turn ? -90 : CAM.az) * DEG, phi = CAM.el * DEG, mx = balcony ? .3 : Math.max(margin * .6, 1.7), corners = [];
+    const back = this.env === "backyard" ? GARDEN_PATIO + .5 : mx; // a garden keeps its patio and the house's back wall in frame
+    [[-mx, -back], [fW + mx, -back], [fW + mx, fH + mx], [-mx, fH + mx]].forEach(([x, z]) => corners.push(new THREE.Vector3(x, 0, z), new THREE.Vector3(x, 2.5, z)));
     const saved = { target: this.target.clone(), dist: this.dist, theta: this.theta, phi: this.phi };
     this.target.copy(t); this.theta = theta; this.phi = phi; let dist = Math.max(fW, fH) * 1.6;
     for (let k = 0; k < 6; k++) { this.dist = dist; this.update(); let m = 0; corners.forEach((c) => { const v = c.clone().project(this.camera); m = Math.max(m, Math.abs(v.x), Math.abs(v.y)); }); dist *= m / .985; }
@@ -1802,11 +1885,14 @@ export default function Grove3D(props) {
         const nodes = latest.current.preview || !labels.current ? [] : Array.from(labels.current.children), items = [], byId = new Map();
         nodes.forEach((n) => {
           const a = st.anchors[n.dataset.zone]; if (!a) return;
-          let minX = 1e9, maxX = -1e9; const pts = a.corners.map(([x, z]) => { const q = project(x, 0, z, pv); minX = Math.min(minX, q.x); maxX = Math.max(maxX, q.x); return q; });
+          let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9; const pts = a.corners.map(([x, z]) => { const q = project(x, 0, z, pv); minX = Math.min(minX, q.x); maxX = Math.max(maxX, q.x); minY = Math.min(minY, q.y); maxY = Math.max(maxY, q.y); return q; });
           pts.sort((u, v) => v.y - u.y); const f0 = pts[0], f1 = pts[1], c = project(a.cx, 0, a.cz, pv); // the two lowest points on screen = the front edge
           const badge = !!n.querySelector(".g3-badge");
           byId.set(n.dataset.zone, n);
-          items.push({ id: n.dataset.zone, x: (f0.x + f1.x) / 2, y: (f0.y + f1.y) / 2, cx: c.x, cy: c.y, on: f0.on && f1.on && c.on, px: maxX - minX, w: a.w * ls, h: 20 * ls, badge: badge ? 24 * ls : 0, area: a.area, sel: a.sel, jobs: badge ? 1 : 0 });
+          // a thin area (a planter strip along a balcony wall) would vanish under its own pill: hang the pill
+          // just in front of it instead, so the planters stay visible
+          const fy = (f0.y + f1.y) / 2, thin = a.thin || maxY - minY < 20 * ls * 2.2;
+          items.push({ id: n.dataset.zone, x: thin ? c.x : (f0.x + f1.x) / 2, y: thin ? maxY + 20 * ls + 6 : fy, cx: c.x, cy: c.y, on: f0.on && f1.on && c.on, px: maxX - minX, w: a.w * ls, h: 20 * ls, badge: badge ? 24 * ls : 0, area: a.area, sel: a.sel, jobs: badge ? 1 : 0 });
         });
         placeLabels(items, { W: S.W, H: S.H, far, mobile: st.coarse }).forEach(({ id, x, y, show }) => {
           const n = byId.get(id);
@@ -1997,6 +2083,7 @@ export default function Grove3D(props) {
     st.hits = []; st.plotHits = []; st.M = materials(); latest.current.showTip?.(null);
     const dimsChanged = !st.dims || st.dims.fW !== P.fW || st.dims.fH !== P.fH || st.dims.margin !== P.margin;
     st.dims = { fW: P.fW, fH: P.fH, margin: P.margin };
+    if (st.controls.env !== P.env) { st.controls.env = P.env; st.fitted = false; }
     const ctx = { data: P.data, zones: P.zones, roads: P.roads, crops: P.crops, fW: P.fW, fH: P.fH, margin: P.margin, env: P.env, pathTexture: P.pathTexture, roadWidth: P.roadWidth, todayKey: P.todayKey || todayLocalKey(), actualToday: P.actualToday, hits: st.hits, plotHits: st.plotHits, M: st.M,
       plants: [], tufts: [], pots: [], herd: [], fruit: new Map(), fruitDrop: new Map(), details: [], motion: { smoke: [], bees: [] }, vanes: [], keep: [], device: { mobile: st.mobile, reduced: st.reduced }, fences: { plain: { posts: [], rails: [] }, picket: { posts: [], caps: [], rails: [] }, rail: { posts: [], bars: [], rails: [] } }, growth: { glows: [], poles: [], tags: [[], [], [], [], [], []] } };
     const t0 = performance.now(); setDetail(st.mobile ? PHONE_DETAIL : 1); try { st.world = buildWorld(ctx); } finally { setDetail(1); } st.herd = ctx.herd; st.vanes = ctx.vanes; st.hanging = ctx.hanging || []; st.buildMs = performance.now() - t0;
@@ -2032,7 +2119,7 @@ export default function Grove3D(props) {
       st.requestRender();
     };
     st.scene.add(st.world);
-    st.anchors = Object.fromEntries(P.zones.map((z) => [z.id, { cx: z.xM + z.wM / 2, cz: z.yM + z.hM / 2, h: 0, corners: [[z.xM, z.yM], [z.xM + z.wM, z.yM], [z.xM + z.wM, z.yM + z.hM], [z.xM, z.yM + z.hM]], area: z.wM * z.hM, sel: 0, w: Math.min(23, z.name.length) * 6 + 16 + (/^\d+$/.test(z.name.trim()) ? 0 : 15) }]));
+    st.anchors = Object.fromEntries(P.zones.map((z) => [z.id, { cx: z.xM + z.wM / 2, cz: z.yM + z.hM / 2, h: 0, corners: [[z.xM, z.yM], [z.xM + z.wM, z.yM], [z.xM + z.wM, z.yM + z.hM], [z.xM, z.yM + z.hM]], area: z.wM * z.hM, thin: P.env === "balcony" && Math.min(z.wM, z.hM) <= .8, sel: 0, w: Math.min(23, z.name.length) * 6 + 16 + (/^\d+$/.test(z.name.trim()) ? 0 : 15) }]));
     st.hits.forEach((h) => { const a = st.anchors[h.userData.zoneId]; if (a) a.h = Math.min(6, h.userData.bounds.h); }); // label height: roof ridge, bed edge…
     st.setupSun(); st.fx.cloudKey = ""; st.fx.precipKey = ""; st.setWeatherFx(st.sky);
     if (dimsChanged) st.fitted = false;

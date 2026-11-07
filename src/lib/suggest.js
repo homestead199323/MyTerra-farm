@@ -191,7 +191,7 @@ export function describeSuggestion(crop, profile, region, date) {
 const FARM_CAP_W = 100, FARM_CAP_H = 60;
 
 const ENV_ZONE = {
-  balcony:  { type:"container", label:"Balcony Containers", emoji:"🪣", share:0.5,  minA:0.3, maxA:6,  inset:0.25, minW:3,  minH:2, depth:0.45 },
+  balcony:  { type:"container", label:"Balcony Containers", emoji:"🪣", share:0.5,  minA:0.3, maxA:6,  inset:0.25, minW:1,  minH:0.8, depth:0.45 },
   backyard: { type:"raised",  label:"Raised Bed",         emoji:"🪴", share:0.25, minA:1,   maxA:12, inset:1,    minW:6,  minH:4, depth:1.2 },
   farm:     { type:"veg",     label:"Vegetable Bed",      emoji:"🌿", share:0.1,  minA:2,   maxA:24, inset:4,    minW:16, minH:10, depth:1.2 },
 };
@@ -237,9 +237,10 @@ export function buildStarterZone(environment, lengthM, widthM, timeBudget) {
     farmH = Math.max(spec.minH, Math.ceil(yM + spec.depth + 2), Math.min(realH, FARM_CAP_H));
     maxW = farmW - xM - 2; maxH = farmH - yM - 2;
   } else {
-    // Balcony/backyard: the canvas is the real space itself
-    farmW = Math.max(spec.minW, Math.ceil(Math.max(lengthM, widthM)));
-    farmH = Math.max(spec.minH, Math.ceil(Math.min(lengthM, widthM)));
+    // Balcony/backyard: the canvas is the real space itself, to the nearest 10 cm
+    // (a 4 × 1.5 m balcony stays 4 × 1.5 m — no rounding up to whole metres)
+    farmW = Math.max(spec.minW, r1(Math.max(lengthM, widthM)));
+    farmH = Math.max(spec.minH, r1(Math.min(lengthM, widthM)));
     xM = spec.inset; yM = spec.inset;
     maxW = Math.max(0.5, farmW - spec.inset * 2);
     maxH = Math.max(0.3, farmH - spec.inset * 2);
@@ -250,6 +251,8 @@ export function buildStarterZone(environment, lengthM, widthM, timeBudget) {
   if (wM * hM < usable - 0.05) hM = Math.min(maxH, usable / wM);
   hM = Math.max(0.3, Math.round(hM * 100) / 100);
   usable = r1(wM * hM);
+  // Balcony troughs go along the railing (the sunny, open side), not against the wall in front of the door.
+  if (env === "balcony") yM = Math.max(0, Math.round((farmH - spec.inset - hM) * 100) / 100);
   return { spec:spec, areaM2:usable, wM:wM, hM:hM, xM:xM, yM:yM, farmW:farmW, farmH:farmH, partial:partial };
 }
 

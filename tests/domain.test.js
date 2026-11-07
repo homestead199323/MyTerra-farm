@@ -450,6 +450,9 @@ test('Starter bed is sized by time, 1.2 m wide, and never exceeds the space',()=
   const big=buildStarterZone('backyard',8,5,'unlimited');assert(big.areaM2>b.areaM2&&big.areaM2<=8*5*0.8);
   const bal=buildStarterZone('balcony',4,1.5,'min5');assert.equal(bal.hM,.45);assert(bal.wM<=4-0.5);
   const tiny=buildStarterZone('balcony',1,1,'unlimited');assert(tiny.areaM2<=1);
+  // the map is the space the person typed, not rounded up to whole metres or a 2 m minimum
+  assert.equal(bal.farmW,4);assert.equal(bal.farmH,1.5);
+  const odd=buildStarterZone('backyard',7.3,4.6,'min15');assert.equal(odd.farmW,7.3);assert.equal(odd.farmH,4.6);
   assert(starterCount(CROP_MAP.get('Radish'),2)>starterCount(CROP_MAP.get('Lettuce'),2));
 });
 test('Starter kit lists only what is missing; the first week starts with it',()=>{

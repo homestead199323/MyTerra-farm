@@ -79,8 +79,8 @@ export function woodpile(g, x, z, { seed = 1 } = {}) {
   [[4, r], [3, r * 2.75], [2, r * 4.5]].forEach(([n, y]) => { for (let i = 0; i < n; i++) { const u = (i - (n - 1) / 2) * r * 2.1; tube(h, r, r, 1.0, W, u, y, 0, { rx: HPI, seg: 12 }); disc(h, r * .96, E, u, y, .502, { rx: 0, seg: 12 }); disc(h, r * .96, E, u, y, -.502, { rx: Math.PI, seg: 12 }); } });
   [-1, 1].forEach((k) => pill(h, [k * .55, 0, 0], [k * .55, .95, 0], .035, W, { seg: 7 }));
 }
-export function bench(g, x, z, { seed = 1 } = {}) {
-  const h = at(g, x, z, srnd(seed) * 6.28), W = F(PAL.wood), D = F(PAL.woodDark);
+export function bench(g, x, z, { seed = 1, ry = null } = {}) {
+  const h = at(g, x, z, ry ?? srnd(seed) * 6.28), W = F(PAL.wood), D = F(PAL.woodDark);
   [-.1, .1].forEach((u) => rbox(h, 1.5, .06, .17, W, 0, .46, u, { r: .025 }));
   [-.6, .6].forEach((u) => { rbox(h, .09, .46, .4, D, u, .23, 0, { r: .03 }); rbox(h, .09, .5, .07, D, u, .72, -.2, { r: .03, rx: -.15 }); });
   rbox(h, 1.5, .09, .05, W, 0, .72, -.25, { r: .02, rx: -.15 }); rbox(h, 1.5, .09, .05, W, 0, .86, -.27, { r: .02, rx: -.15 });

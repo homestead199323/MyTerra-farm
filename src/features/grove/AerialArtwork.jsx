@@ -62,9 +62,9 @@ export const CropCrown=memo(function CropCrown({crop='',stage=3,x,y,size=.45,id,
 });
 
 /* post-and-rail (or white picket) fence: round posts, rounded rails; gateW leaves a centred gap with a green gate */
-export function Fence({x=0,y=0,w,h,id,gate=false,pickets=false,gateW}) {
+export function Fence({x=0,y=0,w,h,id,gate=false,pickets=false,gateW,top=true}) {
  const gw=gateW??w*.28, g0=x+w/2-gw/2, g1=x+w/2+gw/2;
- const segments=[[[x,y],[x+w,y]],[[x,y],[x,y+h]],[[x+w,y],[x+w,y+h]],...(!gate?[[[x,y+h],[x+w,y+h]]]:[[[x,y+h],[g0,y+h]],[[g1,y+h],[x+w,y+h]]])];
+ const segments=[...(top?[[[x,y],[x+w,y]]]:[]),[[x,y],[x,y+h]],[[x+w,y],[x+w,y+h]],...(!gate?[[[x,y+h],[x+w,y+h]]]:[[[x,y+h],[g0,y+h]],[[g1,y+h],[x+w,y+h]]])];
  const rail=pickets?T.woodPale:T.woodMid, post=pickets?T.white:T.woodDark;
  return <g strokeLinecap="round" filter={`url(#${id}-shadow)`}>
    {segments.map(([a,b],i)=><g key={i}><path d={`M${a}L${b}`} stroke={rail} strokeWidth={pickets?.07:.1}/>{Array.from({length:Math.min(800,Math.max(2,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/(pickets?.26:1.3))+1))}).map((_,j,arr)=>{const t=j/(arr.length-1);return <circle key={j} cx={a[0]+(b[0]-a[0])*t} cy={a[1]+(b[1]-a[1])*t} r={pickets?.06:.085} fill={post} stroke={pickets?T.stoneDark:'none'} strokeWidth=".015"/>;})}</g>)}

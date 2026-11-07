@@ -33,11 +33,13 @@ export function entranceOf(zone) {return {xM:zone.xM+zone.wM/2,yM:zone.yM+zone.h
 export function areaCenter(zone) {return {xM:zone.xM+zone.wM/2,yM:zone.yM+zone.hM/2};}
 // A compressed orthogonal grid routes paths around the recorded area footprints.
 // Coordinates include obstacle edges and entrance midpoints, so metres remain exact at any farm size.
-export function accessPaths(zones,farmW,farmH,lines=[]) {
+// from: where the network starts — the farm gate on the front edge by default; a garden starts at the
+// back door on the far edge ({xM: farmW / 2, yM: 0}).
+export function accessPaths(zones,farmW,farmH,lines=[],from=null) {
   if(!zones.length)return [];
   const width=Math.max(.25,Math.min(.75,Math.min(farmW,farmH)*.04)),clearance=width/2+.12;
   const obstacles=zones.map(z=>({left:z.xM-clearance,right:z.xM+z.wM+clearance,top:z.yM-clearance,bottom:z.yM+z.hM+clearance}));
-  const start={xM:farmW/2,yM:farmH};
+  const start=from?{xM:from.xM,yM:from.yM}:{xM:farmW/2,yM:farmH};
   const entries=zones.filter(z=>z.road!==false).map(z=>[
     {xM:z.xM-clearance,yM:z.yM+z.hM/2,edge:{xM:z.xM,yM:z.yM+z.hM/2}},
     {xM:z.xM+z.wM+clearance,yM:z.yM+z.hM/2,edge:{xM:z.xM+z.wM,yM:z.yM+z.hM/2}},
