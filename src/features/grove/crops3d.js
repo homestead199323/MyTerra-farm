@@ -273,14 +273,20 @@ export function cropMaterials(TIME) {
   return { mat: cropMat, depth: cropDepth };
 }
 /* draws every collected plant: items are { key, name, stage, x, y, z, s, ry } in world metres */
-export function buildCrops(g, items, TIME) {
+export function buildCrops(g, items, TIME, focusBounds) {
   if (!items.length) return;
   const { mat } = cropMaterials(TIME), byKey = new Map(), lod = items.length > 900 ? 2 : items.length > 350 ? 1 : 0; // the whole farm shares one level of detail
   items.forEach((it) => { const key = cropKey(it.name, it.stage, lod); it.lod = lod; let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), E = new THREE.Euler();
+  const box = focusBounds ? new THREE.Box3() : null;
   byKey.forEach((list) => {
     const geo = cropGeometry(list[0].name, list[0].stage, list[0].lod || 0), im = new THREE.InstancedMesh(geo, mat, list.length);
-    list.forEach((it, i) => { P.set(it.x, it.y, it.z); E.set(0, it.ry || 0, 0); Q.setFromEuler(E); S.setScalar(it.s); M4.compose(P, Q, S); im.setMatrixAt(i, M4); });
+    if (focusBounds && !geo.boundingBox) geo.computeBoundingBox();
+    list.forEach((it, i) => {
+      P.set(it.x, it.y, it.z); E.set(0, it.ry || 0, 0); Q.setFromEuler(E); S.setScalar(it.s); M4.compose(P, Q, S); im.setMatrixAt(i, M4);
+      const bounds = focusBounds?.get(it.zoneId);
+      if (bounds) bounds.union(box.copy(geo.boundingBox).applyMatrix4(M4));
+    });
     // Retain identities so a changed growth stage can animate independently of its neighbours.
     im.userData.cropItems = list.map((it) => ({ key: `${it.name}|${it.x.toFixed(3)}|${it.y.toFixed(3)}|${it.z.toFixed(3)}`, stage: it.stage }));
     im.instanceMatrix.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; g.add(im);

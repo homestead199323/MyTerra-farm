@@ -4,6 +4,7 @@ import './sky.test.js';
 import './herd-brain.test.js';
 import './animal-animation.test.js';
 import './gestures.test.js';
+import './focus-camera.test.js';
 import './labels.test.js';
 import './designer-fit.test.js';
 import './growth-preview.test.js';

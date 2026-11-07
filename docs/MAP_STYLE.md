@@ -75,6 +75,7 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - A thin white footprint follows a mouse hover or keyboard focus, showing which area can be opened. The selected area retains its gold frame; neither effect changes the scene's lighting.
 - Hovering a planted row adds a gold row outline and a compact crop card with its stage and area; pointer feedback distinguishes selectable areas from the ground.
 - Selecting a planted row focuses its bed and shows the crop's stage-specific picture. An area selection briefly settles into its gold outline; reduced motion displays it immediately.
+- Inspection framing fits the actual zone and crop bounds through the perspective camera, including tall plants and roofs. It preserves the current orbit direction and raises low views to 60° for plant areas. Small pots can be inspected at the same close distance on large farms and balconies; Reset still returns to the whole property. This fit reserves space around the object, but does not yet avoid every overlapping information panel or neighbouring building.
 
 ## 7b. Phones (2026-10-25) — coarse pointer only (`isCoarse()` → host class `g3-coarse`; harness `?coarse=1`)
 - Inline on the home screen the map is a **live preview tile** (aspect ≥ 4:3): no gestures, no pills, no controls, no scroll hint; an "Open map" pill (`.g3-open`) with a job-count badge; one tap anywhere opens full screen; closing it returns to the whole-farm home view. The render-quality tier (`mobile`: coarse pointer OR short screen) is separate and unchanged.

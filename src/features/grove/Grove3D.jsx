@@ -15,6 +15,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent } from "./gestures";
+import { focusDistance } from "./focus-camera";
 import { placeLabels } from "./labels";
 import { previewGrowthOf, growthSceneStages, growthTransitionStart, growthTransitionDelay, growthTransitionProgress, GROWTH_DURATION_MS, GROWTH_STAGGER_MS, rowAtDate } from "./growth-preview";
 import { animalZone, bedRows, layoutPlots, STAGES } from "../quiet/farm-model";
@@ -1076,6 +1077,7 @@ function balconyHangingPot(world, ctx, x, z, seed, M) {
 }
 function buildWorld(ctx) {
   const { data, zones, roads, fW, fH, margin, env, M } = ctx;
+  ctx.focusBounds = new Map();
   const world = new THREE.Group();
   const E = Math.max(fW, fH) * 16;
   const heightAt = terrainHeightFn(fW, fH, margin); ctx.heightAt = heightAt;
@@ -1127,13 +1129,18 @@ function buildWorld(ctx) {
   // zones — each one also gets an invisible hit box (its bounding box) for taps, so the detailed
   // geometry can be merged for speed without losing which area was tapped
   zones.forEach((z) => {
+    const firstPlant = ctx.plants.length;
     const g = buildZone(z, ctx); world.add(g); g.updateMatrixWorld(true);
+    for (let i = firstPlant; i < ctx.plants.length; i++) ctx.plants[i].zoneId = z.id;
     const bb = new THREE.Box3().setFromObject(g), size = new THREE.Vector3(), c = new THREE.Vector3();
     if (bb.isEmpty()) { bb.min.set(z.xM, 0, z.yM); bb.max.set(z.xM + z.wM, .5, z.yM + z.hM); }
     bb.min.y = Math.min(0, bb.min.y); bb.max.y = Math.max(bb.min.y + .6, bb.max.y);
     bb.getSize(size); bb.getCenter(c);
     const hit = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), M.hit); hit.position.copy(c); hit.userData.zoneId = z.id; hit.userData.bounds = { x0: bb.min.x, x1: bb.max.x, z0: bb.min.z, z1: bb.max.z, h: bb.max.y };
     world.add(hit); ctx.hits.push(hit);
+    // Separate from hit/selection bounds: tall leaves must fit the camera without
+    // expanding invisible tap targets over neighbouring beds.
+    hit.userData.focusBounds = bb.clone(); ctx.focusBounds.set(z.id, hit.userData.focusBounds);
   });
   // user-drawn fences and gates
   (data.mapLines || []).filter((l) => l.kind !== "path" && (l.points || []).length > 1).forEach((l) => {
@@ -1192,7 +1199,7 @@ function buildWorld(ctx) {
   }
   if (balcony) { // a stone slab: no grass, no wild flowers
     buildFences(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M);
-    buildCrops(world, ctx.plants, TIME);
+    buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
     bake(world, new Set([...ctx.hits, ...ctx.plotHits, ctx.ground, ctx.apron, ...ctx.keep]));
     const herd = buildHerd(ctx.herd, TIME); if (herd) { world.add(herd.mesh); ctx.herdMesh = herd; }
     return world;
@@ -1204,7 +1211,7 @@ function buildWorld(ctx) {
   heads.forEach((list, k) => instances(world, sphereGeo(8, 6), M.flower[k], list, { cast: false, receive: false }));
   // everything collected across the zones is drawn once for the whole farm
   buildFences(world, ctx, M); buildTufts(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M);
-  buildCrops(world, ctx.plants, TIME);
+  buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
   bake(world, new Set([...ctx.hits, ...ctx.plotHits, ctx.ground, ctx.apron, ...ctx.keep])); // the terrain keeps its vertex colours; the vanes stay live
   const herd = buildHerd(ctx.herd, TIME); if (herd) { world.add(herd.mesh); ctx.herdMesh = herd; } // every animal, one draw call, moving in the vertex shader
   // swallows over the farm, butterflies over the flowers (fauna-fx.js) — shown or hidden by the sky state
@@ -1451,12 +1458,17 @@ class FarmControls {
   }
   zoomBy(factor, ms = 300) { this.zoomAt(this.size.w / 2, this.size.h / 2, factor, ms); }
   focusZone(zone) {
-    const target = new THREE.Vector3(zone.xM + zone.wM / 2, 0, zone.yM + zone.hM / 2);
-    // Keep the whole footprint in view, including on portrait screens.
+    const bounds = this.hooks.focusBounds?.(zone) || new THREE.Box3(
+      new THREE.Vector3(zone.xM, 0, zone.yM),
+      new THREE.Vector3(zone.xM + zone.wM, .6, zone.yM + zone.hM));
+    const target = bounds.getCenter(new THREE.Vector3()); target.y = 0;
+    // A higher inspection angle exposes planting rows behind pot rims and rails.
+    // Preserve azimuth so selecting a plant never unexpectedly spins the farm.
+    const phi = isPlantZone(zone.type) ? Math.max(this.phi, 60 * DEG) : this.phi;
     const aspect = this.size.w / Math.max(1, this.size.h);
-    const extent = Math.max(zone.wM / Math.min(1, aspect), zone.hM);
-    const dist = Math.min(this.fitDist || this.dist, extent * 4.5);
-    this.animateTo({ target, dist: clamp(dist, this.lim.minDist, this.lim.maxDist) }, 550);
+    const dist = focusDistance(bounds, { target, theta: this.theta, phi,
+      fov: this.camera.fov, aspect, near: this.camera.near });
+    this.animateTo({ target, phi, dist: clamp(dist, this.lim.minDist, this.lim.maxDist) }, 550);
   }
   onWheel(e) {
     if (!this.enabled) return;
@@ -1491,7 +1503,8 @@ class FarmControls {
     let y0 = 1, y1 = -1; this.dist = dist; this.update(); corners.forEach((c) => { const v = c.clone().project(this.camera); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); });
     this.homeTurn = turn; this.homeFrac = (y1 - y0) / 2; // share of the viewport height the farm spans at the home view (harness check)
     const pad = Math.max(margin, 2);
-    this.lim = { minDist: Math.max(2.5, dist * .1), maxDist: dist * 1.35, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -pad, x1: fW + pad, z0: -pad, z1: fH + pad };
+    // Small pots should remain inspectable even when the surrounding farm is large.
+    this.lim = { minDist: 2.5, maxDist: dist * 1.35, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -pad, x1: fW + pad, z0: -pad, z1: fH + pad };
     this.home = { target: t.clone(), dist: dist * zoom, theta, phi }; this.fitDist = dist;
     if (animate) { this.target.copy(saved.target); this.dist = saved.dist; this.theta = saved.theta; this.phi = saved.phi; this.clampView(); this.animateTo(this.home, 600); }
     else { this.stopMotion(); cancelAnimationFrame(this.raf); this.dist = dist * zoom; this.clampView(); this.update(); } // an instant fit also ends any animation or fling still running
@@ -1699,6 +1712,7 @@ export default function Grove3D(props) {
     const io = typeof IntersectionObserver === "function" ? new IntersectionObserver((es) => { inView = es.some((e) => e.isIntersecting); st.setAnim(); }, { threshold: 0 }) : null;
     io?.observe(el);
     const controls = new FarmControls(camera, renderer.domElement, {
+      focusBounds: (zone) => st.hits.find((h) => h.userData.zoneId === zone.id)?.userData.focusBounds,
       change: () => st.requestRender(),
       interact: (on) => { renderer.setPixelRatio(on ? LOW : DPR); st.requestRender(); },
       first: () => latest.current.dismissHint?.(),
@@ -1723,10 +1737,16 @@ export default function Grove3D(props) {
     });
     st.controls = controls; controls.setCooperative(!fullRef.current);
     st.size = () => {
+      const previousW = S.W, previousH = S.H;
       const d = st.dims || { fW: 3, fH: 2, margin: 1 }, ratio = clamp((d.fH + 2 * d.margin) / (d.fW + 2 * d.margin), latest.current.preview ? .72 : .62, .8); // the preview tile is at least 4:3 so the farm fills it
       S.W = el.clientWidth || 600; S.H = fullRef.current ? (el.clientHeight || Math.round(S.W * ratio)) : Math.round(Math.min(S.W * ratio, Math.max(220, (window.innerHeight || 800) * .78)));
       renderer.setSize(S.W, S.H); camera.aspect = S.W / S.H; camera.updateProjectionMatrix(); controls.size = { w: S.W, h: S.H };
-      if ((!st.fitted || latest.current.preview) && st.dims) { st.reset(false); st.fitted = true; } else controls.update(); // the tile has no Reset, so it re-fits on every resize (phone rotation)
+      if ((!st.fitted || latest.current.preview) && st.dims) { st.reset(false); st.fitted = true; }
+      else {
+        const focused = latest.current.zones.find((z) => String(z.id) === latest.current.focusId);
+        if (focused && (previousW !== S.W || previousH !== S.H)) controls.focusZone(focused);
+        else controls.update();
+      } // Reframe the selected area when rotating a phone or resizing the map.
       st.requestRender();
     };
     st.reset = (animate, zoom = 1) => {
