@@ -9,7 +9,7 @@
    MARKER: GROVE_CROPS_3D_V1
    ═══════════════════════════════════════════ */
 import * as THREE from "three";
-import { Parts, clamp01, WIND } from "./toy";
+import { Parts, clamp01, WIND, DETAIL } from "./toy";
 
 const HPI = Math.PI / 2;
 function rng(seed) { let t = (Math.floor(seed * 1000003) ^ 0x5bd1e995) >>> 0; return () => { t = (t + 0x6d2b79f5) >>> 0; let x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
@@ -235,7 +235,7 @@ const cache = new Map();
 export function cropGeometry(name, stage, lod = 0) {
   const st = Math.max(1, Math.min(5, stage)), fam = cropFamily(name), key = cropKey(name, st, lod);
   if (cache.has(key)) return cache.get(key);
-  const P = new Parts(); P.detail = lod === 2 ? .5 : lod === 1 ? .66 : 1; // level of detail: a big farm gets lighter plant models
+  const P = new Parts(); P.detail = (lod === 2 ? .5 : lod === 1 ? .66 : 1) * (DETAIL.value < 1 ? .7 : 1); // phones: lighter still // level of detail: a big farm gets lighter plant models
   if (st === 1) sprout(P); else BUILD[fam.family](P, fam.o, st);
   const g = P.build(); g.userData.shared = true; cache.set(key, g); return g; // shared across world rebuilds
 }
@@ -275,7 +275,7 @@ export function cropMaterials(TIME) {
 /* draws every collected plant: items are { key, name, stage, x, y, z, s, ry } in world metres */
 export function buildCrops(g, items, TIME, focusBounds) {
   if (!items.length) return;
-  const { mat } = cropMaterials(TIME), byKey = new Map(), lod = items.length > 900 ? 2 : items.length > 350 ? 1 : 0; // the whole farm shares one level of detail
+  const { mat } = cropMaterials(TIME), byKey = new Map(), lod = Math.min(2, (items.length > 900 ? 2 : items.length > 350 ? 1 : 0) + (DETAIL.value < 1 ? 1 : 0)); // the whole farm shares one level of detail; phones one step lighter
   items.forEach((it) => { const key = cropKey(it.name, it.stage, lod); it.lod = lod; let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), E = new THREE.Euler();
   const box = focusBounds ? new THREE.Box3() : null;

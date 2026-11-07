@@ -1,6 +1,6 @@
 # MyTerra 3D map — the visual style, locked
 
-**Decided 2026-10-05.** The 3D farm map is a *toy diorama*: rounded, flat-coloured, brightly and softly lit, in the app's own palette. This file is the single source of truth for how anything on the map should look. Read it before touching `src/features/grove/`. Do not re-open the style question in a session — change this file first if the style changes.
+**Decided 2026-10-05; look A applied 2026-11-07.** The 3D farm map is a *toy diorama*: rounded, flat-coloured, sunny and warmly lit, in the app's own palette. Look A (2026-11-07) follows the target picture Dervis approved (Gemini "direction A — richer toy", kept outside the repo): warm olive land, clearer and longer shadows, brighter trees, red sheds, a navy night with lit windows and a glowing greenhouse. This file is the single source of truth for how anything on the map should look. Read it before touching `src/features/grove/`. Do not re-open the style question in a session — change this file first if the style changes.
 
 Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboard (X, 3 Oct 2026) — rounded boxes, one brand colour, white/pale ground, soft shadows, floating white UI cards.
 
@@ -23,24 +23,25 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - Balcony detail: shallow rounded floor tiles with narrow joints, a visible slab edge, wall skirting and a door threshold. Container pots have matching saucers. Existing hanging-pot ornaments hang from three fine supports; the pot and plant swing together gently about the suspension point, following wind strength and direction. Reduced motion leaves them still. Floor tiles are merged by material and capped at 40 × 40.
 
 ## 3. Palette (`TOY` in `palette.js` — the one source for both views; `toy.js` turns it into `PAL` numbers for three.js)
-- **Backdrop / fog:** sage `#b4c69d` — the land fades into it far away (fog starts well beyond the farm); the canvas background is the same colour.
-- **Ground:** meadow green `#6d8f49` with softer patches `#5f7f3e` (set 2026-10-06 so the lit render ≈ `#779849`, close to the old photo map's `#5f7136`); the property inside the hedge a shade lighter `#75984f` with soft irregular lusher/drier patches painted into the vertices (no stripes); pasture / orchard / lawn close variants.
-- **Paths:** warm off-white `#ebe5d8` with a `#d9d2c3` edge, round ends. Settings → Path color: *Warm sand* `#e8d8b9` / *Slate* `#bfc4be` override the material's own tone.
-- **Soil:** `#886347` (raised beds, rows), lighter `#a07e5e` for in-ground beds, `#b69f82` trampled earth.
-- **Buildings:** cream walls `#f2ebdd`, white trims; roofs terracotta `#cf8260` or slate `#6b7784`; barn red `#c7624f` with white boards; coop and sheds warm wood `#cfae82`.
+- **Backdrop / fog:** warm olive `#c3bd78` — the land fades into it far away (fog starts well beyond the farm); the canvas background is the same colour.
+- **Ground (look A):** sunny olive meadow `#a8a95a` with patches `#9b9e51` / dry `#bcb46f`; the property inside the hedge `#a2ae5c` with soft irregular lusher/drier patches painted into the vertices (no stripes); lawn `#9dad58`, pasture `#a1ac5a`, orchard `#96a654`. Grass tufts (`#6f9440`) are scattered on the open ground inside AND outside the hedge (fewer on phones).
+- **Paths:** warm cream `#eee3cb` with a `#dccdae` edge, round ends. Settings → Path color: *Warm sand* `#e8d8b9` / *Slate* `#bfc4be` override the material's own tone.
+- **Soil:** rich brown `#7a5237` (raised beds, rows), dark `#5f3f2a`, lighter `#957155` for in-ground beds, `#b69f82` trampled earth.
+- **Buildings:** cream walls `#f2ebdd`, white trims; roofs terracotta `#cf8260` or light slate `#87909a`; barn red `#c7624f` with white boards; sheds and stores barn red with white trim (look A).
 - **Wood:** `#cfae82` / `#b68e63` / `#7c5a3d`. Stone `#d3cfc5`. Zinc `#c6cdd0`.
 - **Water** `#7cc0d6`, **glass** `#daf2ef`, **hay** `#e4c66f`, **smoke** `#f2f0ec`.
-- **Foliage:** four greens `#4b9150 #3f8446 #5b9f58 #357a3c`, silvery olive `#7d916a`, deep citrus `#33733d`, hedge `#427c41`.
+- **Foliage:** four bright greens `#62a945 #54993d #74b650 #478c38`, silvery olive `#7d916a`, deep citrus `#33733d`, hedge `#3f8a3a`.
 - **The one accent is the brand green `#128147`** (with `#1fa35c` light and `#0c5e33` deep): every door, every gate, the greenhouse door, the tractor, the wheelbarrow, the watering can, the mailbox, the tap wheel, the drinker base. Nothing else is saturated green-blue. Attention stays with `#f7c552` gold (harvest frames, stage tags) and the app's orange (job badges).
 
 ## 4. Light
-- Hemisphere light: white sky, pale green bounce, intensity 0.85. One warm sun (`#fff3e4`, 2.1) high in the afternoon sky so shadows are short.
-- **Shadows are soft and faint**: PCF radius 4, shadow intensity 0.62. Shadows show volume; they never darken the scene.
-- RoomEnvironment at 0.22 for a gentle gradient on matte surfaces. ACES, exposure 0.92. Hemisphere ground bounce `#9fb48a`.
+- Hemisphere light: white sky, warm olive bounce `#b3ac78`, intensity 0.66. One warm sun (`#fff0d6`, 2.45) about 45° up in the fixed afternoon, so shadows are clear and a little long (look A).
+- **Shadows are soft but clear**: PCF radius 4, shadow intensity 0.9. They ground every object; they still never go black.
+- RoomEnvironment at 0.22 for a gentle gradient on matte surfaces. ACES, exposure 1.15.
+- **No post-processing** (no screen-space AO, bloom, depth of field or tilt-shift): tried 2026-11-07, it blurred the map, lost anti-aliasing and blew out the night glow. Edges stay sharp.
 - No vignette, no mottle, no cloud-shadow layers, no darkening of the ground anywhere.
 
 ## 4b. Live sky and weather (2026-10-14, `sky.js`, `weather-fx.js`)
-- The light above is the **fixed afternoon** (`FIXED_SKY`, "Live sky: off" in Settings → Ground & paths). With Live sky on, the sun follows the local clock and the town's latitude (`data.cityGeo`): four presets blended by solar elevation — high (today's look), low (`#ffe2bd`, longer soft shadows), dusk/dawn (`#ffb876`, `#d9c2b2` sky) and night (a `#9fb3d6` "moon" from the mirrored azimuth 40° up, `#5b6a86` sky, exposure 0.8). Night never goes darker than that; window glass and the porch lamp glow warm (`NIGHT` uniform, `nightGlow()` in toy.js). Shadows re-render once a minute.
+- The light above is the **fixed afternoon** (`FIXED_SKY`, "Live sky: off" in Settings → Ground & paths). With Live sky on, the sun follows the local clock and the town's latitude (`data.cityGeo`): four presets blended by solar elevation — high (today's look), low (`#ffe2bd`, longer soft shadows), dusk/dawn (`#ffb876`, `#d9c2b2` sky) and night (a `#a9bde0` "moon" from the mirrored azimuth 40° up, `#5a72a6` sky, navy fog `#22355a`). **Night (look A):** the land outside the hedge slides to navy (`nightTint()` in toy.js on the ground, lighter on the property, darker greens on trees and hedge); window glass (×1.6), the porch lamp and the greenhouse glass (×2, tinted amber) glow warm (`nightGlow(mat, k)`); warm light pools lie on the ground in front of the house door and round the greenhouse (`buildGlowPools`, one additive instanced disc, no real lights). Shadows re-render once a minute.
 - Today's weather (Open-Meteo current conditions) flattens the light when cloudy or foggy (less sun, more sky, fainter shadows, nearer fog) and brings **toy clouds**: 3–6 merged rounded white blobs at 16–20 m drifting downwind, **never casting shadows**. Rain is pale instanced streaks, snow slow white flakes, both falling through a box round the camera target; none under reduced motion, half as many on phones.
 - **Wind** is one uniform (`WIND`: direction the air moves toward, strength 0.15–1 from km/h ÷ 45). Tree, hedge and crop sway scale with it and travel downwind as a gust wave; smoke bends with it; the barn cupola vane turns into it.
 - Crop sway converts world wind into each plant's local orientation, with stable variations in flutter and flexibility. Pond waves follow the wind, with surface normals derived from the same wave as the displacement. Neither changes the sky or lighting presets.
@@ -86,7 +87,8 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 ## 8. Performance rules that keep the look affordable
 - Everything static is merged per material (`bake()`); repeated parts are instanced (fences, pots, tufts, crops, fruit, bees, smoke).
 - Crop models have three levels of detail chosen farm-wide by plant count (>350 plants, >900 plants).
-- Budget at the home view: ≤ 200 draw calls, ≤ 700 k triangles on the all-zones harness (every zone type at once, the worst case). Verified 2026-10-06 after the detail pass: 171 calls / 662 k all-zones; 136 / 530 k on 36 numbered beds.
+- Budget at the home view: ≤ 200 draw calls, ≤ 800 k triangles on the all-zones harness (every zone type at once, the worst case). 2026-11-07: 181 calls / 797 k desktop.
+- **Phone detail tier (2026-11-07):** when the render tier is `mobile`, `setDetail(.45)` (toy.js) builds every sphere, capsule, cylinder, torus and disc, every Parts model and every animal with fewer segments, rounded boxes with one bevel step, and crops one level of detail lighter. Same silhouettes, about half the triangles: 380 k on the all-zones harness (was 787 k). Icons and desktop always build at full detail.
 
 ## 8b. The flat view and the layout editor (`AerialArtwork.jsx`, `GroveScene.jsx`)
 - The same toy style seen straight from above, reading the same `palette.js` colours: flat fills, rounded corners, no photo textures or image sprites, no texture overlays, no sun-tint layer.

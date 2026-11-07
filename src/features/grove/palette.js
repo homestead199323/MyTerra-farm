@@ -6,18 +6,18 @@
    MARKER: MAP_PALETTE_V1
    ═══════════════════════════════════════════ */
 export const TOY = {
-  page: "#b4c69d",
+  page: "#c3bd78", // warm sunny olive backdrop (look A, 2026-11-07)
   yard: "#d9d2c3", yardRim: "#c9c2b3", // Yard / parking: a pale gravel slab with white bay lines
-  meadow: "#6d8f49", meadowB: "#5f7f3e", meadowDry: "#a0a86c", apron: "#75984f",
-  lawn: "#72944d", pasture: "#769750", orchard: "#6a8c47",
-  path: "#ebe5d8", pathEdge: "#d9d2c3", gravel: "#dfd9ca", stonePath: "#d8d3c8", soilPath: "#cfbca2",
-  soil: "#886347", soilDark: "#71513a", soilLight: "#a07e5e", mulch: "#6f4f3a", earth: "#b69f82", floor: "#8e7861",
+  meadow: "#a8a95a", meadowB: "#9b9e51", meadowDry: "#bcb46f", apron: "#a2ae5c",
+  lawn: "#9dad58", pasture: "#a1ac5a", orchard: "#96a654",
+  path: "#eee3cb", pathEdge: "#dccdae", gravel: "#dfd9ca", stonePath: "#d8d3c8", soilPath: "#cfbca2",
+  soil: "#7a5237", soilDark: "#5f3f2a", soilLight: "#957155", mulch: "#6f4f3a", earth: "#b69f82", floor: "#8e7861",
   wood: "#cfae82", woodMid: "#b68e63", woodDark: "#7c5a3d", woodPale: "#e2cfae",
   cream: "#f2ebdd", white: "#fbfaf6", trim: "#ffffff", panel: "#ebe5d8",
-  terracotta: "#cf8260", slate: "#6b7784", slateDark: "#55606c", zinc: "#c6cdd0", metal: "#9ea8ae", dark: "#3b3f44", ink: "#2a2d31",
+  terracotta: "#cf8260", slate: "#87909a", slateDark: "#6d7781", zinc: "#c6cdd0", metal: "#9ea8ae", dark: "#3b3f44", ink: "#2a2d31",
   barn: "#c7624f", barnDark: "#ad5041",
   green: "#128147", greenLight: "#1fa35c", greenPale: "#e7f3ec", greenDeep: "#0c5e33",
-  leaf: ["#4b9150", "#3f8446", "#5b9f58", "#357a3c"], leafOlive: "#7d916a", leafCitrus: "#33733d", leafDark: "#3a7742", hedge: "#427c41",
+  leaf: ["#62a945", "#54993d", "#74b650", "#478c38"], leafOlive: "#7d916a", leafCitrus: "#33733d", leafDark: "#3a7742", hedge: "#3f8a3a",
   water: "#7cc0d6", waterDeep: "#66afc9", ripple: "#dff2f8",
   glass: "#daf2ef", winGlass: "#9fc9dc",
   hay: "#e4c66f", hayDark: "#cfa94f", straw: "#e8d393",
@@ -35,7 +35,7 @@ export const TOY = {
 export const STAGE_HEX = ["#c3cbc4", "#dcca92", "#a9dd8c", "#5fb24d", "#c1d44f", "#f7c552"];
 /* Settings → Ground material / colour: [base, patch, dry] */
 export const GROUND_TONES = {
-  meadow: { natural: ["#6d8f49", "#5f7f3e", "#a0a86c"], dry: ["#aeb27f", "#9fa472", "#bdb98a"], deep: ["#5d8440", "#507536", "#92a26a"] },
+  meadow: { natural: ["#a8a95a", "#9b9e51", "#bcb46f"], dry: ["#aeb27f", "#9fa472", "#bdb98a"], deep: ["#5d8440", "#507536", "#92a26a"] },
   soil: ["#bda583", "#b09876", "#cab596"], gravel: ["#dcd6c8", "#d0c9ba", "#e3ded1"], stone: ["#d6d2c8", "#cac5ba", "#dfdbd2"],
 };
 /* Settings → Path material / colour: [surface, edge] */

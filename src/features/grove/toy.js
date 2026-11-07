@@ -14,7 +14,7 @@ export const HPI = Math.PI / 2;
 export const NIGHT = { value: 0 };
 /* WIND — (dirX, dirZ, strength 0..1): where the air moves toward in scene space; set by Grove3D's sky */
 export const WIND = { value: new THREE.Vector3(.72, -.69, .15) };
-export function nightGlow(mat) {
+export function nightGlow(mat, k = .55) {
   if (mat.userData.nightGlow) return mat; mat.userData.nightGlow = true;
   const prev = mat.onBeforeCompile;
   mat.onBeforeCompile = (sh, r) => {
@@ -22,9 +22,25 @@ export function nightGlow(mat) {
     sh.uniforms.uNight = NIGHT;
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", "#include <common>\nuniform float uNight;")
-      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += uNight * vec3(1., .82, .48) * .55;");
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>\ntotalEmissiveRadiance += uNight * vec3(1., .82, .48) * ${k.toFixed(2)};`);
   };
-  mat.customProgramCacheKey = () => "g3night";
+  mat.customProgramCacheKey = () => `g3night${k}`;
+  return mat;
+}
+/* nightTint(mat, k, rgb) — after dark, ground colours slide toward a cool blue (look A: the land goes navy at dusk while
+   the farm's lit windows stay warm). k = strength at full night; daylight is untouched. */
+export function nightTint(mat, k = .8, rgb = [.13, .2, .36]) {
+  if (mat.userData.nightTint) return mat; mat.userData.nightTint = true;
+  const prev = mat.onBeforeCompile, c = rgb.map((v) => v.toFixed(3)).join(", ");
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev(sh, r);
+    sh.uniforms.uNightT = NIGHT;
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nuniform float uNightT;")
+      .replace("#include <color_fragment>", `#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(${c}), uNightT * ${k.toFixed(2)});`);
+  };
+  const prevKey = mat.customProgramCacheKey?.bind(mat); // chain: foliage / other patches keep their own program key
+  mat.customProgramCacheKey = () => `${prevKey ? prevKey() : ""}|g3tint${k}|${c}`;
   return mat;
 }
 /* ripple(mat, { time, ripple }) — a gentle vertex wave on pond water (two crossing waves; ×3 under rain), with the
@@ -79,22 +95,27 @@ export function flat(color, { rough = .88, metal = 0, side = THREE.FrontSide, tr
 /* layered flat planes (paths, patches) sit on the ground with a polygon offset so they never z-fight */
 export function layered(mat, n) { mat.polygonOffset = true; mat.polygonOffsetFactor = -1; mat.polygonOffsetUnits = -n; return mat; }
 
+/* ---------- detail tier: phones build every round shape with fewer segments (Grove3D calls setDetail before a
+   world build; icons and desktop stay at 1). The cache key carries the final segment count, so tiers never mix. ---------- */
+export const DETAIL = { value: 1 };
+export function setDetail(v) { DETAIL.value = v > 0 ? Math.min(1, v) : 1; }
+const sg = (n, min) => Math.max(min, Math.round(n * DETAIL.value));
 /* ---------- geometry cache: dimensions are quantised to 5 mm so repeated parts share one buffer ---------- */
 const geos = new Map();
 const q = (v) => Math.round(v * 200) / 200;
 function cached(key, make) { let g = geos.get(key); if (!g) { g = make(); g.userData.shared = true; geos.set(key, g); } return g; } // shared: survives world rebuilds (see disposeWorld)
 export function rboxGeo(w, h, d, r, seg) {
   const mn = Math.min(w, h, d);
-  const rr = Math.min(r ?? Math.min(mn * .24, .32), mn / 2 - .001), s = seg ?? (mn >= .28 ? 2 : 1);
+  const rr = Math.min(r ?? Math.min(mn * .24, .32), mn / 2 - .001), s = seg ?? (mn >= .28 && DETAIL.value >= .8 ? 2 : 1);
   if (rr <= .004) return cached(`b|${q(w)}|${q(h)}|${q(d)}`, () => new THREE.BoxGeometry(w, h, d));
   return cached(`rb|${q(w)}|${q(h)}|${q(d)}|${q(rr)}|${s}`, () => new RoundedBoxGeometry(w, h, d, s, rr));
 }
-export function sphereGeo(seg = 14, rings = 10) { return cached(`s|${seg}|${rings}`, () => new THREE.SphereGeometry(1, seg, rings)); }
-export function capsuleGeo(r, len, seg = 10, cap = 4) { return cached(`c|${q(r)}|${q(len)}|${seg}|${cap}`, () => new THREE.CapsuleGeometry(r, len, cap, seg)); }
-export function cylGeo(rt, rb, h, seg = 16, open = false) { return cached(`y|${q(rt)}|${q(rb)}|${q(h)}|${seg}|${open ? 1 : 0}`, () => new THREE.CylinderGeometry(rt, rb, h, seg, 1, open)); }
-export function torusGeo(R, r, tube = 8, seg = 20, arc = Math.PI * 2) { return cached(`t|${q(R)}|${q(r)}|${tube}|${seg}|${arc.toFixed(2)}`, () => new THREE.TorusGeometry(R, r, tube, seg, arc)); }
+export function sphereGeo(seg = 14, rings = 10) { seg = sg(seg, 7); rings = sg(rings, 5); return cached(`s|${seg}|${rings}`, () => new THREE.SphereGeometry(1, seg, rings)); }
+export function capsuleGeo(r, len, seg = 10, cap = 4) { seg = sg(seg, 6); cap = sg(cap, 2); return cached(`c|${q(r)}|${q(len)}|${seg}|${cap}`, () => new THREE.CapsuleGeometry(r, len, cap, seg)); }
+export function cylGeo(rt, rb, h, seg = 16, open = false) { seg = sg(seg, 6); return cached(`y|${q(rt)}|${q(rb)}|${q(h)}|${seg}|${open ? 1 : 0}`, () => new THREE.CylinderGeometry(rt, rb, h, seg, 1, open)); }
+export function torusGeo(R, r, tube = 8, seg = 20, arc = Math.PI * 2) { tube = sg(tube, 4); seg = sg(seg, 10); return cached(`t|${q(R)}|${q(r)}|${tube}|${seg}|${arc.toFixed(2)}`, () => new THREE.TorusGeometry(R, r, tube, seg, arc)); }
 export function coneGeo(r, h, seg = 12) { return cached(`k|${q(r)}|${q(h)}|${seg}`, () => new THREE.ConeGeometry(r, h, seg)); }
-export function discGeo(r, seg = 24) { return cached(`d|${q(r)}|${seg}`, () => new THREE.CircleGeometry(r, seg)); }
+export function discGeo(r, seg = 24) { seg = sg(seg, 10); return cached(`d|${q(r)}|${seg}`, () => new THREE.CircleGeometry(r, seg)); }
 export function planeGeo(w, h) { return cached(`p|${q(w)}|${q(h)}`, () => new THREE.PlaneGeometry(w, h)); }
 
 /* ---------- mesh helpers: every one adds to a group and returns the mesh ---------- */
@@ -134,7 +155,7 @@ export function instances(g, geo, mat, items, { cast = true, receive = true } = 
 
 /* ---------- vertex-coloured part builder: merges coloured primitives into one geometry (crops, props) ---------- */
 export class Parts {
-  constructor() { this.geos = []; this.detail = 1; }
+  constructor() { this.geos = []; this.detail = DETAIL.value; }
   seg(n, min = 5) { return Math.max(min, Math.round(n * this.detail)); }
   add(geo, color, { pos = [0, 0, 0], rot = [0, 0, 0], scale = 1, paint = null } = {}) {
     const M = new THREE.Matrix4(), Q = new THREE.Quaternion().setFromEuler(new THREE.Euler(rot[0], rot[1], rot[2], "YXZ"));

@@ -13,10 +13,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
-import { N8AOPass } from "n8ao";
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent } from "./gestures";
 import { focusDistance } from "./focus-camera";
@@ -35,7 +31,7 @@ import { createBrain } from "./herd-brain";
 import { buildSwallows, buildButterflies, swallowCount, butterflyCount } from "./fauna-fx";
 import { GROUND_TONES, pathTones } from "./palette";
 import { TREE_RE } from "./crop-families";
-import { PAL, STAGE_COLOR, NIGHT, WIND, nightGlow, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
+import { PAL, STAGE_COLOR, NIGHT, WIND, setDetail, nightGlow, nightTint, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
@@ -45,6 +41,8 @@ const CAM = { az: -22, el: 54, fov: 28 };
 // Phone UX tier (preview tile, bottom bar, label density): a coarse pointer, i.e. fingers. The dev harness can
 // force it (?coarse=1) so Playwright at phone size exercises the phone branches without device emulation.
 // The render-quality tier (`mobile` in the engine) is wider: coarse pointer OR a short screen side.
+// Phones build every round shape with fewer segments (toy.js setDetail): about half the triangles, same silhouettes.
+const PHONE_DETAIL = .45;
 const HARNESS = import.meta.env.DEV && typeof window !== "undefined" ? window.__g3harness || null : null;
 const isCoarse = () => HARNESS?.coarse === true || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches);
 // growth stages (farm-model STAGES): Planned, Sown, Seedling, Growing, Maturing, Harvest window
@@ -108,15 +106,15 @@ function materials() {
     wood: flat(PAL.wood), woodMid: flat(PAL.woodMid), woodDark: flat(PAL.woodDark), woodPale: flat(PAL.woodPale), bark: flat(0x9a7656),
     terracotta: flat(PAL.terracotta), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: flat(PAL.zinc, { rough: .6, metal: .15 }), metal: flat(PAL.metal, { rough: .5, metal: .3 }), dark: flat(PAL.dark), ink: flat(0x4a3f36),
     barn: flat(PAL.barn), barnDark: flat(PAL.barnDark), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
-    glass: nightGlow(flat(PAL.glass, { transparent: true, opacity: .34, rough: .12, physical: true, env: 1.5, side: THREE.DoubleSide, depthWrite: false })),
-    winGlass: nightGlow(flat(0x9fc9dc, { rough: .18, metal: .05, physical: true, env: 1.4 })),
-    lamp: nightGlow(flat(0xd9b35c, { rough: .4, metal: .5 })),
+    glass: nightTint(nightGlow(flat(PAL.glass, { transparent: true, opacity: .34, rough: .12, physical: true, env: 1.5, side: THREE.DoubleSide, depthWrite: false }), 2.0), .8, [1, .62, .25]), // the greenhouse glows warm after dark
+    winGlass: nightGlow(flat(0x9fc9dc, { rough: .18, metal: .05, physical: true, env: 1.4 }), 1.6),
+    lamp: nightGlow(flat(0xd9b35c, { rough: .4, metal: .5 }), 1.3),
     water: flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4 }), pondWater: ripple(flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4, variant: "pond" }), { time: TIME, ripple: WX.ripple }),
     yard: flat(PAL.yard, { rough: .95 }), yardRim: flat(PAL.yardRim, { rough: .95 }),
     solar: flat(PAL.solar, { rough: .25, metal: .3, physical: true, env: 1.3 }), solarFrame: flat(PAL.solarFrame, { rough: .5, metal: .2 }),
-    hedge: foliage(flat(PAL.hedge, { rough: .95 }), { sway: .02, freq: .6, from: .4 }),
-    leaf: [...PAL.leaf, PAL.leafOlive, PAL.leafCitrus].map((c) => foliage(flat(c, { rough: .95 }), { sway: .06, freq: .25, from: 1.2 })), // 0-3 greens, 4 silvery olive, 5 deep citrus / fig
-    tuft: flat(0x8fc77e, { rough: 1 }), flower: PAL.flower.map((c) => flat(c, { rough: .9 })), flowerStem: flat(0x6fa05a, { rough: 1 }),
+    hedge: nightTint(foliage(flat(PAL.hedge, { rough: .95 }), { sway: .02, freq: .6, from: .4 }), .55, [.07, .17, .12]),
+    leaf: [...PAL.leaf, PAL.leafOlive, PAL.leafCitrus].map((c) => nightTint(foliage(flat(c, { rough: .95 }), { sway: .06, freq: .25, from: 1.2 }), .55, [.07, .17, .12])), // 0-3 greens, 4 silvery olive, 5 deep citrus / fig
+    tuft: flat(0x6f9440, { rough: 1 }), flower: PAL.flower.map((c) => flat(c, { rough: .9 })), flowerStem: flat(0x6fa05a, { rough: 1 }),
     compost: PAL.compost.map((c) => flat(c, { rough: 1 })), hive: PAL.hive.map((c) => flat(c)), pot: flat(PAL.pot), potRim: flat(PAL.potRim), mulch: layered(flat(PAL.mulch, { rough: 1 }), 13), mulchRim: layered(flat(PAL.soilLight, { rough: 1 }), 12),
     netting: flat(0xffffff, { transparent: true, opacity: .14, side: THREE.DoubleSide, depthWrite: false, rough: 1 }), shade: flat(0xeef2e6, { rough: .95 }),
     hit: new THREE.MeshBasicMaterial({ visible: false }),
@@ -375,7 +373,7 @@ function gableRoof(g, cx, cz, w, d, H, rise, ov, roofMat, wallMat, alongX, capMa
 function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, off = [0, 0] } = {}) {
   const cx = w / 2, cz = d / 2, house = kind === "house", small = Math.min(w, d) < 4, alongX = w >= d;
   const H = house ? 3.0 : small ? 2.3 : 2.6;
-  const wallMat = house ? M.cream : M.wood;
+  const wallMat = house ? M.cream : M.barn; // sheds and stores: barn red with white trim (look A)
   contact(g, M, cx, cz, w, d);
   tag(rbox(g, w + .16, .34, d + .16, M.stoneDark, cx, .17, cz, { r: .08 }));
   tag(rbox(g, w, H, d, wallMat, cx, H / 2, cz, { r: Math.min(.24, Math.min(w, d) * .08), seg: 2 }));
@@ -395,6 +393,7 @@ function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, 
     // door, windows
     const door = .98, doorH = 2.1, wy = 1.5, ww = .9, wh = 1.1;
     doorAt(dg, put, "S", 0, door, doorH, "house", M, d);
+    if (ctx) (ctx.glowPools ||= []).push({ x: off[0] + cx, z: off[1] + d + 1.0, r: Math.min(3.2, w * .38) }); // porch light pool after dark
     for (let k = 0; ; k++) { const u = door / 2 + .6 + ww / 2 + k * 1.95; if (u + ww / 2 + .9 > w / 2) break; windowAt(dg, put, "S", u, wy, ww, wh, M, { shutters: true }); windowAt(dg, put, "S", -u, wy, ww, wh, M, { shutters: true }); }
     const nE = Math.max(0, Math.floor((d - 1.0) / 2.0));
     for (let i = 0; i < nE; i++) { const u = (i - (nE - 1) / 2) * 2.0; windowAt(dg, put, "W", u, wy, ww, wh, M); windowAt(dg, put, "E", u, wy, ww, wh, M); }
@@ -686,6 +685,19 @@ function tuftGeo() { // a clump of five soft blades, merged: grass tufts and wil
   const g = mergeGeometries(parts, false); parts.forEach((p) => p.dispose()); g.userData.shared = true; tuftGeos.set("t", g); return g;
 }
 function buildTufts(g, ctx, M) { instances(g, tuftGeo(), M.tuft, ctx.tufts, { cast: false, receive: true }); }
+/* warm light pools on the ground in front of lit doors and round the greenhouse after dark (look A). One instanced
+   disc, additive, fading with NIGHT: invisible by day, no lights added to the scene (cheap on phones). */
+let glowPoolMat = null;
+function buildGlowPools(g, ctx) {
+  const pools = ctx.glowPools || []; if (!pools.length) return;
+  glowPoolMat ??= new THREE.ShaderMaterial({
+    uniforms: { uNight: NIGHT }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+    vertexShader: "varying vec2 vP; void main() { vP = position.xy; vec4 p = vec4(position, 1.);\n#ifdef USE_INSTANCING\np = instanceMatrix * p;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * p; }",
+    fragmentShader: "uniform float uNight; varying vec2 vP; void main() { float r = length(vP), a = pow(max(0., 1. - r * r), 1.6) * uNight * .6; gl_FragColor = vec4(vec3(1., .68, .3), a); }",
+  });
+  const im = instances(g, discGeo(1, 28), glowPoolMat, pools.map((q) => ({ p: [q.x, .09, q.z], rx: -HPI, s: [q.r, q.r, 1] })), { cast: false, receive: false });
+  if (im) { im.renderOrder = 20; im.frustumCulled = false; glowPoolMat.polygonOffset = true; glowPoolMat.polygonOffsetFactor = -2; glowPoolMat.polygonOffsetUnits = -40; }
+}
 function pots(ctx, items, plantsList, off = [0, 0]) { // items: [{x, y, z}] — pot + soil + a small 3D plant, collected farm-wide
   items.forEach((it, i) => { const [crop, stage] = plantsList[i % plantsList.length]; ctx.pots.push({ x: off[0] + it.x, y: it.y, z: off[1] + it.z }); ctx.plants.push({ name: crop, stage, x: off[0] + it.x, y: it.y + .2, z: off[1] + it.z, s: cropScale(.3, stage, crop), ry: srand(i + 11) * 6.28 }); });
 }
@@ -804,6 +816,7 @@ function buildZone(z, ctx) {
     pill(g, [-t / 2 - .1, rimH - .2, cz + d * .3], [-t / 2 - .5, rimH - .2, cz + d * .3], .05, M.zinc, { seg: 10 });
   } else if (z.type === "greenhouse") {
     const H = 2.25, kw = .48, alongX = w >= d, rise = Math.max(.6, Math.min(w, d) * .3), F = M.trim;
+    (ctx.glowPools ||= []).push({ x: off[0] + cx, z: off[1] + cz, r: Math.max(w, d) * .62 }); // the lit greenhouse spills warm light after dark
     contact(g, M, cx, cz, w, d, .006);
     tag(plane(g, w, d, M.soil(), cx, .01, cz));
     rbox(g, alongX ? w - .2 : .9, .03, alongX ? .9 : d - .2, M.gravel, cx, .02, cz, { r: .01, cast: false });
@@ -1087,7 +1100,7 @@ function buildWorld(ctx) {
   const heightAt = terrainHeightFn(fW, fH, margin); ctx.heightAt = heightAt;
   const style = data.mapStyle || {}, gm = style.groundMaterial || (env === "balcony" ? "stone" : "meadow");
   const colors = gm === "meadow" ? (GROUNDS.meadow[style.groundColor] || GROUNDS.meadow.natural) : (GROUNDS[gm] || GROUNDS.stone);
-  const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), flat(0xffffff, { rough: .96, vertexColors: true }));
+  const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), nightTint(flat(0xffffff, { rough: .96, vertexColors: true, variant: "land" }), .82));
   ground.receiveShadow = true; world.add(ground); ctx.ground = ground;
   if (gm === "meadow") {
     // the property inside the hedge: a shade lighter than the meadow, with soft irregular patches painted into the
@@ -1101,7 +1114,7 @@ function buildWorld(ctx) {
       col.push(tmp.r, tmp.g, tmp.b);
     }
     geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    const apron = new THREE.Mesh(geo, layered(flat(0xffffff, { rough: .96, vertexColors: true }), 3)); apron.rotation.x = -HPI; apron.position.set(fW / 2, .004, fH / 2); apron.receiveShadow = true; world.add(apron); ctx.apron = apron; // kept out of bake(): it carries vertex colours
+    const apron = new THREE.Mesh(geo, nightTint(layered(flat(0xffffff, { rough: .96, vertexColors: true, variant: "apron" }), 3), .3, [.2, .25, .2])); apron.rotation.x = -HPI; apron.position.set(fW / 2, .004, fH / 2); apron.receiveShadow = true; world.add(apron); ctx.apron = apron; // kept out of bake(): it carries vertex colours
   }
   // boundary by environment: a balcony is a slab against the building wall with a slim rounded railing;
   // a garden and a farm get the round-capped post-and-rail fence, stone gate pillars and a green gate
@@ -1210,11 +1223,20 @@ function buildWorld(ctx) {
   }
   const open = (i, seed) => { for (let k = 0; k < 6; k++) { const x = -margin * .6 + srand(seed + i * 3 + k) * (fW + margin * 1.2), y = -margin * .6 + srand(seed + i * 5 + k + 1) * (fH + margin * 1.2); if (!inZone(x, y) && !onRoad(x, y)) return [x, y]; } return [null, null]; };
   tuftsIn(ctx, Math.min(320, Math.round(fW * fH / 5)), 17, (i) => open(i, 500));
+  if (env !== "balcony") { // look A: tufts scattered over the meadow outside the hedge too (fewer on phones)
+    const nOut = Math.min(ctx.device?.mobile ? 70 : 160, Math.round((fW + fH) * 2.2));
+    for (let i = 0; i < nOut; i++) {
+      const edge = i % 4, t = srand(i * 3 + 911), off = 2.2 + srand(i * 5 + 913) * margin * 1.5;
+      const x = edge === 0 ? -off : edge === 1 ? fW + off : -margin + t * (fW + 2 * margin), y = edge === 2 ? -off : edge === 3 ? fH + off : -margin + t * (fH + 2 * margin);
+      if (edge === 3 && Math.abs(x - fW / 2) < 2.4) continue; // the drive stays clear
+      ctx.tufts.push({ p: [x, heightAt(x, y), y], ry: srand(i + 917) * 3, s: .8 + srand(i + 919) * .8 });
+    }
+  }
   const heads = PAL.flower.map(() => []), nf = Math.min(120, Math.round(fW * fH / 14));
   for (let i = 0; i < nf; i++) { const [x, y] = open(i, 900); if (x == null) continue; const s = .7 + srand(i + 41) * .6; ctx.tufts.push({ p: [x, 0, y], ry: srand(i + 43) * 3, s }); for (let k = 0; k < 3; k++) heads[(i + k) % heads.length].push({ p: [x + (srand(i * 3 + k) - .5) * .22, .2 * s + srand(i + k) * .08, y + (srand(i * 5 + k) - .5) * .22], s: .035 + srand(i * 7 + k) * .02 }); }
   heads.forEach((list, k) => instances(world, sphereGeo(8, 6), M.flower[k], list, { cast: false, receive: false }));
   // everything collected across the zones is drawn once for the whole farm
-  buildFences(world, ctx, M); buildTufts(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M);
+  buildFences(world, ctx, M); buildTufts(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M); buildGlowPools(world, ctx);
   buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
   bake(world, new Set([...ctx.hits, ...ctx.plotHits, ctx.ground, ctx.apron, ...ctx.keep])); // the terrain keeps its vertex colours; the vanes stay live
   const herd = buildHerd(ctx.herd, TIME); if (herd) { world.add(herd.mesh); ctx.herdMesh = herd; } // every animal, one draw call, moving in the vertex shader
@@ -1663,7 +1685,7 @@ export default function Grove3D(props) {
     const coarse = isCoarse(), mobile = coarse || Math.min(screen.width, screen.height) < 820;
     const DPR = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2), LOW = Math.min(DPR, mobile ? 1.15 : 1.25);
     renderer.setPixelRatio(DPR);
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; // static scene: shadows render once
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false; // static scene: shadows render once
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.domElement.className = "g3-canvas"; renderer.domElement.setAttribute("data-g3-style", "toy-v1"); renderer.domElement.setAttribute("aria-label", "3D farm map: drag to move, pinch or scroll to zoom, two fingers to rotate");
@@ -1674,27 +1696,6 @@ export default function Grove3D(props) {
     scene.background = new THREE.Color(FIXED_SKY.fog);
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .22; pmrem.dispose();
     const camera = new THREE.PerspectiveCamera(CAM.fov, 1, 1, 4000);
-    let composer = null, n8aoPass = null, bloomPass = null;
-    try {
-      composer = new EffectComposer(renderer);
-      n8aoPass = new N8AOPass(scene, camera, 512, 512);
-      n8aoPass.configuration.aoRadius = 2.4;
-      n8aoPass.configuration.distanceFalloff = 1.0;
-      n8aoPass.configuration.intensity = 2.4;
-      n8aoPass.configuration.color = new THREE.Color(0x101a14);
-      n8aoPass.configuration.halfRes = mobile;
-      n8aoPass.configuration.gammaCorrection = false;
-      n8aoPass.configuration.transparencyAware = true;
-      composer.addPass(n8aoPass);
-
-      bloomPass = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.18, 0.4, 0.88);
-      composer.addPass(bloomPass);
-
-      const outputPass = new OutputPass();
-      composer.addPass(outputPass);
-    } catch {
-      composer = null;
-    }
     // bright, soft, toy-box light: a white sky with a pale green bounce, one warm sun with faint soft shadows
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9fb48a, .85); scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xfff3e4, 2.1); sun.castShadow = true;
@@ -1704,7 +1705,7 @@ export default function Grove3D(props) {
     let queued = false, dirty = false, animOn = false, animRaf = 0, lastFrame = 0, inView = true;
     const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     const IDLE_MS = mobile ? 1000 / 20 : 1000 / 30; // idle animation rate; gestures and camera moves render every frame
-    const st = { renderer, scene, camera, sun, composer, world: null, hits: [], plotHits: [], dims: null, fitted: false, anchors: {}, highlight: null, pickGroup: null, picked: null, calls: 0, animating: false };
+    const st = { renderer, scene, camera, sun, world: null, hits: [], plotHits: [], dims: null, fitted: false, anchors: {}, highlight: null, pickGroup: null, picked: null, calls: 0, animating: false };
     st.reduced = reduced; st.mobile = mobile; st.coarse = coarse; state.current = st;
     if (import.meta.env?.DEV && typeof window !== "undefined") window.__g3 = st; // dev-only inspection hook
     // the sky (sky.js) owns every light value; FIXED_SKY reproduces the map's original fixed afternoon
@@ -1756,7 +1757,7 @@ export default function Grove3D(props) {
         group.rotation.x = swing * WIND.value.y; group.rotation.z = -swing * WIND.value.x;
       });
       if (st.M) st.M.glow.emissiveIntensity = .45 + .3 * Math.sin(TIME.value * 2.2);
-      if (composer) composer.render(); else renderer.render(scene, camera);
+      renderer.render(scene, camera);
       st.calls = renderer.info.render.calls;
       // zone names hang just above the front edge of the thing they name (the footprint edge nearest the
       // viewer) so they never cover a roof; they shrink as the camera pulls back; placement (selected →
@@ -1803,7 +1804,7 @@ export default function Grove3D(props) {
     const controls = new FarmControls(camera, renderer.domElement, {
       focusBounds: (zone) => st.hits.find((h) => h.userData.zoneId === zone.id)?.userData.focusBounds,
       change: () => st.requestRender(),
-      interact: (on) => { const pr = on ? LOW : DPR; renderer.setPixelRatio(pr); if (composer) composer.setPixelRatio(pr); st.requestRender(); },
+      interact: (on) => { renderer.setPixelRatio(on ? LOW : DPR); st.requestRender(); },
       first: () => latest.current.dismissHint?.(),
       coop: (kind) => latest.current.showCoop?.(kind),
       reset: () => { latest.current.clearFocus?.(); st.reset(true); },
@@ -1830,12 +1831,6 @@ export default function Grove3D(props) {
       const d = st.dims || { fW: 3, fH: 2, margin: 1 }, ratio = clamp((d.fH + 2 * d.margin) / (d.fW + 2 * d.margin), latest.current.preview ? .72 : .62, .8); // the preview tile is at least 4:3 so the farm fills it
       S.W = el.clientWidth || 600; S.H = fullRef.current ? (el.clientHeight || Math.round(S.W * ratio)) : Math.round(Math.min(S.W * ratio, Math.max(220, (window.innerHeight || 800) * .78)));
       renderer.setSize(S.W, S.H); camera.aspect = S.W / S.H; camera.updateProjectionMatrix(); controls.size = { w: S.W, h: S.H };
-      if (composer) {
-        composer.setSize(S.W, S.H);
-        composer.setPixelRatio(renderer.getPixelRatio());
-        if (n8aoPass) n8aoPass.setSize(S.W, S.H);
-        if (bloomPass?.resolution) bloomPass.resolution.set(S.W, S.H);
-      }
       if ((!st.fitted || latest.current.preview) && st.dims) { st.reset(false); st.fitted = true; }
       else {
         const focused = latest.current.zones.find((z) => String(z.id) === latest.current.focusId);
@@ -1956,7 +1951,6 @@ export default function Grove3D(props) {
       if (st.rowHoverOutline) st.rowHoverOutline.geometry.dispose(); rowHoverMaterial.dispose();
       if (st.world) disposeWorld(st.world);
       if (st.fx?.clouds) { st.fx.clouds.geometry.dispose(); st.fx.clouds.material.dispose(); } if (st.fx?.precip) { st.fx.precip.dispose(); st.fx.precip.geometry.dispose(); }
-      if (st.composer) st.composer.dispose();
       renderer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement); state.current = null;
     };
   }, []);
@@ -1973,7 +1967,7 @@ export default function Grove3D(props) {
     st.dims = { fW: P.fW, fH: P.fH, margin: P.margin };
     const ctx = { data: P.data, zones: P.zones, roads: P.roads, crops: P.crops, fW: P.fW, fH: P.fH, margin: P.margin, env: P.env, pathTexture: P.pathTexture, roadWidth: P.roadWidth, todayKey: P.todayKey || todayLocalKey(), actualToday: P.actualToday, hits: st.hits, plotHits: st.plotHits, M: st.M,
       plants: [], tufts: [], pots: [], herd: [], fruit: new Map(), fruitDrop: new Map(), details: [], motion: { smoke: [], bees: [] }, vanes: [], keep: [], device: { mobile: st.mobile, reduced: st.reduced }, fences: { plain: { posts: [], rails: [] }, picket: { posts: [], caps: [], rails: [] }, rail: { posts: [], bars: [], rails: [] } }, growth: { glows: [], poles: [], tags: [[], [], [], [], [], []] } };
-    const t0 = performance.now(); st.world = buildWorld(ctx); st.herd = ctx.herd; st.vanes = ctx.vanes; st.hanging = ctx.hanging || []; st.buildMs = performance.now() - t0;
+    const t0 = performance.now(); setDetail(st.mobile ? PHONE_DETAIL : 1); try { st.world = buildWorld(ctx); } finally { setDetail(1); } st.herd = ctx.herd; st.vanes = ctx.vanes; st.hanging = ctx.hanging || []; st.buildMs = performance.now() - t0;
     // Only animate plants whose stage actually changed as the preview date moves.
     // Other farm edits and the initial render should never make the garden jump.
     const nextStages = new Map(), changed = [], animateGrowth = !st.reduced && st.cropStages && st.cropDay !== P.todayKey;

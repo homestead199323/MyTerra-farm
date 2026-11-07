@@ -9,9 +9,9 @@ test('sky: London noon midsummer ≈ 62°',()=>{near(sunPosition(new Date(2026,5
 test('sky: London noon midwinter ≈ 15°',()=>{near(sunPosition(new Date(2026,11,21,12,0),51.5).elevation,15,1.5,'elevation');});
 test('sky: night at 23:00',()=>{assert.equal(skyState({date:new Date(2026,5,21,23,0),lat:51.5}).night,1);});
 test("sky: fixed look matches today's sun",()=>{
-  const L=Math.hypot(.55,1.25,-.35),want=[.55/L,1.25/L,-.35/L];
+  const L=Math.hypot(.55,.66,-.35),want=[.55/L,.66/L,-.35/L];
   want.forEach((v,i)=>near(FIXED_SKY.sunDir[i],v,.01,'sunDir['+i+']'));
-  assert.equal(FIXED_SKY.sunIntensity,2.1);assert.equal(FIXED_SKY.fog,'#b4c69d');assert.equal(FIXED_SKY.night,0);
+  assert.equal(FIXED_SKY.sunIntensity,2.45);assert.equal(FIXED_SKY.fog,'#c3bd78');assert.equal(FIXED_SKY.night,0);
 });
 test('sky: no weather → clear calm',()=>{const w=weatherOf(null);assert.equal(w.precip,'none');assert.equal(w.cloud,0);assert.equal(w.windStrength,.15);});
 test('sky: high latitude winter is finite',()=>{

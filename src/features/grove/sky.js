@@ -27,7 +27,7 @@ export function sunPosition(date, latDeg, lngDeg = null) {
 
 /* scene mapping: the reference afternoon (15:00, 21 Jun, 50° N) must land on the map's historic sun
    vector (.55, 1.25, -.35) so "Live sky: off" is pixel-identical to the old fixed light */
-const REF_VEC = (() => { const L = Math.hypot(.55, 1.25, -.35); return [.55 / L, 1.25 / L, -.35 / L]; })();
+const REF_VEC = (() => { const L = Math.hypot(.55, .66, -.35); return [.55 / L, .66 / L, -.35 / L]; })(); // ~45° up (look A, 2026-11-07): longer, clearer shadows
 const REF = sunPosition(new Date(2026, 5, 21, 15, 0), 50);
 const AZ_OFFSET = Math.atan2(REF_VEC[0], -REF_VEC[2]) / DEG - REF.azimuth; // scene azimuth = solar azimuth + offset
 function dirFrom(elevationDeg, azimuthDeg) {
@@ -37,10 +37,10 @@ function dirFrom(elevationDeg, azimuthDeg) {
 
 /* light presets by solar elevation (spec §1) */
 const PRESETS = [
-  { el: 35, sunColor: "#fff3e4", sunIntensity: 2.1, hemiSky: "#ffffff", hemiGround: "#9fb48a", hemiIntensity: .85, fog: "#b4c69d", exposure: 1.15, shadowIntensity: .62, envIntensity: .22 },
-  { el: 12, sunColor: "#ffe2bd", sunIntensity: 1.8, hemiSky: "#fff6ea", hemiGround: "#9fb48a", hemiIntensity: .8, fog: "#bcc9a4", exposure: 1.15, shadowIntensity: .55, envIntensity: .22 },
+  { el: 35, sunColor: "#fff0d6", sunIntensity: 2.45, hemiSky: "#ffffff", hemiGround: "#b3ac78", hemiIntensity: .66, fog: "#c3bd78", exposure: 1.15, shadowIntensity: .9, envIntensity: .22 },
+  { el: 12, sunColor: "#ffe2bd", sunIntensity: 1.8, hemiSky: "#fff6ea", hemiGround: "#b3ac78", hemiIntensity: .8, fog: "#c7bf82", exposure: 1.15, shadowIntensity: .8, envIntensity: .22 },
   { el: 0, sunColor: "#ffb876", sunIntensity: 1.1, hemiSky: "#d9c2b2", hemiGround: "#8f9c7e", hemiIntensity: .7, fog: "#b9b2a6", exposure: 1.12, shadowIntensity: .45, envIntensity: .2 },
-  { el: -6, sunColor: "#9fb3d6", sunIntensity: .5, hemiSky: "#5b6a86", hemiGround: "#3f4a40", hemiIntensity: .6, fog: "#56627a", exposure: 1.0, shadowIntensity: .35, envIntensity: .14 },
+  { el: -6, sunColor: "#a9bde0", sunIntensity: .55, hemiSky: "#5a72a6", hemiGround: "#2d3a52", hemiIntensity: .75, fog: "#22355a", exposure: 1.0, shadowIntensity: .45, envIntensity: .14 },
 ];
 function presetAt(el) {
   if (el >= PRESETS[0].el) return { ...PRESETS[0] };
@@ -91,8 +91,8 @@ export function skyState({ date = new Date(), lat = 50, lng = null, weather = nu
 }
 
 export const FIXED_SKY = Object.freeze({
-  sunDir: REF_VEC, sunColor: PRESETS[0].sunColor, sunIntensity: 2.1, hemiSky: "#ffffff", hemiGround: "#9fb48a", hemiIntensity: .85,
-  fog: "#b4c69d", fogNear: 1, exposure: 1.15, shadowIntensity: .62, envIntensity: .22, night: 0, elevation: 55, cloud: 0, precip: "none",
+  sunDir: REF_VEC, sunColor: PRESETS[0].sunColor, sunIntensity: 2.45, hemiSky: "#ffffff", hemiGround: "#b3ac78", hemiIntensity: .66,
+  fog: "#c3bd78", fogNear: 1, exposure: 1.15, shadowIntensity: .9, envIntensity: .22, night: 0, elevation: 55, cloud: 0, precip: "none",
   windDir: CALM.windDir, windStrength: .15, tempC: 15, reduced: false,
 });
 
