@@ -205,11 +205,20 @@ export function resetSync() {
 export async function pullIfRemoteNewer() {
   if (!isSupabaseConfigured) return null;
   if (typeof navigator !== "undefined" && navigator.onLine === false) return null;
-  if (_dirty) return null; // local has unpushed edits — don't clobber
+  if (_dirty) {
+    // Local has unpushed edits — don't clobber them. If the last push failed
+    // (status "error"), coming back to the app is a good moment to retry it.
+    if (_status === "error") void flushPush();
+    return null;
+  }
   const session = await getSession();
   if (!session) return null;
 
   const pulled = await pullFarm();
+  // An edit made while the pull was in flight wins: applying the pulled copy
+  // now would drop it from the screen (and the queued push would then upload
+  // a farm the user is no longer looking at).
+  if (_dirty) return null;
   if (!pulled || pulled.source !== "cloud" || !pulled.data) return null;
   if (pulled.updatedAt > _lastUpdatedAt) {
     _lastUpdatedAt = pulled.updatedAt;
