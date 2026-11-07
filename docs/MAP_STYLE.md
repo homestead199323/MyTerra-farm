@@ -12,7 +12,8 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - **Real geometry for everything that is a thing.** Crops (`crops3d.js`), animals (`animals3d.js`), props (`props3d.js`). No sprites, no billboards, no camera-facing quads.
 
 ## 2. Surface
-- **Flat matte colour only.** `flat(color)` — `MeshStandardMaterial`, roughness ≈ 0.88, metalness 0. No photo textures, no procedural textures, no alpha-gradient masks (retired 2026-10-05: the blurred contact patches and the soft mulch disc looked photoreal next to the flat shapes). Objects are grounded by the sun's soft shadow; the mulch under a tree is a crisp flat disc with a lighter rim.
+- **Matte colour with fine shader texture (look A, 2026-11-07).** `flat(color)` — `MeshStandardMaterial`, roughness ≈ 0.88, metalness 0 — plus `texture(mat, kind)` in toy.js: grain painted in the fragment shader from world position, no image files. `meadow` (soft grass mottling on land, property, lawns), `soil` (clods), `gravel` (specks on paths), `roof` (tile/shingle courses parallel to the eaves, each tile a slightly different shade), `wood` (grain streaks), `leaf` (dappled hedge and tree crowns). The finest grain fades with camera distance so far ground never shimmers. Still no photo textures. Trees stand on a soft contact patch (`M.blob`); the mulch under a fruit tree is a crisp flat disc with a lighter rim.
+- **Meadow details (look A):** grass tufts, wildflower clumps (4 heads each) and flat pebbles scattered beyond the hedge (70 / 120 on desktop, 30 / 50 on phones); after dark they darken with the land (`nightTint`).
 - Glass (greenhouse, windows, tractor cab) and water are the only glossy materials: `MeshPhysicalMaterial`, low roughness, env map.
 - Vertex colours carry variety inside one mesh (crop leaves lighter toward the tip, animal coats, ground patches) — never a texture.
 

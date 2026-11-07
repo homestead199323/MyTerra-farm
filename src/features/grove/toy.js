@@ -71,6 +71,36 @@ transformed.y += g3Wave(position.xz).z;`);
   mat.customProgramCacheKey = () => "g3ripple-wind-v2";
   return mat;
 }
+/* texture(mat, kind) — fine surface texture painted in the fragment shader from world position (look A, 2026-11-07):
+   no image files, nothing to download, a few maths ops per pixel. The finest grain fades out with distance so far
+   ground never shimmers. Kinds: meadow (soft grass mottling), soil (clods), gravel (specks), roof (tile courses
+   parallel to the eaves, each tile a slightly different shade), wood (grain streaks), leaf (dappled foliage). Chains with sway / night patches. */
+const G3NOISE = `varying vec3 vG3W;
+float g3h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float g3n(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3. - 2. * f); return mix(mix(g3h(i), g3h(i + vec2(1., 0.)), u.x), mix(g3h(i + vec2(0., 1.)), g3h(i + vec2(1., 1.)), u.x), u.y); }`;
+const TEX = {
+  meadow: "{ vec2 p = vG3W.xz; float fine = 1. - smoothstep(22., 60., distance(vG3W, cameraPosition)); float n = g3n(p * .35) * .5 + g3n(p * 1.6) * .35 + (g3n(p * 7.) - .5) * .5 * fine + (g3h(floor(p * 10.)) - .5) * .25 * fine; diffuseColor.rgb *= .86 + n * .3; }",
+  soil: "{ vec2 p = vG3W.xz; float fine = 1. - smoothstep(18., 50., distance(vG3W, cameraPosition)); float n = g3n(p * 5.) * .6 + (g3h(floor(p * 14.)) - .5) * .6 * fine; diffuseColor.rgb *= .8 + n * .4; }",
+  gravel: "{ vec2 p = vG3W.xz; float fine = 1. - smoothstep(18., 50., distance(vG3W, cameraPosition)); float s = g3h(floor(p * 11.)); diffuseColor.rgb *= .94 + g3n(p * 2.5) * .08 - step(.8, s) * .14 * fine + step(s, .1) * .06 * fine; }",
+  roof: "{ float c = vG3W.y / .2, row = floor(c), t = fract(c); float col = floor((vG3W.x + vG3W.z) / .42 + row * .5); diffuseColor.rgb *= (.88 + g3h(vec2(row, col)) * .2) * (1. - .34 * (1. - smoothstep(0., .28, t))); }",
+  wood: "{ vec3 p = vG3W; float g = g3n(vec2((p.x + p.z) * 2.4, p.y * 20.)) * .6 + g3n(vec2((p.x - p.z) * 1.1, p.y * 7.)) * .4; diffuseColor.rgb *= .86 + g * .26; }",
+  leaf: "{ vec3 p = vG3W * 2.2; float n = g3n(p.xz + p.y * 1.7) * .55 + g3n(p.xy * 1.6 + p.z) * .45; diffuseColor.rgb *= .78 + n * .44; }",
+};
+export function texture(mat, kind) {
+  if (mat.userData.g3tex) return mat; mat.userData.g3tex = kind;
+  const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey?.bind(mat);
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev(sh, r);
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vG3W;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\n{ vec4 g3p = vec4(transformed, 1.);\n#ifdef USE_INSTANCING\ng3p = instanceMatrix * g3p;\n#endif\nvG3W = (modelMatrix * g3p).xyz; }");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\n" + G3NOISE)
+      .replace("#include <color_fragment>", "#include <color_fragment>\n" + TEX[kind]);
+  };
+  mat.customProgramCacheKey = () => `${prevKey ? prevKey() : ""}|g3tex-${kind}`;
+  return mat;
+}
 export const UP = new THREE.Vector3(0, 1, 0);
 
 /* ---------- palette: the shared map palette (palette.js) as numbers for three.js ---------- */

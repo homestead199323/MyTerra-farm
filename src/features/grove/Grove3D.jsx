@@ -31,7 +31,7 @@ import { createBrain } from "./herd-brain";
 import { buildSwallows, buildButterflies, swallowCount, butterflyCount } from "./fauna-fx";
 import { GROUND_TONES, pathTones } from "./palette";
 import { TREE_RE } from "./crop-families";
-import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, nightGlow, nightTint, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
+import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
@@ -99,11 +99,12 @@ function motionMat(color, smoke, vertexColors = false) {
 function materials() {
   const L = (c, n) => layered(flat(c, { rough: .95 }), n);
   return {
-    // ground layers
-    lawn: (color = PAL.lawn) => L(color, 6), soil: (color = PAL.soil) => L(color, 6), gravel: L(PAL.gravel, 6), stoneFloor: (color = PAL.stone) => L(color, 6), concrete: L(PAL.concrete, 6), earth: (color = PAL.earth) => L(color, 6), pavers: L(0xe7e3da, 5), hay: flat(PAL.hay, { rough: .95 }), hayFloor: L(PAL.straw, 7),
+    // ground layers (look A: fine shader texture, no images)
+    lawn: (color = PAL.lawn) => texture(L(color, 6), "meadow"), soil: (color = PAL.soil) => texture(L(color, 6), "soil"), gravel: texture(L(PAL.gravel, 6), "gravel"), stoneFloor: (color = PAL.stone) => L(color, 6), concrete: L(PAL.concrete, 6), earth: (color = PAL.earth) => L(color, 6), pavers: L(0xe7e3da, 5), hay: flat(PAL.hay, { rough: .95 }), hayFloor: L(PAL.straw, 7),
     // structure
-    cream: flat(PAL.cream), white: flat(PAL.white), trim: flat(PAL.trim, { rough: .8 }), panel: flat(PAL.panel), stone: flat(PAL.stone), stoneDark: flat(PAL.stoneDark), rock: flat(PAL.rock), concreteSolid: flat(PAL.concrete),
-    wood: flat(PAL.wood), woodMid: flat(PAL.woodMid), woodDark: flat(PAL.woodDark), woodPale: flat(PAL.woodPale), bark: flat(0x8a5a36),
+    cream: flat(PAL.cream), white: flat(PAL.white), trim: flat(PAL.trim, { rough: .8 }), panel: flat(PAL.panel), stone: flat(PAL.stone), stoneDark: flat(PAL.stoneDark), rock: nightTint(flat(PAL.rock), .6, [.12, .15, .24]), concreteSolid: flat(PAL.concrete),
+    wood: texture(flat(PAL.wood), "wood"), woodMid: texture(flat(PAL.woodMid), "wood"), woodDark: texture(flat(PAL.woodDark), "wood"), woodPale: texture(flat(PAL.woodPale), "wood"), bark: flat(0x8a5a36),
+    roofClay: texture(flat(PAL.terracotta, { variant: "roof" }), "roof"), roofSlate: texture(flat(PAL.slate, { variant: "roof" }), "roof"), // tiled roofs
     terracotta: flat(PAL.terracotta), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: flat(PAL.zinc, { rough: .6, metal: .15 }), metal: flat(PAL.metal, { rough: .5, metal: .3 }), dark: flat(PAL.dark), ink: flat(0x4a3f36),
     barn: flat(PAL.barn), barnDark: flat(PAL.barnDark), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
     glass: nightTint(nightGlow(flat(PAL.glass, { transparent: true, opacity: .34, rough: .12, physical: true, env: 1.5, side: THREE.DoubleSide, depthWrite: false }), 2.0), .8, [1, .62, .25]), // the greenhouse glows warm after dark
@@ -112,9 +113,9 @@ function materials() {
     water: flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4 }), pondWater: ripple(flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4, variant: "pond" }), { time: TIME, ripple: WX.ripple }),
     yard: flat(PAL.yard, { rough: .95 }), yardRim: flat(PAL.yardRim, { rough: .95 }),
     solar: flat(PAL.solar, { rough: .25, metal: .3, physical: true, env: 1.3 }), solarFrame: flat(PAL.solarFrame, { rough: .5, metal: .2 }),
-    hedge: nightTint(foliage(flat(PAL.hedge, { rough: .95 }), { sway: .02, freq: .6, from: .4 }), .55, [.07, .17, .12]),
-    leaf: [...PAL.leaf, PAL.leafOlive, PAL.leafCitrus].map((c) => nightTint(foliage(flat(c, { rough: .95 }), { sway: .06, freq: .25, from: 1.2 }), .55, [.07, .17, .12])), // 0-3 greens, 4 silvery olive, 5 deep citrus / fig
-    tuft: flat(0x6f9440, { rough: 1 }), flower: PAL.flower.map((c) => flat(c, { rough: .9 })), flowerStem: flat(0x6fa05a, { rough: 1 }),
+    hedge: texture(nightTint(foliage(flat(PAL.hedge, { rough: .95 }), { sway: .02, freq: .6, from: .4 }), .55, [.07, .17, .12]), "leaf"),
+    leaf: [...PAL.leaf, PAL.leafOlive, PAL.leafCitrus].map((c) => texture(nightTint(foliage(flat(c, { rough: .95 }), { sway: .06, freq: .25, from: 1.2 }), .55, [.07, .17, .12]), "leaf")), // 0-3 greens, 4 silvery olive, 5 deep citrus / fig
+    tuft: nightTint(flat(0x6f9440, { rough: 1 }), .6, [.06, .12, .1]), flower: PAL.flower.map((c) => nightTint(flat(c, { rough: .9 }), .75, [.12, .14, .22])), flowerStem: flat(0x6fa05a, { rough: 1 }),
     compost: PAL.compost.map((c) => flat(c, { rough: 1 })), hive: PAL.hive.map((c) => flat(c)), pot: flat(PAL.pot), potRim: flat(PAL.potRim), mulch: layered(flat(PAL.mulch, { rough: 1 }), 13), mulchRim: layered(flat(PAL.soilLight, { rough: 1 }), 12),
     netting: flat(0xffffff, { transparent: true, opacity: .14, side: THREE.DoubleSide, depthWrite: false, rough: 1 }), shade: flat(0xeef2e6, { rough: .95 }),
     hit: new THREE.MeshBasicMaterial({ visible: false }),
@@ -396,8 +397,8 @@ function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, 
   const dg = new THREE.Group(); dg.position.set(cx, 0, cz); g.add(dg);
   const put = fixtures(w, d);
   if (house) {
-    const ov = .5, roofMat = clay ? M.terracotta : M.slate;
-    tag(hipRoof(g, cx, cz, w, d, H, rise, ov, roofMat, clay ? M.terracotta : M.slateDark, M));
+    const ov = .5;
+    tag(hipRoof(g, cx, cz, w, d, H, rise, ov, clay ? M.roofClay : M.roofSlate, clay ? M.terracotta : M.slateDark, M));
     // chimney with a rounded cap and a thread of soft smoke
     const chx = w * .3 * (alongX ? 1 : .4), chz = -d * .18 * (alongX ? .4 : 1);
     const hh = hipHeight(chx, chz, w + 2 * ov, d + 2 * ov, rise);
@@ -429,7 +430,7 @@ function building(g, w, d, kind, M, { clay = false, tag = (m) => m, ctx = null, 
     ORNAMENTS.flowers(g, cx - door / 2 - .9, d + .55, { seed: 3, s: .7 }); ORNAMENTS.flowers(g, cx + door / 2 + .9, d + .55, { seed: 5, s: .7 });
     if (ctx) ctx.details.push({ kind: "barrel", x: off[0] + w + ap - .55, z: off[1] + d * .5 - .2, ry: 0 }, { kind: "birdbath", x: off[0] + hx0 + 1.7, z: off[1] + d + ap - .9 });
   } else {
-    gableRoof(g, cx, cz, w, d, H, rise, .4, clay ? M.terracotta : M.slate, wallMat, alongX, clay ? M.terracotta : M.slateDark, M);
+    gableRoof(g, cx, cz, w, d, H, rise, .4, clay ? M.roofClay : M.roofSlate, wallMat, alongX, clay ? M.terracotta : M.slateDark, M);
     const wide = w > 2.4;
     doorAt(dg, put, "S", wide ? -w * .18 : 0, .95, Math.min(1.95, H - .3), "shed", M, d);
     if (wide) windowAt(dg, put, "S", w * .25, H * .58, .7, .7, M, { sill: true });
@@ -492,7 +493,7 @@ function coopZone(g, z, ctx, tag) {
   tag(rbox(g, t, H, hd, wallMat, hx + t / 2, floorY + H / 2, hcz, { r: .02, seg: 1 })); tag(rbox(g, t, H, hd, wallMat, hx + hw - t / 2, floorY + H / 2, hcz, { r: .02, seg: 1 }));
   [[hx, hz], [hx + hw, hz], [hx, hz + hd], [hx + hw, hz + hd]].forEach(([x, zz]) => rbox(g, .1, H + .04, .1, trim, x, floorY + H / 2, zz, { r: .035, cast: false }));
   const rise = Math.max(.42, hd * .32);
-  gableRoof(g, hcx, hcz, hw, hd, floorY + H, rise, .34, M.slate, wallMat, true, M.slateDark, M, { thick: .12, gutters: false });
+  gableRoof(g, hcx, hcz, hw, hd, floorY + H, rise, .34, M.roofSlate, wallMat, true, M.slateDark, M, { thick: .12, gutters: false });
   // pop door: a dark opening, the sliding hatch pushed up above it, and a cleated ramp down to the run
   const px = hx + popU, fz = hz + hd;
   plane(g, popW - .02, popH - .02, M.ink, px, floorY + popH / 2, fz + .002, { rx: 0, cast: false });
@@ -561,7 +562,7 @@ function barnZone(g, z, ctx, tag) {
   [[0, 0], [bw, 0], [0, bd], [bw, bd]].forEach(([x, zz]) => rbox(g, .18, H, .18, trim, x, H / 2, zz, { r: .06, cast: false }));
   if (!small && bw >= 7) { const sr = Math.min(.9, bd * .16); silo(g, bw - sr - .4, -sr - .45, { r: sr, h: H + 1.4 }); } // a feed silo behind the barn, by the back corner
   const rise = Math.min(bw, bd) / 2 * .7;
-  gableRoof(g, cx, bcz, bw, bd, H, rise, .4, z.color === "clay" ? M.terracotta : M.slate, wallMat, alongX, z.color === "clay" ? M.terracotta : M.slateDark, M, { thick: .18 });
+  gableRoof(g, cx, bcz, bw, bd, H, rise, .4, z.color === "clay" ? M.roofClay : M.roofSlate, wallMat, alongX, z.color === "clay" ? M.terracotta : M.slateDark, M, { thick: .18 });
   // sliding door on an overhead track, rolled open to one side
   const fz = bd, tz = fz + .18, ty = dh + .3;
   rbox(g, dw * 2.05, .09, .09, M.metal, cx + dw * .45, ty, tz, { r: .03, cast: false });
@@ -1123,7 +1124,7 @@ function buildWorld(ctx) {
   const heightAt = terrainHeightFn(fW, fH, margin); ctx.heightAt = heightAt;
   const style = data.mapStyle || {}, gm = style.groundMaterial || (env === "balcony" ? "stone" : "meadow");
   const colors = gm === "meadow" ? (GROUNDS.meadow[style.groundColor] || GROUNDS.meadow.natural) : (GROUNDS[gm] || GROUNDS.stone);
-  const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), nightTint(flat(0xffffff, { rough: .96, vertexColors: true, variant: "land" }), .9, [.07, .12, .24]));
+  const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), texture(nightTint(flat(0xffffff, { rough: .96, vertexColors: true, variant: "land" }), .9, [.07, .12, .24]), "meadow"));
   ground.receiveShadow = true; world.add(ground); ctx.ground = ground;
   if (gm === "meadow") {
     // the property inside the hedge: a shade lighter than the meadow, with soft irregular patches painted into the
@@ -1137,7 +1138,7 @@ function buildWorld(ctx) {
       col.push(tmp.r, tmp.g, tmp.b);
     }
     geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    const apron = new THREE.Mesh(geo, nightTint(layered(flat(0xffffff, { rough: .96, vertexColors: true, variant: "apron" }), 3), .3, [.34, .28, .13])); apron.rotation.x = -HPI; apron.position.set(fW / 2, .004, fH / 2); apron.receiveShadow = true; world.add(apron); ctx.apron = apron; // kept out of bake(): it carries vertex colours
+    const apron = new THREE.Mesh(geo, texture(nightTint(layered(flat(0xffffff, { rough: .96, vertexColors: true, variant: "apron" }), 3), .3, [.34, .28, .13]), "meadow")); apron.rotation.x = -HPI; apron.position.set(fW / 2, .004, fH / 2); apron.receiveShadow = true; world.add(apron); ctx.apron = apron; // kept out of bake(): it carries vertex colours
   }
   // boundary by environment: a balcony is a slab against the building wall with a slim rounded railing;
   // a garden and a farm get the round-capped post-and-rail fence, stone gate pillars and a green gate
@@ -1159,7 +1160,7 @@ function buildWorld(ctx) {
   const drive = balcony ? [] : [{ xM: fW / 2, yM: fH - .2 }, { xM: fW / 2, yM: fH + Math.max(margin * 1.6, 3) }];
   // paths: pale rounded ribbons with a soft edge and round ends
   const [pathCol, edgeCol] = hexN(pathTones(ctx.pathTexture, style.pathColor)); // same tones as the flat map
-  const roadMat = layered(flat(pathCol, { rough: .95, side: THREE.DoubleSide }), 10), edgeMat = layered(flat(edgeCol, { rough: .95, side: THREE.DoubleSide }), 8), rw = ctx.roadWidth;
+  const roadMat = texture(layered(flat(pathCol, { rough: .95, side: THREE.DoubleSide }), 10), "gravel"), edgeMat = texture(layered(flat(edgeCol, { rough: .95, side: THREE.DoubleSide }), 8), "gravel"), rw = ctx.roadWidth;
   [...roads, drive].forEach((raw) => {
     if (raw.length < 2) return; const line = smooth(raw);
     const e = new THREE.Mesh(ribbonGeo(line, rw + .26), edgeMat); e.position.y = .011; e.receiveShadow = true; world.add(e);
@@ -1257,6 +1258,14 @@ function buildWorld(ctx) {
   }
   const heads = PAL.flower.map(() => []), nf = Math.min(120, Math.round(fW * fH / 14));
   for (let i = 0; i < nf; i++) { const [x, y] = open(i, 900); if (x == null) continue; const s = .7 + srand(i + 41) * .6; ctx.tufts.push({ p: [x, 0, y], ry: srand(i + 43) * 3, s }); for (let k = 0; k < 3; k++) heads[(i + k) % heads.length].push({ p: [x + (srand(i * 3 + k) - .5) * .22, .2 * s + srand(i + k) * .08, y + (srand(i * 5 + k) - .5) * .22], s: .035 + srand(i * 7 + k) * .02 }); }
+  if (env !== "balcony") { // look A: wildflower clumps and pebbles out in the meadow beyond the hedge (fewer on phones)
+    const mob = ctx.device?.mobile, ring = (i, seed) => { const edge = i % 4, t = srand(i * 3 + seed), o = 2.4 + srand(i * 5 + seed + 1) * margin * 1.4; const x = edge === 0 ? -o : edge === 1 ? fW + o : -margin + t * (fW + 2 * margin), y = edge === 2 ? -o : edge === 3 ? fH + o : -margin + t * (fH + 2 * margin); return edge === 3 && Math.abs(x - fW / 2) < 2.6 ? null : [x, y]; };
+    const nfo = Math.min(mob ? 30 : 70, Math.round((fW + fH) * .9));
+    for (let i = 0; i < nfo; i++) { const q = ring(i, 1301); if (!q) continue; const [x, y] = q, h0 = heightAt(x, y), s = .8 + srand(i + 1307) * .6; ctx.tufts.push({ p: [x, h0, y], ry: srand(i + 1309) * 3, s }); for (let k = 0; k < 4; k++) heads[(i * 2 + k) % heads.length].push({ p: [x + (srand(i * 3 + k + 1311) - .5) * .3, h0 + .2 * s + srand(i + k + 1313) * .08, y + (srand(i * 5 + k + 1317) - .5) * .3], s: .035 + srand(i * 7 + k + 1319) * .02 }); }
+    const pebbles = [], np = Math.min(mob ? 50 : 120, Math.round((fW + fH) * 1.6));
+    for (let i = 0; i < np; i++) { const q = ring(i, 1401); if (!q) continue; const [x, y] = q, s = .05 + srand(i + 1403) * .08; pebbles.push({ p: [x, heightAt(x, y) + s * .25, y], ry: srand(i + 1405) * 6, s: [s * 1.3, s * .6, s] }); }
+    instances(world, sphereGeo(8, 6), M.rock, pebbles, { cast: false, receive: true });
+  }
   heads.forEach((list, k) => instances(world, sphereGeo(8, 6), M.flower[k], list, { cast: false, receive: false }));
   // everything collected across the zones is drawn once for the whole farm
   buildFences(world, ctx, M); buildTufts(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M); buildGlowPools(world, ctx);
