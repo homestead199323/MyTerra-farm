@@ -13,6 +13,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { HorizontalTiltShiftShader } from "three/examples/jsm/shaders/HorizontalTiltShiftShader.js";
+import { VerticalTiltShiftShader } from "three/examples/jsm/shaders/VerticalTiltShiftShader.js";
+import { N8AOPass } from "n8ao";
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent } from "./gestures";
 import { placeLabels } from "./labels";
@@ -1292,7 +1299,8 @@ class FarmControls {
     this.target = new THREE.Vector3(); this.dist = 60; this.theta = CAM.az * DEG; this.phi = CAM.el * DEG;
     this.lim = { minDist: 3, maxDist: 200, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -10, x1: 10, z0: -10, z1: 10 };
     this.size = { w: 1, h: 1 }; this.home = null;
-    this.pointers = new Map(); this.pan = null; this.pinch = null; this.tapStart = null; this.lastTap = null; this.samples = [];
+    this.pointers = new Map(); this.pan = null; this.pinch = null; this.tapStart = null; this.lastTap = null;
+    this.samples = []; this.rotSamples = [];
     this.raf = 0; this.anim = null; this.inertia = null; this.idleTimer = 0; this.interacting = false;
     this.ray = new THREE.Raycaster(); this.ndc = new THREE.Vector2(); this.tmp = new THREE.Vector3(); this.tmp2 = new THREE.Vector3();
     this.onDown = this.onDown.bind(this); this.onMove = this.onMove.bind(this); this.onUp = this.onUp.bind(this);
@@ -1317,7 +1325,9 @@ class FarmControls {
     this.camera.lookAt(target); this.camera.updateMatrixWorld();
   }
   clampView() {
-    const L = this.lim; this.dist = clamp(this.dist, L.minDist, L.maxDist); this.phi = clamp(this.phi, L.minPhi, L.maxPhi);
+    const L = this.lim; this.dist = clamp(this.dist, L.minDist, L.maxDist);
+    const minP = Math.max(15 * DEG, L.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, L.maxPhi || (85 * DEG));
+    this.phi = clamp(this.phi, minP, maxP);
     this.target.x = clamp(this.target.x, L.x0, L.x1); this.target.z = clamp(this.target.z, L.z0, L.z1); this.target.y = 0;
   }
   local(e) { const r = this.dom.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
@@ -1343,6 +1353,7 @@ class FarmControls {
     const p = this.local(e), now = performance.now();
     this.pointers.set(e.pointerId, { x: p.x, y: p.y, btn: e.button, mods: !!(e.ctrlKey || e.metaKey || e.shiftKey), touch: e.pointerType === "touch", hinted: false });
     this.interact(true);
+    this.samples = []; this.rotSamples = [];
     if (this.pointers.size === 1) {
       this.tapStart = { x: p.x, y: p.y, t: now, moved: 0 };
       if (this.cooperative && e.pointerType === "touch") this.pan = null; // the page scrolls; two fingers move the map
@@ -1366,10 +1377,22 @@ class FarmControls {
     if (this.pointers.size === 2 && this.pinch) this.movePinch();
     else if (this.pointers.size === 1) {
       if (this.cooperative && P.touch) { if (!P.hinted && this.tapStart && this.tapStart.moved > 12) { P.hinted = true; this.hooks.coop?.("touch"); } return; }
-      if (P.btn === 2 || P.mods) { this.theta -= dx * .006; this.phi = clamp(this.phi + dy * .005, this.lim.minPhi, this.lim.maxPhi); this.update(); }
+      if (P.btn === 2 || P.mods) {
+        this.theta -= dx * .006;
+        const minP = Math.max(15 * DEG, this.lim.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, this.lim.maxPhi || (85 * DEG));
+        this.phi = clamp(this.phi + dy * .005, minP, maxP);
+        this.update();
+        this.rotSamples.push([performance.now(), this.theta, this.phi]);
+        if (this.rotSamples.length > 8) this.rotSamples.shift();
+      }
       else if (this.pan) {
         const g = this.groundAt(p.x, p.y, this.tmp2);
-        if (g) { this.target.x += this.pan.anchor.x - g.x; this.target.z += this.pan.anchor.z - g.z; this.clampView(); this.update(); this.samples.push([performance.now(), this.target.x, this.target.z]); if (this.samples.length > 8) this.samples.shift(); }
+        if (g) {
+          this.target.x += this.pan.anchor.x - g.x; this.target.z += this.pan.anchor.z - g.z;
+          this.clampView(); this.update();
+          this.samples.push([performance.now(), this.target.x, this.target.z]);
+          if (this.samples.length > 8) this.samples.shift();
+        }
       }
     }
     this.changed(); e.preventDefault();
@@ -1383,7 +1406,14 @@ class FarmControls {
     // the first clear movement decides the gesture and locks it: zoom (above) always applies; rotate and tilt only once chosen
     if (!S.intent) { S.intent = pinchIntent({ d: S.d0, ang: S.a0, midY: S.mid0.y }, { d, ang, midY: mid.y }, { dt: performance.now() - S.t0 }); if (S.intent) { S.rotOff = da; S.tiltOff = dyMid; } }
     if (S.intent === "rotate") this.theta = S.theta0 + (da - S.rotOff);
-    if (S.intent === "tilt") this.phi = clamp(S.phi0 + (dyMid - S.tiltOff) * .0045, this.lim.minPhi, this.lim.maxPhi);
+    if (S.intent === "tilt") {
+      const minP = Math.max(15 * DEG, this.lim.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, this.lim.maxPhi || (85 * DEG));
+      this.phi = clamp(S.phi0 + (dyMid - S.tiltOff) * .0045, minP, maxP);
+    }
+    if (S.intent === "rotate" || S.intent === "tilt") {
+      this.rotSamples.push([performance.now(), this.theta, this.phi]);
+      if (this.rotSamples.length > 8) this.rotSamples.shift();
+    }
     if (S.anchor) this.anchor(mid.x, mid.y, S.anchor); else { this.clampView(); this.update(); }
   }
   onUp(e) {
@@ -1407,22 +1437,60 @@ class FarmControls {
   stopMotion() { this.anim = null; this.inertia = null; }
   startInertia() {
     if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const s = this.samples; if (s.length < 2) return;
-    const now = performance.now(), last = s[s.length - 1]; let first = s[0];
-    for (const q of s) if (now - q[0] <= 90) { first = q; break; }
-    const dt = last[0] - first[0]; if (dt < 8 || now - last[0] > 100) return;
-    let vx = (last[1] - first[1]) / dt, vz = (last[2] - first[2]) / dt; const v = Math.hypot(vx, vz), vmax = this.dist * .0014;
-    if (v < .002) return; if (v > vmax) { vx *= vmax / v; vz *= vmax / v; }
-    this.inertia = { vx, vz, t: now }; this.interact(true); this.tick();
+    const now = performance.now();
+    let panI = null, rotI = null;
+    const s = this.samples;
+    if (s.length >= 2) {
+      const last = s[s.length - 1]; let first = s[0];
+      for (const q of s) if (now - q[0] <= 90) { first = q; break; }
+      const dt = last[0] - first[0];
+      if (dt >= 8 && now - last[0] <= 100) {
+        let vx = (last[1] - first[1]) / dt, vz = (last[2] - first[2]) / dt;
+        const v = Math.hypot(vx, vz), vmax = this.dist * .0014;
+        if (v >= .002) {
+          if (v > vmax) { vx *= vmax / v; vz *= vmax / v; }
+          panI = { vx, vz };
+        }
+      }
+    }
+    const rs = this.rotSamples;
+    if (rs.length >= 2) {
+      const last = rs[rs.length - 1]; let first = rs[0];
+      for (const q of rs) if (now - q[0] <= 90) { first = q; break; }
+      const dt = last[0] - first[0];
+      if (dt >= 8 && now - last[0] <= 100) {
+        let vTh = (last[1] - first[1]) / dt, vPh = (last[2] - first[2]) / dt;
+        const vr = Math.hypot(vTh, vPh), vrmax = .003;
+        if (vr >= .0003) {
+          if (vr > vrmax) { vTh *= vrmax / vr; vPh *= vrmax / vr; }
+          rotI = { vTheta: vTh, vPhi: vPh };
+        }
+      }
+    }
+    if (panI || rotI) {
+      this.inertia = { vx: panI?.vx || 0, vz: panI?.vz || 0, vTheta: rotI?.vTheta || 0, vPhi: rotI?.vPhi || 0, t: now };
+      this.interact(true);
+      this.tick();
+    }
   }
   tick() {
     cancelAnimationFrame(this.raf);
     this.raf = requestAnimationFrame(() => {
       const now = performance.now();
       if (this.inertia) {
-        const I = this.inertia, dt = Math.min(48, now - I.t); I.t = now; const k = Math.exp(-dt / 260);
-        this.target.x += I.vx * dt; this.target.z += I.vz * dt; I.vx *= k; I.vz *= k; this.clampView(); this.update();
-        if (Math.hypot(I.vx, I.vz) < .0004) this.inertia = null;
+        const I = this.inertia, dt = Math.min(48, now - I.t); I.t = now;
+        const k = Math.exp(-dt / 260);
+        this.target.x += I.vx * dt; this.target.z += I.vz * dt;
+        if (I.vTheta) this.theta += I.vTheta * dt;
+        if (I.vPhi) {
+          const minP = Math.max(15 * DEG, this.lim.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, this.lim.maxPhi || (85 * DEG));
+          this.phi = clamp(this.phi + I.vPhi * dt, minP, maxP);
+        }
+        I.vx *= k; I.vz *= k;
+        if (I.vTheta) I.vTheta *= k;
+        if (I.vPhi) I.vPhi *= k;
+        this.clampView(); this.update();
+        if (Math.hypot(I.vx, I.vz) < .0004 && Math.hypot(I.vTheta || 0, I.vPhi || 0) < .00004) this.inertia = null;
       }
       if (this.anim) {
         const A = this.anim, t = clamp((now - A.t0) / A.ms, 0, 1), k = ease(t);
@@ -1585,15 +1653,48 @@ export default function Grove3D(props) {
     const coarse = isCoarse(), mobile = coarse || Math.min(screen.width, screen.height) < 820;
     const DPR = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2), LOW = Math.min(DPR, mobile ? 1.15 : 1.25);
     renderer.setPixelRatio(DPR);
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false; // static scene: shadows render once
-    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; // static scene: shadows render once
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.domElement.className = "g3-canvas"; renderer.domElement.setAttribute("data-g3-style", "toy-v1"); renderer.domElement.setAttribute("aria-label", "3D farm map: drag to move, pinch or scroll to zoom, two fingers to rotate");
     el.insertBefore(renderer.domElement, el.firstChild);
     const lost = (e) => { e.preventDefault(); latest.current.onUnavailable?.(); };
     renderer.domElement.addEventListener("webglcontextlost", lost);
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(FIXED_SKY.fog);
+    scene.fog = new THREE.Fog(FIXED_SKY.fog, 30, 120);
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .22; pmrem.dispose();
     const camera = new THREE.PerspectiveCamera(CAM.fov, 1, 1, 4000);
+    let composer = null, n8aoPass = null, bloomPass = null, hTiltPass = null, vTiltPass = null;
+    try {
+      composer = new EffectComposer(renderer);
+      n8aoPass = new N8AOPass(scene, camera, 512, 512);
+      n8aoPass.configuration.aoRadius = 2.4;
+      n8aoPass.configuration.distanceFalloff = 1.0;
+      n8aoPass.configuration.intensity = 2.4;
+      n8aoPass.configuration.color = new THREE.Color(0x101a14);
+      n8aoPass.configuration.halfRes = mobile;
+      n8aoPass.configuration.gammaCorrection = false;
+      n8aoPass.configuration.transparencyAware = true;
+      composer.addPass(n8aoPass);
+
+      bloomPass = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.18, 0.4, 0.88);
+      composer.addPass(bloomPass);
+
+      hTiltPass = new ShaderPass(HorizontalTiltShiftShader);
+      vTiltPass = new ShaderPass(VerticalTiltShiftShader);
+      hTiltPass.uniforms.h.value = 1.8 / 512;
+      hTiltPass.uniforms.r.value = 0.5;
+      vTiltPass.uniforms.v.value = 1.8 / 512;
+      vTiltPass.uniforms.r.value = 0.5;
+      composer.addPass(hTiltPass);
+      composer.addPass(vTiltPass);
+
+      const outputPass = new OutputPass();
+      composer.addPass(outputPass);
+    } catch {
+      composer = null;
+    }
     // bright, soft, toy-box light: a white sky with a pale green bounce, one warm sun with faint soft shadows
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9fb48a, .85); scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xfff3e4, 2.1); sun.castShadow = true;
@@ -1603,7 +1704,7 @@ export default function Grove3D(props) {
     let queued = false, dirty = false, animOn = false, animRaf = 0, lastFrame = 0, inView = true;
     const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     const IDLE_MS = mobile ? 1000 / 20 : 1000 / 30; // idle animation rate; gestures and camera moves render every frame
-    const st = { renderer, scene, camera, sun, world: null, hits: [], plotHits: [], dims: null, fitted: false, anchors: {}, highlight: null, pickGroup: null, picked: null, calls: 0, animating: false };
+    const st = { renderer, scene, camera, sun, composer, world: null, hits: [], plotHits: [], dims: null, fitted: false, anchors: {}, highlight: null, pickGroup: null, picked: null, calls: 0, animating: false };
     st.reduced = reduced; st.mobile = mobile; st.coarse = coarse; state.current = st;
     if (import.meta.env?.DEV && typeof window !== "undefined") window.__g3 = st; // dev-only inspection hook
     // the sky (sky.js) owns every light value; FIXED_SKY reproduces the map's original fixed afternoon
@@ -1614,7 +1715,11 @@ export default function Grove3D(props) {
       sun.color.set(s.sunColor); sun.intensity = s.sunIntensity; sun.shadow.intensity = s.shadowIntensity;
       renderer.toneMappingExposure = s.exposure; scene.environmentIntensity = s.envIntensity;
       scene.background = new THREE.Color(s.fog);
-      if (st.fogRange) scene.fog = new THREE.Fog(s.fog, st.fogRange.near * (s.fogNear ?? 1), st.fogRange.far);
+      if (!scene.fog) scene.fog = new THREE.Fog(s.fog, (st.fogRange?.near || 30) * (s.fogNear ?? 1), st.fogRange?.far || 120);
+      else {
+        scene.fog.color.set(s.fog);
+        if (st.fogRange) { scene.fog.near = st.fogRange.near * (s.fogNear ?? 1); scene.fog.far = st.fogRange.far; }
+      }
       NIGHT.value = clamp((3 - s.elevation) / 9, 0, 1); // windows and lamps come on as the sun sets
       WIND.value.set(s.windDir[0], s.windDir[1], s.windStrength); WX.ripple.value = s.precip === "rain" ? 3 : 1;
       (st.vanes || []).forEach((v) => { v.rotation.y = vaneAngle(s.windDir); });
@@ -1655,7 +1760,8 @@ export default function Grove3D(props) {
         group.rotation.x = swing * WIND.value.y; group.rotation.z = -swing * WIND.value.x;
       });
       if (st.M) st.M.glow.emissiveIntensity = .45 + .3 * Math.sin(TIME.value * 2.2);
-      renderer.render(scene, camera); st.calls = renderer.info.render.calls;
+      if (composer) composer.render(); else renderer.render(scene, camera);
+      st.calls = renderer.info.render.calls;
       // zone names hang just above the front edge of the thing they name (the footprint edge nearest the
       // viewer) so they never cover a roof; they shrink as the camera pulls back; placement (selected →
       // pending jobs → biggest footprint, no overlaps, far-out size threshold) lives in labels.js
@@ -1700,7 +1806,7 @@ export default function Grove3D(props) {
     io?.observe(el);
     const controls = new FarmControls(camera, renderer.domElement, {
       change: () => st.requestRender(),
-      interact: (on) => { renderer.setPixelRatio(on ? LOW : DPR); st.requestRender(); },
+      interact: (on) => { const pr = on ? LOW : DPR; renderer.setPixelRatio(pr); if (composer) composer.setPixelRatio(pr); st.requestRender(); },
       first: () => latest.current.dismissHint?.(),
       coop: (kind) => latest.current.showCoop?.(kind),
       reset: () => { latest.current.clearFocus?.(); st.reset(true); },
@@ -1726,13 +1832,28 @@ export default function Grove3D(props) {
       const d = st.dims || { fW: 3, fH: 2, margin: 1 }, ratio = clamp((d.fH + 2 * d.margin) / (d.fW + 2 * d.margin), latest.current.preview ? .72 : .62, .8); // the preview tile is at least 4:3 so the farm fills it
       S.W = el.clientWidth || 600; S.H = fullRef.current ? (el.clientHeight || Math.round(S.W * ratio)) : Math.round(Math.min(S.W * ratio, Math.max(220, (window.innerHeight || 800) * .78)));
       renderer.setSize(S.W, S.H); camera.aspect = S.W / S.H; camera.updateProjectionMatrix(); controls.size = { w: S.W, h: S.H };
+      if (composer) {
+        composer.setSize(S.W, S.H);
+        composer.setPixelRatio(renderer.getPixelRatio());
+        if (n8aoPass) n8aoPass.setSize(S.W, S.H);
+        if (bloomPass?.resolution) bloomPass.resolution.set(S.W, S.H);
+        if (hTiltPass) hTiltPass.uniforms.h.value = 1.8 / Math.max(1, S.W);
+        if (vTiltPass) vTiltPass.uniforms.v.value = 1.8 / Math.max(1, S.H);
+      }
       if ((!st.fitted || latest.current.preview) && st.dims) { st.reset(false); st.fitted = true; } else controls.update(); // the tile has no Reset, so it re-fits on every resize (phone rotation)
       st.requestRender();
     };
     st.reset = (animate, zoom = 1) => {
       const { fW, fH, margin } = st.dims; controls.fit(fW, fH, margin, animate, zoom);
-      const far = Math.min(controls.fitDist * 5.0, Math.max(fW, fH) * 16 * .9), near = Math.min(controls.fitDist * 2.4, far / 1.4);
-      st.fogRange = { near, far }; scene.fog = new THREE.Fog(st.sky.fog, near * (st.sky.fogNear ?? 1), far); // the ground fades into the backdrop beyond the farthest allowed zoom-out
+      const near = Math.max(10, controls.fitDist * 1.05);
+      const far = Math.max(near + 15, controls.fitDist * 2.8);
+      st.fogRange = { near, far };
+      if (!scene.fog) scene.fog = new THREE.Fog(st.sky.fog, near * (st.sky.fogNear ?? 1), far);
+      else {
+        scene.fog.color.set(st.sky.fog);
+        scene.fog.near = near * (st.sky.fogNear ?? 1);
+        scene.fog.far = far;
+      }
       st.requestRender();
     };
     st.setupSun = () => {
@@ -1841,6 +1962,7 @@ export default function Grove3D(props) {
       if (st.rowHoverOutline) st.rowHoverOutline.geometry.dispose(); rowHoverMaterial.dispose();
       if (st.world) disposeWorld(st.world);
       if (st.fx?.clouds) { st.fx.clouds.geometry.dispose(); st.fx.clouds.material.dispose(); } if (st.fx?.precip) { st.fx.precip.dispose(); st.fx.precip.geometry.dispose(); }
+      if (st.composer) st.composer.dispose();
       renderer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement); state.current = null;
     };
   }, []);
