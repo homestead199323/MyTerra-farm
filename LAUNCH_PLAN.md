@@ -539,3 +539,22 @@
   READY, live Grove3D chunk carries the new strings on both domains. NOT verified: a real iPhone. Seen, not fixed:
   on phones the crop card covers the full-screen close button; the Growth legend's last stage label is clipped at
   375 px; focused phone view still lets some area labels overlap; `tests/g3-beds.html` ignores `?full=1`.
+- [x] **Full app QA pass (2026-11-07).** Ran lint, 157 → 160 tests in five time zones, Vite build, and Playwright on
+  the demo (`/app` with no session) at 390 px, 1440 px and dark mode: five onboarding personas (London backyard,
+  Amsterdam balcony, 100 km "farm", 30 × 20 ft Toronto garden, 0.3 × 0.2 m), every page, morning walk, map
+  pop-ups, growth preview, planting form, animals, pantry sell, Money, backup export/import, Learn search,
+  landing / legal / 404 / auth screens, with a frost + gale forecast mocked. Fixed (`84771dd`…`ff67bc6`): map
+  pop-up 0 kg saved the estimate, 0 eggs saved 1, negatives became the estimate, 1e9 kg went straight in
+  (now 0 = failed crop / empty round, invalid amounts explained, huge ones need a second tap); add-animal and
+  Money accepted 100,000 goats / £1e12 and Money's Add did nothing silently on a missing field; "process for
+  meat" turned a typed 0 into 1 animal and had no Undo; onboarding accepted 100 km sides and put a blackberry
+  (2.5–3.5 m) in a 2 × 1.2 m starter bed; a focus pull could drop an edit made while it was in flight; space-only
+  crop searches; vibrate console error on load; garlic depth, blossom end rot and blackberry spacing vs RHS.
+  Verified on production `dpl_G6cx9BBnpj841BFDEoqM6dA7vfP8` (READY, bundle `index-DUcK9fEi.js` carries the new
+  strings, CSP unchanged) by re-running the same Playwright checks against www.myterra.farm. NOT verified: a
+  real phone; the sync race fix (needs two devices). Seen, not fixed: in the full-screen phone map the chimney
+  smoke puffs look oversized and cover the house (3D lane, Codex); the starter-map canvas is bigger than very
+  small or narrow spaces (4 × 1.5 m balcony shows as 4 × 2 m; a 0.3 × 0.2 m "garden" gets a 1 m² bed); Money
+  totals have no thousands separators and transactions show ISO dates; the Growth legend's last label is
+  clipped at 375 px (already noted above). GitHub reports the repo moved to `homestead199323/MyTerra-farm`
+  (pushes still redirect).
