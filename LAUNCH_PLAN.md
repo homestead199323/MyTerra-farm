@@ -527,3 +527,15 @@
   and survives reload. NOT verified: the exact revert he saw (not reproduced end to end — needs two devices or a
   tab left open for an hour). Remaining risk: whole-document last-write-wins — a device that edits before its
   focus pull lands can still overwrite a newer edit made elsewhere; a compare-and-swap on `updated_at` would close it.
+- [x] **3D release from the Codex chat (2026-11-07).** Cherry-picked Codex commit `d9789ca` (base `feca8a6`) onto
+  main as `de73ef7`; auto-merged, the farm size/type fix (`e4237a6`) is intact. Contents: map area selector +
+  camera focus, crop-row selection card, label collision handling, Growth closes back to today, compact phone
+  timeline, stage-aware growth preview, task feedback, animal reactions, Farm Designer "Preview 3D", wind sway,
+  balcony tiles/saucers/hanging pots, new lettuce/tomato/radish/strawberry models, runtime reduced-motion.
+  Pictures re-rendered with `scripts/render-icons.mjs` (`2bf8c25`, 299 of 300 changed). Verified: 154+3 tests,
+  Vite build, ESLint on touched files, Playwright on g3-balcony/crops/all/beds at 1280 px and 375 px
+  (`?coarse=1&full=1`) incl. reduced motion — no console errors, crop card opens, Growth +2 mo shows the preview
+  and closing it returns to today, Reset returns to the whole space; production dpl_95eUhbT1YD4V8z4KLfwLbwUQp4U9
+  READY, live Grove3D chunk carries the new strings on both domains. NOT verified: a real iPhone. Seen, not fixed:
+  on phones the crop card covers the full-screen close button; the Growth legend's last stage label is clipped at
+  375 px; focused phone view still lets some area labels overlap; `tests/g3-beds.html` ignores `?full=1`.
