@@ -37,10 +37,10 @@ function dirFrom(elevationDeg, azimuthDeg) {
 
 /* light presets by solar elevation (spec §1) */
 const PRESETS = [
-  { el: 35, sunColor: "#fff3e4", sunIntensity: 2.1, hemiSky: "#ffffff", hemiGround: "#9fb48a", hemiIntensity: .85, fog: "#b4c69d", exposure: .92, shadowIntensity: .62, envIntensity: .22 },
-  { el: 12, sunColor: "#ffe2bd", sunIntensity: 1.8, hemiSky: "#fff6ea", hemiGround: "#9fb48a", hemiIntensity: .8, fog: "#bcc9a4", exposure: .92, shadowIntensity: .55, envIntensity: .22 },
-  { el: 0, sunColor: "#ffb876", sunIntensity: 1.1, hemiSky: "#d9c2b2", hemiGround: "#8f9c7e", hemiIntensity: .7, fog: "#b9b2a6", exposure: .9, shadowIntensity: .45, envIntensity: .2 },
-  { el: -6, sunColor: "#9fb3d6", sunIntensity: .5, hemiSky: "#5b6a86", hemiGround: "#3f4a40", hemiIntensity: .6, fog: "#56627a", exposure: .8, shadowIntensity: .35, envIntensity: .14 },
+  { el: 35, sunColor: "#fff3e4", sunIntensity: 2.1, hemiSky: "#ffffff", hemiGround: "#9fb48a", hemiIntensity: .85, fog: "#b4c69d", exposure: 1.15, shadowIntensity: .62, envIntensity: .22 },
+  { el: 12, sunColor: "#ffe2bd", sunIntensity: 1.8, hemiSky: "#fff6ea", hemiGround: "#9fb48a", hemiIntensity: .8, fog: "#bcc9a4", exposure: 1.15, shadowIntensity: .55, envIntensity: .22 },
+  { el: 0, sunColor: "#ffb876", sunIntensity: 1.1, hemiSky: "#d9c2b2", hemiGround: "#8f9c7e", hemiIntensity: .7, fog: "#b9b2a6", exposure: 1.12, shadowIntensity: .45, envIntensity: .2 },
+  { el: -6, sunColor: "#9fb3d6", sunIntensity: .5, hemiSky: "#5b6a86", hemiGround: "#3f4a40", hemiIntensity: .6, fog: "#56627a", exposure: 1.0, shadowIntensity: .35, envIntensity: .14 },
 ];
 function presetAt(el) {
   if (el >= PRESETS[0].el) return { ...PRESETS[0] };
@@ -92,7 +92,7 @@ export function skyState({ date = new Date(), lat = 50, lng = null, weather = nu
 
 export const FIXED_SKY = Object.freeze({
   sunDir: REF_VEC, sunColor: PRESETS[0].sunColor, sunIntensity: 2.1, hemiSky: "#ffffff", hemiGround: "#9fb48a", hemiIntensity: .85,
-  fog: "#b4c69d", fogNear: 1, exposure: .92, shadowIntensity: .62, envIntensity: .22, night: 0, elevation: 55, cloud: 0, precip: "none",
+  fog: "#b4c69d", fogNear: 1, exposure: 1.15, shadowIntensity: .62, envIntensity: .22, night: 0, elevation: 55, cloud: 0, precip: "none",
   windDir: CALM.windDir, windStrength: .15, tempC: 15, reduced: false,
 });
 
