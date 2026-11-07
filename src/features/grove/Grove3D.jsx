@@ -802,7 +802,7 @@ function buildZone(z, ctx) {
         const a = (k + .5) * seg, c = hang ? hangC : (r + .5) * rowD, x = alongX ? a : c, zz = alongX ? c : a, tl = seg - .07;
         tag(rbox(g, alongX ? tl : tD, H, alongX ? tD : tl, M.pot, x, base + H / 2, zz, { r: .05 }));
         rbox(g, (alongX ? tl : tD) + .03, .045, (alongX ? tD : tl) + .03, M.potRim, x, base + H - .01, zz, { r: .02, cast: false });
-        rbox(g, (alongX ? tl : tD) - .07, .03, (alongX ? tD : tl) - .07, M.soil(PAL.soilDark), x, base + H - .025, zz, { r: .012, cast: false });
+        rbox(g, (alongX ? tl : tD) - .07, .03, (alongX ? tD : tl) - .07, M.soil(PAL.soilDark), x, base + H - .005, zz, { r: .012, cast: false }); // soil just above the trough's top, inside the rim
         if (hang) [-1, 1].forEach((sd) => { const bx = x + sd * (tl / 2 - .14); rbox(g, .05, .5, .05, M.zinc, bx, base + .25, zz + tD / 2 + .04, { r: .02, cast: false }); rbox(g, .05, .05, .16, M.zinc, bx, base + .47, zz + tD / 2 + .04, { r: .02, cast: false }); }); // hooks over the rail
         else [-1, 1].forEach((sd) => rbox(g, alongX ? .08 : tD - .06, .03, alongX ? tD - .06 : .08, M.stoneDark, x + (alongX ? sd * (tl / 2 - .12) : 0), .015, zz + (alongX ? 0 : sd * (tl / 2 - .12)), { r: .012, cast: false })); // little feet
       }
