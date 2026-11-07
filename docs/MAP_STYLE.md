@@ -30,12 +30,12 @@ Reference that set the direction: Dilum Sanjaya's "WareTrack" warehouse dashboar
 - **Buildings:** cream walls `#f2ebdd`, white trims; roofs terracotta `#cf8260` or light slate `#87909a`; barn red `#c7624f` with white boards; sheds and stores barn red with white trim (look A).
 - **Wood:** `#cfae82` / `#b68e63` / `#7c5a3d`. Stone `#d3cfc5`. Zinc `#c6cdd0`.
 - **Water** `#7cc0d6`, **glass** `#daf2ef`, **hay** `#e4c66f`, **smoke** `#f2f0ec`.
-- **Foliage:** four bright greens `#62a945 #54993d #74b650 #478c38`, silvery olive `#7d916a`, deep citrus `#33733d`, hedge `#3f8a3a`.
+- **Foliage:** four leaf greens `#628f3e #548237 #749b48 #477732` (lit ≈ the target picture's `#567f38`), silvery olive `#7d916a`, deep citrus `#33733d`, hedge `#3f7634`.
 - **The one accent is the brand green `#128147`** (with `#1fa35c` light and `#0c5e33` deep): every door, every gate, the greenhouse door, the tractor, the wheelbarrow, the watering can, the mailbox, the tap wheel, the drinker base. Nothing else is saturated green-blue. Attention stays with `#f7c552` gold (harvest frames, stage tags) and the app's orange (job badges).
 
 ## 4. Light
 - Hemisphere light: white sky, warm olive bounce `#b3ac78`, intensity 0.66. One warm sun (`#fff0d6`, 2.45) about 45° up in the fixed afternoon, so shadows are clear and a little long (look A).
-- **Shadows are soft but clear**: PCF radius 4, shadow intensity 0.9. They ground every object; they still never go black.
+- **Shadows are clear**: PCF radius 2, shadow intensity 0.97 (0.93 low sun; clouds fade them by at most 30 %). By day the shadow-casting sun keeps its real azimuth but stays 34–58° up (`skyState`), so winter and evening shadows stay short and readable instead of smearing across the field. Every tree also stands on a soft dark contact patch (`M.blob`, radial falloff in the shader, merged by `bake()`).
 - RoomEnvironment at 0.22 for a gentle gradient on matte surfaces. ACES, exposure 1.15.
 - **No post-processing** (no screen-space AO, bloom, depth of field or tilt-shift): tried 2026-11-07, it blurred the map, lost anti-aliasing and blew out the night glow. Edges stay sharp.
 - No vignette, no mottle, no cloud-shadow layers, no darkening of the ground anywhere.

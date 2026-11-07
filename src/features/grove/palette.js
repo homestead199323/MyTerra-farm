@@ -17,7 +17,7 @@ export const TOY = {
   terracotta: "#cf8260", slate: "#87909a", slateDark: "#6d7781", zinc: "#c6cdd0", metal: "#9ea8ae", dark: "#3b3f44", ink: "#2a2d31",
   barn: "#c7624f", barnDark: "#ad5041",
   green: "#128147", greenLight: "#1fa35c", greenPale: "#e7f3ec", greenDeep: "#0c5e33",
-  leaf: ["#62a945", "#54993d", "#74b650", "#478c38"], leafOlive: "#7d916a", leafCitrus: "#33733d", leafDark: "#3a7742", hedge: "#3f8a3a",
+  leaf: ["#628f3e", "#548237", "#749b48", "#477732"], leafOlive: "#7d916a", leafCitrus: "#33733d", leafDark: "#3a7742", hedge: "#3f7634",
   water: "#7cc0d6", waterDeep: "#66afc9", ripple: "#dff2f8",
   glass: "#daf2ef", winGlass: "#9fc9dc",
   hay: "#e4c66f", hayDark: "#cfa94f", straw: "#e8d393",

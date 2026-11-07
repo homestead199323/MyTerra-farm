@@ -118,6 +118,11 @@ function materials() {
     compost: PAL.compost.map((c) => flat(c, { rough: 1 })), hive: PAL.hive.map((c) => flat(c)), pot: flat(PAL.pot), potRim: flat(PAL.potRim), mulch: layered(flat(PAL.mulch, { rough: 1 }), 13), mulchRim: layered(flat(PAL.soilLight, { rough: 1 }), 12),
     netting: flat(0xffffff, { transparent: true, opacity: .14, side: THREE.DoubleSide, depthWrite: false, rough: 1 }), shade: flat(0xeef2e6, { rough: .95 }),
     hit: new THREE.MeshBasicMaterial({ visible: false }),
+    blob: new THREE.ShaderMaterial({ // soft round contact shadow (radial falloff in the shader, no texture); merged by bake()
+      transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -8,
+      vertexShader: "varying vec2 vU; void main() { vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+      fragmentShader: "varying vec2 vU; void main() { float r = length(vU - .5) * 2., a = pow(clamp(1. - r, 0., 1.), 1.3) * .42; gl_FragColor = vec4(.13, .16, .05, a); }",
+    }),
     glow: new THREE.MeshStandardMaterial({ color: 0xffc83d, emissive: 0xffb300, emissiveIntensity: .55, roughness: .5, transparent: true, opacity: .95 }),
     stageTag: STAGE_COLOR.map((c, i) => flat(c, { rough: .6, emissive: i === 5 ? 0x8a6a10 : 0x000000, ei: 1 })), tagPole: flat(PAL.tagPole),
     fruit: (color) => flat(color, { rough: .45, emissive: color, ei: .1 }), fruitDrop: (color) => Object.assign(motionMat(color, false), { transparent: true }),
@@ -172,6 +177,7 @@ function tree(g, x, z, r, seed, M, y = 0, leafIdx = null) {
   const th = r * .55 + .3, leaf = M.leaf[leafIdx ?? Math.floor(srand(seed + 3) * 4)], spin = srand(seed) * 6.28;
   const trunk = tube(g, r * .11, r * .16, th + r * .6, M.bark, x, (th + r * .6) / 2, z, { seg: 12 }); trunk.rotation.z = (srand(seed + 7) - .5) * .06;
   const top = th + r * .9;
+  if (M.blob) disc(g, r * 1.12, M.blob, x, .028, z, { seg: 20, cast: false, receive: false }); // look A: a soft dark patch grounds every tree
   // two short branches forking out of the trunk into the crown
   [0, 2.4].forEach((a, i) => pill(g, [x, th + r * .25, z], [x + Math.cos(spin + a) * r * .38, th + r * .75 + i * r * .1, z + Math.sin(spin + a) * r * .38], r * .055, M.bark, { seg: 7, cast: false }));
   // a smooth lumpy crown: five overlapping spheres, slightly squashed, the biggest on top, a lighter one where the sun hits
@@ -1100,7 +1106,7 @@ function buildWorld(ctx) {
   const heightAt = terrainHeightFn(fW, fH, margin); ctx.heightAt = heightAt;
   const style = data.mapStyle || {}, gm = style.groundMaterial || (env === "balcony" ? "stone" : "meadow");
   const colors = gm === "meadow" ? (GROUNDS.meadow[style.groundColor] || GROUNDS.meadow.natural) : (GROUNDS[gm] || GROUNDS.stone);
-  const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), nightTint(flat(0xffffff, { rough: .96, vertexColors: true, variant: "land" }), .82));
+  const ground = new THREE.Mesh(terrainGeo(fW, fH, E, heightAt, colors), nightTint(flat(0xffffff, { rough: .96, vertexColors: true, variant: "land" }), .9, [.07, .12, .24]));
   ground.receiveShadow = true; world.add(ground); ctx.ground = ground;
   if (gm === "meadow") {
     // the property inside the hedge: a shade lighter than the meadow, with soft irregular patches painted into the
@@ -1114,7 +1120,7 @@ function buildWorld(ctx) {
       col.push(tmp.r, tmp.g, tmp.b);
     }
     geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    const apron = new THREE.Mesh(geo, nightTint(layered(flat(0xffffff, { rough: .96, vertexColors: true, variant: "apron" }), 3), .3, [.2, .25, .2])); apron.rotation.x = -HPI; apron.position.set(fW / 2, .004, fH / 2); apron.receiveShadow = true; world.add(apron); ctx.apron = apron; // kept out of bake(): it carries vertex colours
+    const apron = new THREE.Mesh(geo, nightTint(layered(flat(0xffffff, { rough: .96, vertexColors: true, variant: "apron" }), 3), .3, [.34, .28, .13])); apron.rotation.x = -HPI; apron.position.set(fW / 2, .004, fH / 2); apron.receiveShadow = true; world.add(apron); ctx.apron = apron; // kept out of bake(): it carries vertex colours
   }
   // boundary by environment: a balcony is a slab against the building wall with a slim rounded railing;
   // a garden and a farm get the round-capped post-and-rail fence, stone gate pillars and a green gate
@@ -1699,7 +1705,7 @@ export default function Grove3D(props) {
     // bright, soft, toy-box light: a white sky with a pale green bounce, one warm sun with faint soft shadows
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9fb48a, .85); scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xfff3e4, 2.1); sun.castShadow = true;
-    sun.shadow.mapSize.set(mobile ? 2048 : 3072, mobile ? 2048 : 3072); sun.shadow.radius = 4; sun.shadow.bias = -.0003; sun.shadow.normalBias = .04; sun.shadow.intensity = .62;
+    sun.shadow.mapSize.set(mobile ? 2048 : 3072, mobile ? 2048 : 3072); sun.shadow.radius = 2; sun.shadow.bias = -.0003; sun.shadow.normalBias = .04; sun.shadow.intensity = .62;
     scene.add(sun); scene.add(sun.target);
     const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), S = { W: 0, H: 0 };
     let queued = false, dirty = false, animOn = false, animRaf = 0, lastFrame = 0, inView = true;

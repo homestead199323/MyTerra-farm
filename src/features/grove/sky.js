@@ -37,8 +37,8 @@ function dirFrom(elevationDeg, azimuthDeg) {
 
 /* light presets by solar elevation (spec §1) */
 const PRESETS = [
-  { el: 35, sunColor: "#fff0d6", sunIntensity: 2.45, hemiSky: "#ffffff", hemiGround: "#b3ac78", hemiIntensity: .66, fog: "#c3bd78", exposure: 1.15, shadowIntensity: .9, envIntensity: .22 },
-  { el: 12, sunColor: "#ffe2bd", sunIntensity: 1.8, hemiSky: "#fff6ea", hemiGround: "#b3ac78", hemiIntensity: .8, fog: "#c7bf82", exposure: 1.15, shadowIntensity: .8, envIntensity: .22 },
+  { el: 35, sunColor: "#fff0d6", sunIntensity: 2.45, hemiSky: "#ffffff", hemiGround: "#b3ac78", hemiIntensity: .66, fog: "#c3bd78", exposure: 1.15, shadowIntensity: .97, envIntensity: .22 },
+  { el: 12, sunColor: "#ffe2bd", sunIntensity: 1.8, hemiSky: "#fff6ea", hemiGround: "#b3ac78", hemiIntensity: .72, fog: "#c7bf82", exposure: 1.15, shadowIntensity: .93, envIntensity: .22 },
   { el: 0, sunColor: "#ffb876", sunIntensity: 1.1, hemiSky: "#d9c2b2", hemiGround: "#8f9c7e", hemiIntensity: .7, fog: "#b9b2a6", exposure: 1.12, shadowIntensity: .45, envIntensity: .2 },
   { el: -6, sunColor: "#a9bde0", sunIntensity: .55, hemiSky: "#5a72a6", hemiGround: "#2d3a52", hemiIntensity: .75, fog: "#22355a", exposure: 1.0, shadowIntensity: .45, envIntensity: .14 },
 ];
@@ -79,20 +79,22 @@ export function skyState({ date = new Date(), lat = 50, lng = null, weather = nu
   const el = elevationOverride == null ? pos.elevation : elevationOverride;
   const night = clamp(-el / 6, 0, 1), p = presetAt(el);
   // below the horizon the "moon" lights the scene: the sun's azimuth mirrored through north, 40° up
-  const dir = night >= 1 ? dirFrom(40, 360 - pos.azimuth) : dirFrom(Math.max(el, 4), pos.azimuth);
+  // by day the shadow-casting sun keeps the real azimuth but stays 34–58° up (look A): a winter sun at 10° would smear
+  // every shadow into a faint streak across the field; a diorama reads best with short, clear shadows all year
+  const dir = night >= 1 ? dirFrom(40, 360 - pos.azimuth) : dirFrom(clamp(el, 34, 58), pos.azimuth);
   // cloud flattens the light: less sun, more sky, fainter shadows
   const flat = wx.cloud > .3 ? (wx.cloud - .3) / .7 : 0;
   return {
     sunDir: dir, sunColor: p.sunColor, sunIntensity: p.sunIntensity * (1 - .55 * flat),
     hemiSky: p.hemiSky, hemiGround: p.hemiGround, hemiIntensity: p.hemiIntensity + .25 * flat,
-    fog: p.fog, fogNear: 1 - .35 * flat, exposure: p.exposure, shadowIntensity: p.shadowIntensity * (1 - .4 * flat), envIntensity: p.envIntensity,
+    fog: p.fog, fogNear: 1 - .35 * flat, exposure: p.exposure, shadowIntensity: p.shadowIntensity * (1 - .3 * flat), envIntensity: p.envIntensity,
     night, elevation: el, cloud: wx.cloud, precip: wx.precip, windDir: wx.windDir, windStrength: wx.windStrength, tempC: wx.tempC, reduced,
   };
 }
 
 export const FIXED_SKY = Object.freeze({
   sunDir: REF_VEC, sunColor: PRESETS[0].sunColor, sunIntensity: 2.45, hemiSky: "#ffffff", hemiGround: "#b3ac78", hemiIntensity: .66,
-  fog: "#c3bd78", fogNear: 1, exposure: 1.15, shadowIntensity: .9, envIntensity: .22, night: 0, elevation: 55, cloud: 0, precip: "none",
+  fog: "#c3bd78", fogNear: 1, exposure: 1.15, shadowIntensity: .97, envIntensity: .22, night: 0, elevation: 55, cloud: 0, precip: "none",
   windDir: CALM.windDir, windStrength: .15, tempC: 15, reduced: false,
 });
 
