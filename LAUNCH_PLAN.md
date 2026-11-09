@@ -558,7 +558,7 @@
   totals have no thousands separators and transactions show ISO dates; the Growth legend's last label is
   clipped at 375 px (already noted above). GitHub reports the repo moved to `homestead199323/MyTerra-farm`
   (pushes still redirect).
-- [~] **3D map refinement (2026-11-09, owner request "revisit the whole 3D map and assets; refine graphics, UX and UI").**
+- [x] **3D map refinement (2026-11-09, owner request "revisit the whole 3D map and assets; refine graphics, UX and UI").**
   Audit + three slices in `docs/superpowers/specs/2026-11-09-map-refine-design.md`: (1) framing and phone
   readability, (2) map UI, (3) graphics polish. **Slice 1 shipped (`14d64d9`):** `home-view.js` works out the
   home view (tested): a balcony on a portrait phone is seen along its length (4 × 1.5 m: floor 20 % → 35 % of
@@ -587,3 +587,18 @@
   Escape closes the card and keeps the map open, bar shows Growth and Reset. NOT verified: a real phone, the
   handle drag by finger, VoiceOver. Departure to know about: this card is not a small centred card (the app's
   rule for pop-ups); the job pop-up still is.
+  **Slice 3 shipped (`f746b63`):** balcony block in warm plaster `#f3dcb8` with plinth, cornice, downpipes,
+  corbels and shutters on some neighbours' windows; lit windows are amber everywhere (pane tinted, glow ×0.55
+  instead of ×1.6, which clipped to white) and on the apartment block about half the neighbours' windows are
+  lit, the rest navy; a neighbouring block either side, courtyard hedge, pavement, street, street trees and two
+  lamps; festoon cord pale by day; harvest frame bars 4–9 cm by frame size; a balcony turns at most 80° either
+  side (`turnLimit`), because from behind its block hides it. Dropped: the street behind the back-garden houses
+  (cropped out of view since slice 1). Icons not re-rendered: no crop, animal or area model changed and day
+  colours are untouched. Verified: 181 + 3 tests, ESLint, Vite build (sandbox and Mac); Playwright day and
+  `?hour=21` on balcony (both sizes), garden and farm; balcony 4 × 1.5 m phone 60 k → 88 k triangles, 47 → 56
+  calls; 11 × 4.5 m desktop 144 k → 173 k, 69 → 78; garden and farm unchanged; production
+  `dpl_5AKXsYFncyFrykcedN9nEX8WeJHE` READY, live `Grove3D-B6lha05Y.js` carries `facadeB`, `winDark` and
+  `maxTheta`, CSP header present; the demo on www.myterra.farm as a 4 × 1.5 m balcony at 390 px renders the new
+  block at dusk with amber windows. NOT verified: a real phone, frame rate, the turn limit by finger. Known: the
+  street only shows in low side-on views of a large balcony; all-zones desktop is 835 k triangles against the
+  800 k budget in MAP_STYLE (it was 835 k before this work).
