@@ -57,13 +57,24 @@ Measured (headless Chrome, software GL; not a real phone):
 Not in this slice: a wide garden on a portrait phone is limited by its width; it stays about a fifth of the
 screen height. Turning it side-on was rejected on 2026-10-25 (the house became a strip of roofs).
 
-## Slice 2 — map UI (next)
+## Slice 2 — map UI (shipped 2026-11-09)
 
-- Area tap on phones: a bottom sheet about half the screen high, the 3D bed framed in the free half above
-  it; drag up for the full sheet. Desktop: a side panel instead of a centred modal.
-- Sheet fixes: overlap, empty divider, outline, stage pictures that differ per stage or collapse to a bar.
-- Area selector becomes a white chip with the app's own menu; one close control on phones; + / − leave the
-  phone bar; crop card no longer covers the close button; Growth legend not clipped at 375 px.
+Design approved in chat ("go with 2").
+
+- `ZoneSheet.jsx` replaces the centred modal for the area card. Phones and windows under 760 px: a bottom
+  sheet 52 % of the screen high, pulled up to full height by its handle. Wider: a 400 px panel on the right.
+  Not modal; closes with X or Escape only. Departure from the app's "small centred card" rule, limited to this
+  card because its job is to keep the 3D bed in view; the job pop-up stays a centred card.
+- `cover.js` (pure, tested): the card reports what it covers; `focusZone` frames the area in the rest
+  (`fitView` with insets, fill 0.8). Closing the card re-centres the area.
+- Card content: "1 row" not "1 rows"; the generic stage key is gone, each planting shows its own five stage
+  pictures with the current one framed; "Edit spacing & layout" and the stage select no longer collide; the
+  double divider and the green focus outline are gone.
+- Area selector: white chip + own menu with job counts. Phones: bar is Growth · Reset; the X is the one close
+  control. Crop card and hint sit below the chip. Growth legend wraps on phones.
+
+Not in this slice: swipe-to-dismiss (cards close with X only, an earlier owner decision); a panel that moves
+with the inline desktop map (it is fixed to the window's right edge).
 
 ## Slice 3 — graphics polish (after)
 

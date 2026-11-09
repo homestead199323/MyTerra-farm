@@ -13,10 +13,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
+import { Plus, Minus, Compass, Maximize2, Minimize2, X, ChevronDown, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent, isCoarse } from "./gestures";
 import { focusDistance } from "./focus-camera";
-import { homeView } from "./home-view";
+import { homeView, fitView } from "./home-view";
+import { onCover, coverInset, mergeInset } from "./cover";
 import { placeLabels } from "./labels";
 import { previewGrowthOf, growthSceneStages, growthTransitionStart, growthTransitionDelay, growthTransitionProgress, GROWTH_DURATION_MS, GROWTH_STAGGER_MS, rowAtDate } from "./growth-preview";
 import { animalZone, bedRows, layoutPlots, STAGES } from "../quiet/farm-model";
@@ -1578,7 +1579,7 @@ class FarmControls {
     this.cooperative = false; // inline in a scrolling page: one finger scrolls the page, two fingers move the map, plain wheel scrolls
     this.target = new THREE.Vector3(); this.dist = 60; this.theta = CAM.az * DEG; this.phi = CAM.el * DEG;
     this.lim = { minDist: 3, maxDist: 200, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -10, x1: 10, z0: -10, z1: 10 };
-    this.size = { w: 1, h: 1 }; this.home = null;
+    this.size = { w: 1, h: 1 }; this.home = null; this.bars = null; this.cover = null;
     this.pointers = new Map(); this.pan = null; this.pinch = null; this.tapStart = null; this.lastTap = null;
     this.samples = []; this.rotSamples = [];
     this.raf = 0; this.anim = null; this.inertia = null; this.idleTimer = 0; this.interacting = false;
@@ -1807,6 +1808,15 @@ class FarmControls {
     // Preserve azimuth so selecting a plant never unexpectedly spins the farm.
     const phi = isPlantZone(zone.type) ? Math.max(this.phi, 60 * DEG) : this.phi;
     const aspect = this.size.w / Math.max(1, this.size.h);
+    // With an area card open (a phone's bottom sheet, a desktop side panel) or the phone's bars on screen,
+    // the area is framed in the part of the map that is still visible (cover.js), not behind the card.
+    const inset = mergeInset(this.cover, this.bars, this.size);
+    if (inset) {
+      const pts = []; for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) pts.push([x, y, z]);
+      const v = fitView(pts, { theta: this.theta, phi, fov: this.camera.fov, aspect, fill: .8, inset });
+      this.animateTo({ target: new THREE.Vector3(v.target.x, 0, v.target.z), phi, dist: clamp(v.dist, this.lim.minDist, this.lim.maxDist) }, 550);
+      return;
+    }
     const dist = focusDistance(bounds, { target, theta: this.theta, phi,
       fov: this.camera.fov, aspect, near: this.camera.near });
     this.animateTo({ target, phi, dist: clamp(dist, this.lim.minDist, this.lim.maxDist) }, 550);
@@ -1852,7 +1862,7 @@ class FarmControls {
 
 /* ---------- component ---------- */
 export default function Grove3D(props) {
-  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null } = props;
+  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null } = props;
   const liveSky = data.mapStyle?.liveSky !== "off", lat = typeof data.cityGeo?.lat === "number" ? data.cityGeo.lat : null, lng = typeof data.cityGeo?.lng === "number" ? data.cityGeo.lng : null; // "Live sky" setting; the town's geocode drives the sun
   const host = useRef(null), labels = useRef(null), tipRef = useRef(null), state = useRef(null), latest = useRef(props), fullRef = useRef(false);
   const [full, setFull] = useState(() => HARNESS?.full === true);
@@ -1864,6 +1874,7 @@ export default function Grove3D(props) {
   const [ahead, setAhead] = useState(0); // growth preview: days from today
   const [timeOpen, setTimeOpen] = useState(false);
   const [focusId, setFocusId] = useState("");
+  const [findOpen, setFindOpen] = useState(false), findRef = useRef(null);
   const [motionReduced, setMotionReduced] = useState(() => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   useEffect(() => {
     if (typeof matchMedia !== "function") return;
@@ -1926,7 +1937,7 @@ export default function Grove3D(props) {
     ctl((c, st) => { c.focusZone(zone); st.reactToZone?.(zone, scatterPoint); });
     onZoneOpen?.(event, zone);
   }
-  useEffect(() => { latest.current = { ...props, dismissHint, showCoop, showTip, pickRow, focusAndOpen, clearFocus: () => setFocusId(""), todayKey, actualToday: today, liveSky, lat, lng, skyOverride, preview, focusId }; }); // the engine reads the newest props from here
+  useEffect(() => { latest.current = { ...props, cardZoneId, dismissHint, showCoop, showTip, pickRow, focusAndOpen, clearFocus: () => setFocusId(""), todayKey, actualToday: today, liveSky, lat, lng, skyOverride, preview, focusId }; }); // the engine reads the newest props from here
   useEffect(() => { if (!coop) return; const t = setTimeout(() => setCoop(null), 1800); return () => clearTimeout(t); }, [coop]);
   // renderer, lights and controls: created once
   useEffect(() => {
@@ -2271,6 +2282,21 @@ export default function Grove3D(props) {
     return () => clearTimeout(t);
   }, [sceneKey, motionReduced]);
   useEffect(() => { state.current?.select(selectedId || focusId); }, [selectedId, focusId]);
+  // an area card opened, changed height or closed (cover.js): frame its area in the part of the map still in view
+  useEffect(() => onCover((rect) => {
+    const st = state.current, canvas = host.current?.querySelector("canvas"); if (!st?.controls || !canvas) return;
+    const box = canvas.getBoundingClientRect();
+    st.controls.cover = rect ? coverInset({ left: box.left, top: box.top, right: box.right, bottom: box.bottom }, rect) : null;
+    const P = latest.current, id = P.cardZoneId ?? P.focusId, zone = id == null || id === "" ? null : P.zones.find((z) => String(z.id) === String(id));
+    if (zone && !P.preview) { setFocusId(String(zone.id)); st.controls.focusZone(zone); st.requestRender(); }
+  }), []);
+  // the area menu closes on a tap outside it
+  useEffect(() => {
+    if (!findOpen) return undefined;
+    const away = (e) => { if (findRef.current && !findRef.current.contains(e.target)) setFindOpen(false); };
+    document.addEventListener("pointerdown", away, true);
+    return () => document.removeEventListener("pointerdown", away, true);
+  }, [findOpen]);
   // the sky follows the clock: recomputed once a minute (shadows re-render then), and at once when the
   // weather, the Live sky setting, the town or a harness override changes
   const overrideKey = JSON.stringify(skyOverride);
@@ -2315,6 +2341,14 @@ export default function Grove3D(props) {
     return () => { window.removeEventListener("keydown", key); if (el) { el.removeEventListener("pointerdown", down); el.removeEventListener("pointercancel", cancel); el.removeEventListener("click", click); } if (full) { document.body.style.overflow = prev === "hidden" ? "" : prev; document.body.classList.remove("g3-full-open"); } };
   }, [full, mobile]);
   useEffect(() => { if (!hint) return; const t = setTimeout(() => latest.current.dismissHint?.(), 6000); return () => clearTimeout(t); }, [hint]);
+  const wholeName = env === "farm" ? "Whole farm" : env === "balcony" ? "Whole balcony" : "Whole garden";
+  const areaName = zones.find((zone) => String(zone.id) === focusId)?.name || wholeName;
+  function chooseArea(id) {
+    const zone = zones.find((item) => String(item.id) === id);
+    setFindOpen(false); setFocusId(id);
+    if (zone) ctl((c, st) => { c.focusZone(zone); st.reactToZone?.(zone); });
+    else ctl((c, st) => st.reset(true));
+  }
   const hostStyle = full
     ? { position: "fixed", inset: 0, zIndex: 6500, overflow: "hidden", touchAction: "none", background: "#b4c69d" }
     : { position: "relative", width: "100%", overflow: "hidden", touchAction: "pan-y" };
@@ -2352,25 +2386,21 @@ export default function Grove3D(props) {
         </div>
       )}
       {!preview && ahead > 0 && <div className="g3-preview" role="status">Preview · {new Date(todayKey + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" })} · in {ahead} days</div>}
-      {!preview && zones.length > 0 && <label className="g3-find">
-        <span className="g3-sr-only">Find an area on the map</span>
-        <select aria-label="Find an area on the map" value={focusId} onChange={(e) => {
-          const id = e.target.value, zone = zones.find((item) => String(item.id) === id);
-          setFocusId(id);
-          if (zone) ctl((c, st) => { c.focusZone(zone); st.reactToZone?.(zone); });
-          else ctl((c, st) => st.reset(true));
-        }}>
-          <option value="">{env === "farm" ? "Whole farm" : env === "balcony" ? "Whole balcony" : "Whole garden"}</option>
-          {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-        </select>
-      </label>}
+      {!preview && zones.length > 0 && <div className="g3-find" ref={findRef} onKeyDown={(e) => { if (e.key === "Escape" && findOpen) { e.stopPropagation(); setFindOpen(false); } }}>
+        {/* the area chip: a white pill like the name pills, with the app's own menu (was a raw browser dropdown) */}
+        <button type="button" className="g3-area" aria-haspopup="listbox" aria-expanded={findOpen} aria-label={`Showing ${areaName}. Choose an area`} onClick={() => setFindOpen(!findOpen)}><span>{areaName}</span><ChevronDown size={14} aria-hidden="true" /></button>
+        {findOpen && <ul className="g3-area-menu" role="listbox" aria-label="Areas on the map">
+          <li><button type="button" role="option" aria-selected={!focusId} onClick={() => chooseArea("")}><span>{wholeName}</span></button></li>
+          {zones.map((zone) => <li key={zone.id}><button type="button" role="option" aria-selected={focusId === String(zone.id)} onClick={() => chooseArea(String(zone.id))}><span>{zone.name}</span>{(tasksByZone[zone.id] || []).length > 0 && <b aria-label={`${tasksByZone[zone.id].length} jobs`}>{tasksByZone[zone.id].length}</b>}</button></li>)}
+        </ul>}
+      </div>}
       {!preview && <div className="g3-ctl" role="group" aria-label="Map view controls">
         {/* Visible words under the icons (UX audit 2026-09-28: a calendar icon didn't say "growth preview"). */}
         <button type="button" className="g3-btn g3-lbl" aria-label="Growth preview and legend" title="See how your plants grow over the coming weeks" aria-pressed={timeOpen} onClick={() => { if (timeOpen) setAhead(0); setTimeOpen(!timeOpen); }}><Sprout size={17} /><span aria-hidden="true">Growth</span></button>
         <button type="button" className="g3-btn g3-zoom" aria-label="Zoom in" title="Zoom in" onClick={() => ctl((c) => c.zoomBy(.66))}><Plus size={18} /></button>
         <button type="button" className="g3-btn g3-zoom" aria-label="Zoom out" title="Zoom out" onClick={() => ctl((c) => c.zoomBy(1 / .66))}><Minus size={18} /></button>
         <button type="button" className="g3-btn g3-lbl" aria-label="Reset view" title="Show the whole map again" onClick={() => { setFocusId(""); ctl((c, st) => st.reset(true)); }}><Compass size={17} /><span aria-hidden="true">Reset</span></button>
-        <button type="button" className="g3-btn g3-lbl" aria-label={full ? "Exit full screen" : "Full screen map"} title={full ? "Exit full screen" : "Open the map full screen"} aria-pressed={full} onClick={() => setFull(!full)}>{full ? <Minimize2 size={17} /> : <Maximize2 size={17} />}<span aria-hidden="true">{full ? "Exit" : "Expand"}</span></button>
+        <button type="button" className="g3-btn g3-lbl g3-exit" aria-label={full ? "Exit full screen" : "Full screen map"} title={full ? "Exit full screen" : "Open the map full screen"} aria-pressed={full} onClick={() => setFull(!full)}>{full ? <Minimize2 size={17} /> : <Maximize2 size={17} />}<span aria-hidden="true">{full ? "Exit" : "Expand"}</span></button>
       </div>}
       {full && <button type="button" className="g3-btn g3-close" aria-label="Close full screen map" onClick={() => setFull(false)}><X size={20} /></button>}
       {!preview && timeOpen && (
