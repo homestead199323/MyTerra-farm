@@ -76,12 +76,23 @@ Design approved in chat ("go with 2").
 Not in this slice: swipe-to-dismiss (cards close with X only, an earlier owner decision); a panel that moves
 with the inline desktop map (it is fixed to the window's right edge).
 
-## Slice 3 — graphics polish (after)
+## Slice 3 — graphics polish (shipped 2026-11-09)
 
-- Balcony facade: warmer plaster, shutters or reveals for depth; lit and unlit windows vary at night.
-- Balcony surroundings: a street or courtyard edge instead of open meadow; quieter festoon wire by day.
-- Thinner harvest frames on small containers; a street behind the back-garden houses.
-- Re-render the small pictures (`scripts/render-icons.mjs`) after any model change.
+- Balcony block: warm plaster instead of cream-gone-grey; plinth, cornice, downpipes, corbels; shutters on
+  some neighbours' windows.
+- Night: lit windows are amber everywhere (pane tinted, glow lowered so it no longer clips to white); on the
+  apartment block about half the neighbours' windows are lit, the rest go navy.
+- Town: a neighbouring block either side, a hedge closing the courtyard, pavement, street, street trees and
+  two lamps. The street only shows in low side-on views of a large balcony.
+- Festoon cord pale by day; harvest frames slim on small containers.
+- Balcony turn limit of 80 degrees either side: from behind, the block hides the balcony.
+
+Dropped: the street behind the back-garden houses. Since slice 1 the house is cropped by the top of the frame,
+so the street would never be in view. Not needed: re-rendering the small pictures — no crop, animal or area
+model changed, and day colours are untouched (the icons are rendered by day).
+
+Measured: balcony 4 x 1.5 m on a phone 60 k -> 88 k triangles, 47 -> 56 draw calls; balcony 11 x 4.5 m on
+desktop 144 k -> 173 k, 69 -> 78; garden and farm unchanged (218 k; 423 k phone / 835 k desktop, 185 calls).
 
 ## Verification per slice
 

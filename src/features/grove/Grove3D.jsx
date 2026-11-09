@@ -16,7 +16,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, ChevronDown, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent, isCoarse } from "./gestures";
 import { focusDistance } from "./focus-camera";
-import { homeView, fitView } from "./home-view";
+import { homeView, fitView, turnLimit } from "./home-view";
 import { onCover, coverInset, mergeInset } from "./cover";
 import { placeLabels } from "./labels";
 import { previewGrowthOf, growthSceneStages, growthTransitionStart, growthTransitionDelay, growthTransitionProgress, GROWTH_DURATION_MS, GROWTH_STAGGER_MS, rowAtDate } from "./growth-preview";
@@ -109,10 +109,16 @@ function materials() {
     terracotta: flat(PAL.terracotta), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: flat(PAL.zinc, { rough: .6, metal: .15 }), metal: flat(PAL.metal, { rough: .5, metal: .3 }), dark: flat(PAL.dark), ink: flat(0x4a3f36),
     barn: flat(PAL.barn), barnDark: flat(PAL.barnDark), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
     glass: nightTint(nightGlow(flat(PAL.glass, { transparent: true, opacity: .34, rough: .12, physical: true, env: 1.5, side: THREE.DoubleSide, depthWrite: false }), 2.0), .8, [1, .62, .25]), // the greenhouse glows warm after dark
-    winGlass: nightGlow(flat(0x9fc9dc, { rough: .18, metal: .05, physical: true, env: 1.4 }), 1.6),
+    winGlass: nightTint(nightGlow(flat(0x9fc9dc, { rough: .18, metal: .05, physical: true, env: 1.4 }), .55, [1, .62, .22]), .92, [1, .66, .24]), // lit windows are warm amber after dark (look A), not blown out to white
     lamp: nightGlow(flat(0xd9b35c, { rough: .4, metal: .5 }), 1.3),
-    bulb: nightGlow(flat(0xfff1d0, { rough: .35 }), 2.6), wire: flat(0x3a3530, { rough: .7 }), // festoon string lights
-    facade: texture(flat(PAL.cream, { variant: "facade" }), "plaster"), tileA: texture(flat(PAL.stone, { variant: "tile" }), "tile"), tileB: texture(flat(PAL.concrete, { variant: "tile" }), "tile"),
+    bulb: nightGlow(flat(0xfff1d0, { rough: .35 }), 2.6), wire: flat(0xb9b1a3, { rough: .7 }), // festoon string lights: a pale cord (a dark one broke into black dashes at a distance)
+    // an apartment block's windows: some flats are home after dark (warm amber, not blown out to white), some are not
+    winLit: nightTint(nightGlow(flat(PAL.winGlass, { rough: .18, metal: .05, physical: true, env: 1.4, variant: "winLit" }), .55, [1, .62, .22]), .92, [1, .66, .24]), // the pane itself turns amber, so the glow is not washed out by blue glass
+    winDark: nightTint(flat(PAL.winGlass, { rough: .18, metal: .05, physical: true, env: 1.4, variant: "winDark" }), .82, [.1, .14, .26]),
+    facadeB: texture(flat(PAL.plasterPeach, { variant: "facadeB" }), "plaster"), facadeC: texture(flat(PAL.plasterStone, { variant: "facadeC" }), "plaster"),
+    road: nightTint(texture(flat(PAL.asphalt, { rough: .96, variant: "road" }), "gravel"), .78, [.1, .13, .23]), kerb: nightTint(flat(PAL.kerb, { variant: "kerb" }), .7, [.15, .19, .31]), roadLine: nightTint(flat(PAL.white, { variant: "roadLine" }), .55, [.2, .25, .4]),
+    shutter: flat(PAL.woodMid, { variant: "shutter" }),
+    facade: texture(flat(PAL.plaster, { variant: "facade" }), "plaster"), tileA: texture(flat(PAL.stone, { variant: "tile" }), "tile"), tileB: texture(flat(PAL.concrete, { variant: "tile" }), "tile"),
     rug: flat(0xc98a63, { rough: 1 }), rugIn: flat(0xeee0c8, { rough: 1 }), bin: flat(0x4f6e45, { rough: .7 }), nLawn: texture(layered(flat(0x9cb55a, { rough: .96, variant: "nlawn" }), 2), "lawn"),
     water: flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4 }), pondWater: ripple(flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4, variant: "pond" }), { time: TIME, ripple: WX.ripple }),
     yard: flat(PAL.yard, { rough: .95 }), yardRim: flat(PAL.yardRim, { rough: .95 }),
@@ -730,7 +736,7 @@ function buildGlowPools(g, ctx) {
     vertexShader: "varying vec2 vP; void main() { vP = position.xy; vec4 p = vec4(position, 1.);\n#ifdef USE_INSTANCING\np = instanceMatrix * p;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * p; }",
     fragmentShader: "uniform float uNight; varying vec2 vP; void main() { float r = length(vP), a = pow(max(0., 1. - r * r), 1.6) * uNight * .6; gl_FragColor = vec4(vec3(1., .68, .3), a); }",
   });
-  const im = instances(g, discGeo(1, 28), glowPoolMat, pools.map((q) => ({ p: [q.x, .09, q.z], rx: -HPI, s: [q.r, q.r, 1] })), { cast: false, receive: false });
+  const im = instances(g, discGeo(1, 28), glowPoolMat, pools.map((q) => ({ p: [q.x, (q.y || 0) + .09, q.z], rx: -HPI, s: [q.r, q.r, 1] })), { cast: false, receive: false });
   if (im) { im.renderOrder = 20; im.frustumCulled = false; glowPoolMat.polygonOffset = true; glowPoolMat.polygonOffsetFactor = -2; glowPoolMat.polygonOffsetUnits = -40; }
 }
 function pots(ctx, items, plantsList, off = [0, 0]) { // items: [{x, y, z}] — pot + soil + a small 3D plant, collected farm-wide
@@ -1060,7 +1066,7 @@ function buildGrowth(g, ctx, M) { // stage markers and harvest halos for the who
   G.glows.forEach((h) => {
     if (h.tree) { ring(g, h.s[0] / 2, .05, M.glow, h.p[0], h.p[1] + .03, h.p[2], { tube: 6, seg: 36, cast: false, receive: false }); return; }
     const fg = new THREE.Group(); fg.position.set(h.p[0], h.p[1], h.p[2]); fg.rotation.y = h.ry || 0; g.add(fg);
-    const w = h.s[0], d = h.s[1], t = .09;
+    const w = h.s[0], d = h.s[1], t = clamp(Math.min(w, d) * .085, .04, .09); // a slim frame on a trough or pot row, the full bar on a field row
     [[0, -d / 2, w + t, t], [0, d / 2, w + t, t], [-w / 2, 0, t, d + t], [w / 2, 0, t, d + t]].forEach(([x, z, bw, bd]) => rbox(fg, bw, .05, bd, M.glow, x, 0, z, { r: .022, seg: 1, cast: false, receive: false }));
   });
   instances(g, capsuleGeo(.022, .48, 7, 2), M.tagPole, G.poles, { cast: false });
@@ -1147,13 +1153,26 @@ function balconyEdge(world, ctx, fW, fH, M) {
     rbox(world, L + .1, .16, .3, M.white, cx, top + .02, bz - D / 2 + .13, { r: .05, cast: false });
     [x0 + .13, x1 - .13].forEach((ex) => rbox(world, .3, .16, D + t, M.white, ex, top + .02, bz + t / 2, { r: .05, cast: false }));
     const nl = Math.max(1, Math.min(3, Math.round(L / 7)));
-    for (let i = 0; i < nl; i++) { const lx = x0 + (i + .5) * L / nl; rbox(world, 1.2, .22, 1.2, M.trim, lx, top + .02, bz - .6, { r: .06, cast: false }); rbox(world, .98, .06, .98, M.winGlass, lx, top + .14, bz - .6, { r: .03, cast: false }); } }
+    for (let i = 0; i < nl; i++) { const lx = x0 + (i + .5) * L / nl; rbox(world, 1.2, .22, 1.2, M.trim, lx, top + .02, bz - .6, { r: .06, cast: false }); rbox(world, .98, .06, .98, M.winDark, lx, top + .14, bz - .6, { r: .03, cast: false }); } }
   [0, -STOREY].forEach((y) => rbox(world, x1 - x0 + .04, .12, .08, M.trim, (x0 + x1) / 2, y - .32, .02, { r: .03, cast: false })); // a white band at each floor line
+  // depth on the front: a stone plinth at street level, a cornice under the coping, a zinc downpipe at each end,
+  // and stone corbels carrying our slab
+  rbox(world, x1 - x0 + .1, 1.0, .14, M.stone, (x0 + x1) / 2, -drop + .5, .03, { r: .04, cast: false });
+  rbox(world, x1 - x0 + .18, .16, .22, M.trim, (x0 + x1) / 2, top - .24, .05, { r: .05, cast: false });
+  [x0 + .42, x1 - .42].forEach((px) => { pill(world, [px, top - .4, .12], [px, -drop + .3, .12], .055, M.zinc, { seg: 8, cast: false }); rbox(world, .2, .14, .2, M.zinc, px, top - .42, .12, { r: .04, cast: false }); });
+  { const nc = Math.max(2, Math.min(5, Math.round(fW / 2.2))); for (let i = 0; i < nc; i++) { const cx = fW * (i + .5) / nc; rbox(world, .2, .34, Math.min(.7, fH * .5), M.stoneDark, cx, -.43, Math.min(.7, fH * .5) / 2 - .02, { r: .06, cast: false }); } }
   const sills = []; // the neighbours' window boxes: flowers on some of the other flats' sills (life, without a second balcony)
-  const win = (wx, wy, theirs = false) => { rbox(world, 1.1, 1.15, .1, M.trim, wx, wy, .02, { r: .04 }); rbox(world, .9, .95, .04, M.winGlass, wx, wy, .08, { r: .015, cast: false }); rbox(world, 1.3, .1, .22, M.trim, wx, wy - .61, .1, { r: .04, cast: false }); if (theirs && srand(Math.round(wx * 7 + wy * 13) + 401) < .55) sills.push([wx, wy - .5]); };
+  // a window: white frame, glass, sill. Ours are lit after dark; about half the neighbours' are (the rest go dark),
+  // some of theirs have wooden shutters folded back, some a window box. `lite` builds the far blocks' with fewer faces.
+  const win = (wx, wy, theirs = false, lite = false) => {
+    const k = Math.round(wx * 7 + wy * 13), seg = lite ? 1 : undefined, lit = !theirs || srand(k + 409) < .48;
+    rbox(world, 1.1, 1.15, .1, M.trim, wx, wy, .02, { r: .04, seg }); rbox(world, .9, .95, .04, lit ? M.winLit : M.winDark, wx, wy, .08, { r: .015, seg, cast: false }); rbox(world, 1.3, .1, .22, M.trim, wx, wy - .61, .1, { r: .04, seg, cast: false });
+    if (theirs && srand(k + 405) < .42) [-1, 1].forEach((sd) => rbox(world, .3, 1.08, .05, M.shutter, wx + sd * .73, wy, .05, { r: .02, seg: 1, cast: false }));
+    if (theirs && !lite && srand(k + 401) < .55) sills.push([wx, wy - .5]);
+  };
   // our own wall: a green glazed door, a threshold, skirting, and windows when there is room
   const dx = Math.min(fW * .25, 1.6), dW = 1.0, dH = 2.15;
-  rbox(world, dW + .2, dH + .1, .1, M.green, dx, (dH + .1) / 2, .02, { r: .04 }); rbox(world, dW - .16, dH - .2, .04, M.winGlass, dx, dH / 2 + .02, .08, { r: .015, cast: false });
+  rbox(world, dW + .2, dH + .1, .1, M.green, dx, (dH + .1) / 2, .02, { r: .04 }); rbox(world, dW - .16, dH - .2, .04, M.winLit, dx, dH / 2 + .02, .08, { r: .015, cast: false });
   rbox(world, .06, .2, .06, M.metal, dx + dW * .36, 1.0, .1, { r: .02, cast: false });
   rbox(world, dW + .16, .06, .3, M.stoneDark, dx, .025, .12, { r: .025, cast: false });
   rbox(world, fW, .13, .05, M.trim, fW / 2, .065, .015, { r: .015, cast: false });
@@ -1173,6 +1192,38 @@ function balconyEdge(world, ctx, fW, fH, M) {
   { const cg = new THREE.Group(); cg.position.y = -drop; world.add(cg); // shrubs along the foot of the building and two benches on the paving
     for (let x = x0 + .6; x < x1 - .4; x += 1.1 + srand(Math.round(x * 3) + 451) * .5) { const r = .38 + srand(Math.round(x * 7) + 455) * .16, k = Math.abs(Math.round(x * 11)); ball(cg, [r * 1.25, r, r * 1.1], M.leaf[k % 4], x, r * .8, 1.9 + srand(Math.round(x * 5) + 453) * .3, { seg: 14, rings: 10, minSeg: 10, minRings: 7 }); ball(cg, [r * .8, r * .7, r * .8], M.leaf[(k + 1) % 4], x + r * .7, r * .55, 2.05, { seg: 12, rings: 9, minSeg: 9, minRings: 6 }); }
     ORNAMENTS.bench(cg, x0 + (x1 - x0) * .3, .9, { ry: 0 }); ORNAMENTS.bench(cg, x0 + (x1 - x0) * .72, .9, { ry: 0 }); }
+  balconyTown(world, ctx, fW, fH, M, x0, x1, win);
+}
+/* The town round a balcony (2026-11-09): the block no longer stands in a meadow. A clipped hedge closes the
+   courtyard, then a pavement, a street with a dashed centre line and the far pavement with street trees and
+   lamps (warm pools after dark); a neighbouring block stands either side of ours on the same building line,
+   one a storey taller, one a storey lower, in two other plaster tones. Everything sits two storeys down. */
+function balconyTown(world, ctx, fW, fH, M, x0, x1, win) {
+  const drop = BALCONY_DROP, top = STOREY, cg = new THREE.Group(); cg.position.y = -drop; world.add(cg);
+  const sx0 = -28, sx1 = fW + 28, sw = sx1 - sx0, sc = (sx0 + sx1) / 2, zc = fH + 8.4; // the street runs well past the view on the flat ground
+  rbox(cg, sw, .7, .6, M.hedge, sc, .33, zc, { r: .28, seg: 2 });
+  rbox(cg, sw, .1, 1.9, M.kerb, sc, .05, zc + 1.45, { r: .04, cast: false });
+  rbox(cg, sw, .04, 5.6, M.road, sc, .02, zc + 5.2, { r: .015, cast: false });
+  rbox(cg, sw, .1, 1.9, M.kerb, sc, .05, zc + 8.95, { r: .04, cast: false });
+  for (let x = sx0 + 1.5; x < sx1 - 1.5; x += 3.2) rbox(cg, 1.5, .012, .14, M.roadLine, x, .046, zc + 5.2, { r: .005, seg: 1, cast: false, receive: false });
+  // street lamps on the near pavement, street trees on the far one
+  [fW / 2 - 6.5, fW / 2 + 6.5].forEach((lx) => {
+    pill(cg, [lx, 0, zc + 1.2], [lx, 3.3, zc + 1.2], .06, M.zinc, { seg: 8 }); pill(cg, [lx, 3.3, zc + 1.2], [lx, 3.45, zc + 1.9], .045, M.zinc, { seg: 6, cast: false });
+    ball(cg, [.17, .13, .17], M.bulb, lx, 3.36, zc + 2.0, { seg: 10, rings: 8, cast: false });
+    (ctx.glowPools ||= []).push({ x: lx, y: -drop, z: zc + 2.3, r: 3.1 });
+  });
+  for (let i = 0, x = sx0 + 5; x < sx1 - 3; i++, x += 7.5 + srand(i + 941) * 2.5) tree(cg, x, zc + 9.2, 1.05 + srand(i + 943) * .3, i + 947, M);
+  // the neighbours: [which end, length, storeys above ours, plaster]
+  [[-1, 9.2, 1, M.facadeB], [1, 8.4, -1, M.facadeC]].forEach(([sd, L, up, mat], bi) => {
+    const gapB = 3.4, bx0 = sd < 0 ? x0 - gapB - L : x1 + gapB, bx1 = bx0 + L, cx = (bx0 + bx1) / 2, bTop = top + up * STOREY, D = 7, bz = -.05 - D / 2;
+    rbox(world, L, bTop + drop, D, mat, cx, (bTop - drop) / 2, bz, { r: .08, seg: 2 });
+    rbox(world, L - .5, .08, D - .5, M.concreteSolid, cx, bTop - .1, bz, { r: .03, cast: false });
+    [[cx, bz + D / 2 - .13, L + .1, .3], [cx, bz - D / 2 + .13, L + .1, .3], [bx0 + .13, bz, .3, D], [bx1 - .13, bz, .3, D]].forEach(([px, pz, w, d]) => rbox(world, w, .16, d, M.white, px, bTop + .02, pz, { r: .05, seg: 1, cast: false }));
+    rbox(world, L + .1, 1.0, .14, M.stone, cx, -drop + .5, .03, { r: .04, seg: 1, cast: false });
+    const n = Math.max(2, Math.floor((L - 1.0) / 2.3)), off = (L - (n - 1) * 2.3) / 2;
+    for (let fy = -STOREY * 2; fy <= bTop - STOREY + .01; fy += STOREY) for (let i = 0; i < n; i++) { if (fy === -STOREY * 2 && i === (bi ? n - 1 : 0)) { rbox(world, 1.2, 2.2, .1, M.green, bx0 + off + i * 2.3, fy + 1.1, .02, { r: .04, seg: 1 }); continue; } win(bx0 + off + i * 2.3, fy + 1.55, true, true); } // a green street door on the ground floor
+    tree(cg, sd < 0 ? x0 - gapB / 2 : x1 + gapB / 2, 1.4, 1.2, 951 + bi, M); // a tree in the gap between the blocks
+  });
 }
 function balconyHangingPot(world, ctx, x, z, seed, M) {
   const angle = srand(seed) * Math.PI * 2, px = x + Math.cos(angle) * .45, pz = z - Math.sin(angle) * .45;
@@ -1605,6 +1656,7 @@ class FarmControls {
     this.camera.position.set(target.x + Math.sin(theta) * Math.cos(phi) * dist, target.y + Math.sin(phi) * dist, target.z + Math.cos(theta) * Math.cos(phi) * dist);
     this.camera.lookAt(target); this.camera.updateMatrixWorld();
   }
+  clampTheta() { const m = this.lim.maxTheta; if (m != null) this.theta = clamp(this.theta, -m, m); } // a balcony is never seen from behind its building (home-view.js turnLimit)
   clampView() {
     const L = this.lim; this.dist = clamp(this.dist, L.minDist, L.maxDist);
     const minP = Math.max(15 * DEG, L.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, L.maxPhi || (85 * DEG));
@@ -1659,7 +1711,7 @@ class FarmControls {
     else if (this.pointers.size === 1) {
       if (this.cooperative && P.touch) { if (!P.hinted && this.tapStart && this.tapStart.moved > 12) { P.hinted = true; this.hooks.coop?.("touch"); } return; }
       if (P.btn === 2 || P.mods) {
-        this.theta -= dx * .006;
+        this.theta -= dx * .006; this.clampTheta();
         const minP = Math.max(15 * DEG, this.lim.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, this.lim.maxPhi || (85 * DEG));
         this.phi = clamp(this.phi + dy * .005, minP, maxP);
         this.update();
@@ -1686,7 +1738,7 @@ class FarmControls {
     const dyMid = mid.y - S.mid0.y;
     // the first clear movement decides the gesture and locks it: zoom (above) always applies; rotate and tilt only once chosen
     if (!S.intent) { S.intent = pinchIntent({ d: S.d0, ang: S.a0, midY: S.mid0.y }, { d, ang, midY: mid.y }, { dt: performance.now() - S.t0 }); if (S.intent) { S.rotOff = da; S.tiltOff = dyMid; } }
-    if (S.intent === "rotate") this.theta = S.theta0 + (da - S.rotOff);
+    if (S.intent === "rotate") { this.theta = S.theta0 + (da - S.rotOff); this.clampTheta(); }
     if (S.intent === "tilt") {
       const minP = Math.max(15 * DEG, this.lim.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, this.lim.maxPhi || (85 * DEG));
       this.phi = clamp(S.phi0 + (dyMid - S.tiltOff) * .0045, minP, maxP);
@@ -1762,7 +1814,7 @@ class FarmControls {
         const I = this.inertia, dt = Math.min(48, now - I.t); I.t = now;
         const k = Math.exp(-dt / 260);
         this.target.x += I.vx * dt; this.target.z += I.vz * dt;
-        if (I.vTheta) this.theta += I.vTheta * dt;
+        if (I.vTheta) { this.theta += I.vTheta * dt; this.clampTheta(); }
         if (I.vPhi) {
           const minP = Math.max(15 * DEG, this.lim.minPhi || (15 * DEG)), maxP = Math.min(85 * DEG, this.lim.maxPhi || (85 * DEG));
           this.phi = clamp(this.phi + I.vPhi * dt, minP, maxP);
@@ -1853,7 +1905,7 @@ class FarmControls {
     this.homeTurn = v.turn; this.homeFrac = v.frac; // share of the viewport height the space's own ground spans at the home view (harness check)
     const pad = Math.max(margin, 2);
     // Small pots should remain inspectable even when the surrounding farm is large.
-    this.lim = { minDist: 2.5, maxDist: dist * 1.35, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -pad, x1: fW + pad, z0: -pad, z1: fH + pad };
+    this.lim = { minDist: 2.5, maxDist: dist * 1.35, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -pad, x1: fW + pad, z0: -pad, z1: fH + pad, maxTheta: turnLimit(this.env) };
     this.home = { target: t.clone(), dist: dist * zoom, theta, phi }; this.fitDist = dist;
     if (animate) { this.clampView(); this.animateTo(this.home, 600); }
     else { this.stopMotion(); cancelAnimationFrame(this.raf); this.target.copy(t); this.theta = theta; this.phi = phi; this.dist = dist * zoom; this.clampView(); this.update(); } // an instant fit also ends any animation or fling still running

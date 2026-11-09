@@ -14,6 +14,8 @@ export const TOY = {
   soil: "#7a5237", soilDark: "#5f3f2a", soilLight: "#957155", mulch: "#6f4f3a", earth: "#b69f82", floor: "#8e7861",
   wood: "#cfae82", woodMid: "#b68e63", woodDark: "#7c5a3d", woodPale: "#e2cfae",
   cream: "#f2ebdd", white: "#fbfaf6", trim: "#ffffff", panel: "#ebe5d8",
+  plaster: "#f3dcb8", plasterPeach: "#eec3a0", plasterStone: "#e9dcc0", // apartment blocks round a balcony: warm plaster, never grey in shade
+  asphalt: "#b5b0a4", kerb: "#e6e0d2", // the street in front of a balcony's courtyard
   terracotta: "#cf8260", slate: "#87909a", slateDark: "#6d7781", zinc: "#c6cdd0", metal: "#9ea8ae", dark: "#3b3f44", ink: "#2a2d31",
   barn: "#c7624f", barnDark: "#ad5041",
   green: "#128147", greenLight: "#1fa35c", greenPale: "#e7f3ec", greenDeep: "#0c5e33",

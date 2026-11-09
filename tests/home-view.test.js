@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { fitView, homeView } from '../src/features/grove/home-view.js';
+import { fitView, homeView, turnLimit } from '../src/features/grove/home-view.js';
 
 const DEG = Math.PI / 180;
 const project = (v, points, aspect, fov = 28) => {
@@ -62,4 +62,13 @@ test('a farm keeps its turn rule: the long axis runs up a portrait screen', () =
   assert.equal(p.turn, true); assert.equal(p.theta, -90 * DEG);
   const l = homeView({ env: 'farm', fW: 46, fH: 26, margin: 3, aspect: 1280 / 720, fov: 28, az: -22, el: 54 });
   assert.equal(l.turn, false); assert.equal(l.theta, -22 * DEG);
+});
+
+test('a balcony cannot be turned to look at it from behind its building; gardens and farms turn freely', () => {
+  assert.ok(Math.abs(turnLimit('balcony') - 80 * DEG) < 1e-9);
+  assert.equal(turnLimit('backyard'), null); assert.equal(turnLimit('farm'), null);
+  for (const [fW, fH] of [[4, 1.5], [11, 4.5]]) for (const aspect of [390 / 844, 16 / 10]) {
+    const v = homeView({ env: 'balcony', fW, fH, margin: .4, aspect, fov: 28, az: -22, el: 54 });
+    assert.ok(Math.abs(v.theta) < turnLimit('balcony'), 'the home view is inside the limit');
+  }
 });

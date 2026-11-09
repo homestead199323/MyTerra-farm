@@ -66,3 +66,8 @@ export function homeView({ env, fW, fH, margin = 1, aspect, fov, az, el, patio =
   const turn = portrait !== (fH > fW), mx = Math.max(margin * .6, 1.7);
   return done(fitView(boxPoints(-mx, fW + mx, -mx, fH + mx, 2.5), { ...opt, theta: (turn ? -90 : az) * DEG }), turn);
 }
+
+/* How far the camera may be turned from straight-on, in radians (null = all the way round).
+   A balcony is only ever seen from outside its building: from behind, the block hides it and the view
+   is a roof, so the turn stops 80 degrees either side. Gardens and farms turn freely. */
+export const turnLimit = (env) => (env === "balcony" ? 80 * DEG : null);

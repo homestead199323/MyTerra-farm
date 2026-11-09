@@ -14,7 +14,7 @@ export const HPI = Math.PI / 2;
 export const NIGHT = { value: 0 };
 /* WIND — (dirX, dirZ, strength 0..1): where the air moves toward in scene space; set by Grove3D's sky */
 export const WIND = { value: new THREE.Vector3(.72, -.69, .15) };
-export function nightGlow(mat, k = .55) {
+export function nightGlow(mat, k = .55, rgb = [1, .82, .48]) {
   if (mat.userData.nightGlow) return mat; mat.userData.nightGlow = true;
   const prev = mat.onBeforeCompile;
   mat.onBeforeCompile = (sh, r) => {
@@ -22,9 +22,9 @@ export function nightGlow(mat, k = .55) {
     sh.uniforms.uNight = NIGHT;
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", "#include <common>\nuniform float uNight;")
-      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>\ntotalEmissiveRadiance += uNight * vec3(1., .82, .48) * ${k.toFixed(2)};`);
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>\ntotalEmissiveRadiance += uNight * vec3(${rgb.map((v) => v.toFixed(3)).join(", ")}) * ${k.toFixed(2)};`);
   };
-  mat.customProgramCacheKey = () => `g3night${k}`;
+  mat.customProgramCacheKey = () => `g3night${k}|${rgb.join(",")}`;
   return mat;
 }
 /* nightTint(mat, k, rgb) — after dark, ground colours slide toward a cool blue (look A: the land goes navy at dusk while
