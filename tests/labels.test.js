@@ -59,3 +59,22 @@ test('labels: a zone whose centre is on screen keeps its name when its front edg
 test('labels: a zone whose centre has left the screen is hidden even if its front edge is on it', () => {
   assert.equal(placeLabels([it('a', { x: 200, y: 700, cx: 200, cy: -40 })], opt)[0].show, false);
 });
+
+// small areas: the pill hangs in front of the bed (below it on screen) instead of covering its plants
+test('labels: a small bed gets its pill in front of it, clear of the plants', () => {
+  const bed = it('bed', { x: 200, y: 300, box: { x0: 150, y0: 240, x1: 250, y1: 300 }, below: { x: 200, y: 326 } });
+  const r = placeLabels([bed], opt)[0];
+  assert.equal(r.show, true); assert.equal(r.y, 326);
+  assert.ok(r.y - 20 >= 300, 'the pill starts below the bed');
+});
+test('labels: when another area lies right in front, the pill stays on its own bed', () => {
+  const back = it('back', { x: 200, y: 300, box: { x0: 150, y0: 240, x1: 250, y1: 300 }, below: { x: 200, y: 326 } });
+  const front = it('front', { x: 200, y: 400, area: 30, box: { x0: 140, y0: 304, x1: 260, y1: 400 } });
+  const r = placeLabels([back, front], opt);
+  assert.equal(by(r, 'back').y, 300); assert.equal(by(r, 'back').show, true);
+});
+test('labels: a thin strip always hangs its pill in front', () => {
+  const strip = it('strip', { x: 200, y: 300, thin: true, box: { x0: 100, y0: 290, x1: 300, y1: 300 }, below: { x: 200, y: 326 } });
+  const front = it('front', { x: 200, y: 420, area: 30, box: { x0: 140, y0: 304, x1: 260, y1: 420 } });
+  assert.equal(by(placeLabels([strip, front], opt), 'strip').y, 326);
+});

@@ -22,3 +22,7 @@ export function pinchIntent(s0, s1, { dt = 0 } = {}) {
   if (dt >= PINCH.settleMs) return "zoom";
   return null;
 }
+
+/* Phone tier: a coarse pointer (finger). On the home screen the map is then a tap-to-open tile.
+   `window.__g3harness.coarse` forces it in the dev harnesses (stripped from production builds). */
+export const isCoarse = () => (import.meta.env?.DEV && typeof window !== "undefined" && window.__g3harness?.coarse === true) || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches);

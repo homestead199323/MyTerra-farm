@@ -9,6 +9,7 @@ import { plantingRows, plantingBounds } from "../quiet/planting-plan";
 import GroveZoneCard from "./GroveZoneCard";
 import ZoneTaskPopup from "./ZoneTaskPopup";
 import { taskGlyph } from "./zone-tasks";
+import { isCoarse } from "./gestures";
 import { AerialDefs, Building, CropCrown, Fence, OverheadAnimal, Ornament, Canopy } from "./AerialArtwork";
 import { accessPaths, plantedRows, plantPosition, buildingScale } from "./aerial-layout";
 import { srand } from "./sceneMath";
@@ -1187,7 +1188,7 @@ export default function GroveScene({
           {edit
             ? "Drag to move · corner to resize"
             : three
-              ? interactive ? "Drag to look around · tap an area to open it" : "Drag to look around"
+              ? isCoarse() ? "Tap the map to open it" /* phones: the tile takes no gestures */ : interactive ? "Drag to look around · tap an area to open it" : "Drag to look around"
               : showHelperText
                 ? "Tap an area to explore"
                 : "Growth stages are estimates"}

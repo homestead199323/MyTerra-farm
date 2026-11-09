@@ -133,6 +133,14 @@ export function layered(mat, n) { mat.polygonOffset = true; mat.polygonOffsetFac
    world build; icons and desktop stay at 1). The cache key carries the final segment count, so tiers never mix. ---------- */
 export const DETAIL = { value: 1 };
 export function setDetail(v) { DETAIL.value = v > 0 ? Math.min(1, v) : 1; }
+/* Which tier a phone builds. A balcony or a back garden is light (about 140 k / 220 k triangles at full detail,
+   inside the phone budget of 300 k), so it keeps every curve smooth; the lighter tier is for farms, and for a
+   garden someone has packed like one. Desktop is always 1. */
+export function detailFor({ mobile, env, zones = 0, plants = 0 }) {
+  if (!mobile) return 1;
+  if (env !== "farm" && zones <= 12 && plants <= 250) return 1;
+  return .45;
+}
 const sg = (n, min) => Math.max(min, Math.round(n * DETAIL.value));
 /* ---------- geometry cache: dimensions are quantised to 5 mm so repeated parts share one buffer ---------- */
 const geos = new Map();
@@ -144,7 +152,8 @@ export function rboxGeo(w, h, d, r, seg) {
   if (rr <= .004) return cached(`b|${q(w)}|${q(h)}|${q(d)}`, () => new THREE.BoxGeometry(w, h, d));
   return cached(`rb|${q(w)}|${q(h)}|${q(d)}|${q(rr)}|${s}`, () => new RoundedBoxGeometry(w, h, d, s, rr));
 }
-export function sphereGeo(seg = 14, rings = 10) { seg = sg(seg, 7); rings = sg(rings, 5); return cached(`s|${seg}|${rings}`, () => new THREE.SphereGeometry(1, seg, rings)); }
+// minSeg / minRings: big shapes (tree crowns) stay round on the phone tier
+export function sphereGeo(seg = 14, rings = 10, minSeg = 7, minRings = 5) { seg = sg(seg, minSeg); rings = sg(rings, minRings); return cached(`s|${seg}|${rings}`, () => new THREE.SphereGeometry(1, seg, rings)); }
 export function capsuleGeo(r, len, seg = 10, cap = 4) { seg = sg(seg, 6); cap = sg(cap, 2); return cached(`c|${q(r)}|${q(len)}|${seg}|${cap}`, () => new THREE.CapsuleGeometry(r, len, cap, seg)); }
 export function cylGeo(rt, rb, h, seg = 16, open = false) { seg = sg(seg, 6); return cached(`y|${q(rt)}|${q(rb)}|${q(h)}|${seg}|${open ? 1 : 0}`, () => new THREE.CylinderGeometry(rt, rb, h, seg, 1, open)); }
 export function torusGeo(R, r, tube = 8, seg = 20, arc = Math.PI * 2) { tube = sg(tube, 4); seg = sg(seg, 10); return cached(`t|${q(R)}|${q(r)}|${tube}|${seg}|${arc.toFixed(2)}`, () => new THREE.TorusGeometry(R, r, tube, seg, arc)); }
@@ -160,7 +169,7 @@ function place(m, x, y, z, { rx = 0, ry = 0, rz = 0, cast = true, receive = true
 }
 export function rbox(g, w, h, d, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(rboxGeo(w, h, d, o.r, o.seg), mat), x, y, z, o); g.add(m); return m; }
 export function box(g, w, h, d, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(rboxGeo(w, h, d, 0), mat), x, y, z, o); g.add(m); return m; }
-export function ball(g, r, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(sphereGeo(o.seg, o.rings), mat), x, y, z, { ...o, s: Array.isArray(r) ? r : r }); g.add(m); return m; }
+export function ball(g, r, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(sphereGeo(o.seg, o.rings, o.minSeg, o.minRings), mat), x, y, z, { ...o, s: Array.isArray(r) ? r : r }); g.add(m); return m; }
 export function tube(g, rt, rb, h, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(cylGeo(rt, rb, h, o.seg, o.open), mat), x, y, z, o); g.add(m); return m; }
 export function cone(g, r, h, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(coneGeo(r, h, o.seg), mat), x, y, z, o); g.add(m); return m; }
 export function ring(g, R, r, mat, x, y, z, o = {}) { const m = place(new THREE.Mesh(torusGeo(R, r, o.tube, o.seg, o.arc), mat), x, y, z, { rx: HPI, ...o }); g.add(m); return m; }

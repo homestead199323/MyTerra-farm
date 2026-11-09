@@ -14,8 +14,9 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
-import { pinchIntent } from "./gestures";
+import { pinchIntent, isCoarse } from "./gestures";
 import { focusDistance } from "./focus-camera";
+import { homeView } from "./home-view";
 import { placeLabels } from "./labels";
 import { previewGrowthOf, growthSceneStages, growthTransitionStart, growthTransitionDelay, growthTransitionProgress, GROWTH_DURATION_MS, GROWTH_STAGGER_MS, rowAtDate } from "./growth-preview";
 import { animalZone, bedRows, layoutPlots, STAGES } from "../quiet/farm-model";
@@ -31,7 +32,7 @@ import { createBrain } from "./herd-brain";
 import { buildSwallows, buildButterflies, swallowCount, butterflyCount } from "./fauna-fx";
 import { GROUND_TONES, pathTones } from "./palette";
 import { TREE_RE } from "./crop-families";
-import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
+import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, detailFor, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
@@ -41,10 +42,9 @@ const CAM = { az: -22, el: 54, fov: 28 };
 // Phone UX tier (preview tile, bottom bar, label density): a coarse pointer, i.e. fingers. The dev harness can
 // force it (?coarse=1) so Playwright at phone size exercises the phone branches without device emulation.
 // The render-quality tier (`mobile` in the engine) is wider: coarse pointer OR a short screen side.
-// Phones build every round shape with fewer segments (toy.js setDetail): about half the triangles, same silhouettes.
-const PHONE_DETAIL = .45;
+// Phones build a farm's round shapes with fewer segments (toy.js detailFor / setDetail): about half the triangles.
+// A balcony or back garden is light enough to keep full detail.
 const HARNESS = import.meta.env.DEV && typeof window !== "undefined" ? window.__g3harness || null : null;
-const isCoarse = () => HARNESS?.coarse === true || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches);
 // growth stages (farm-model STAGES): Planned, Sown, Seedling, Growing, Maturing, Harvest window
 const STAGE_CSS = ["#c3cbc4", "#dcca92", "#a9dd8c", "#5fb24d", "#c1d44f", "#f7c552"];
 const AREA_ICONS = { house: House, orchard: Trees, pasture: PawPrint, coop: PawPrint, barn: Warehouse, water: Droplets, beehive: Hexagon, veg: Sprout, raised: Sprout, herbs: Sprout, nursery: Sprout, container: Sprout };
@@ -185,7 +185,7 @@ function tree(g, x, z, r, seed, M, y = 0, leafIdx = null) {
   // two short branches forking out of the trunk into the crown
   [0, 2.4].forEach((a, i) => pill(g, [x, th + r * .25, z], [x + Math.cos(spin + a) * r * .38, th + r * .75 + i * r * .1, z + Math.sin(spin + a) * r * .38], r * .055, M.bark, { seg: 7, cast: false }));
   // a smooth lumpy crown: five overlapping spheres, slightly squashed, the biggest on top, a lighter one where the sun hits
-  const blob = (rr, dx, dy, dz, sy, mat = leaf, seg = 16, rings = 12) => ball(g, [rr, rr * sy, rr], mat, x + dx, top + dy, z + dz, { seg, rings });
+  const blob = (rr, dx, dy, dz, sy, mat = leaf, seg = 16, rings = 12) => ball(g, [rr, rr * sy, rr], mat, x + dx, top + dy, z + dz, { seg, rings, minSeg: 10, minRings: 7 }); // crowns are big on screen: they stay round on the phone tier
   blob(r * .92, 0, 0, 0, .86);
   blob(r * .66, Math.cos(spin) * r * .5, -r * .3, Math.sin(spin) * r * .5, .82);
   blob(r * .58, -Math.cos(spin + .9) * r * .48, -r * .2, -Math.sin(spin + .9) * r * .48, .84);
@@ -1138,6 +1138,15 @@ function balconyEdge(world, ctx, fW, fH, M) {
   const t = .3, wz = -t / 2 - .05, side = Math.max(2.6, Math.min(6, fW * .7)), x0 = -side, x1 = fW + side, top = STOREY, drop = BALCONY_DROP;
   rbox(world, x1 - x0, top + drop, t, M.facade, (x0 + x1) / 2, (top - drop) / 2, wz, { r: .08, seg: 2 });
   rbox(world, x1 - x0 + .1, .16, t + .16, M.white, (x0 + x1) / 2, top + .02, wz, { r: .05, cast: false });
+  // the building behind the wall: seen along the balcony (the phone's home view) a bare wall read as a film set.
+  // A block 7 m deep with a flat gravel roof, a white coping all round and two roof lights.
+  { const D = 7, bz = wz - t / 2 - D / 2 + .02, cx = (x0 + x1) / 2, L = x1 - x0;
+    rbox(world, L, top + drop, D, M.facade, cx, (top - drop) / 2, bz, { r: .08, seg: 2 });
+    rbox(world, L - .5, .08, D - .3, M.concreteSolid, cx, top - .1, bz, { r: .03, cast: false });
+    rbox(world, L + .1, .16, .3, M.white, cx, top + .02, bz - D / 2 + .13, { r: .05, cast: false });
+    [x0 + .13, x1 - .13].forEach((ex) => rbox(world, .3, .16, D + t, M.white, ex, top + .02, bz + t / 2, { r: .05, cast: false }));
+    const nl = Math.max(1, Math.min(3, Math.round(L / 7)));
+    for (let i = 0; i < nl; i++) { const lx = x0 + (i + .5) * L / nl; rbox(world, 1.2, .22, 1.2, M.trim, lx, top + .02, bz - .6, { r: .06, cast: false }); rbox(world, .98, .06, .98, M.winGlass, lx, top + .14, bz - .6, { r: .03, cast: false }); } }
   [0, -STOREY].forEach((y) => rbox(world, x1 - x0 + .04, .12, .08, M.trim, (x0 + x1) / 2, y - .32, .02, { r: .03, cast: false })); // a white band at each floor line
   const sills = []; // the neighbours' window boxes: flowers on some of the other flats' sills (life, without a second balcony)
   const win = (wx, wy, theirs = false) => { rbox(world, 1.1, 1.15, .1, M.trim, wx, wy, .02, { r: .04 }); rbox(world, .9, .95, .04, M.winGlass, wx, wy, .08, { r: .015, cast: false }); rbox(world, 1.3, .1, .22, M.trim, wx, wy - .61, .1, { r: .04, cast: false }); if (theirs && srand(Math.round(wx * 7 + wy * 13) + 401) < .55) sills.push([wx, wy - .5]); };
@@ -1161,7 +1170,7 @@ function balconyEdge(world, ctx, fW, fH, M) {
   const nt = Math.max(2, Math.min(4, Math.round((x1 - x0) / 5)));
   for (let i = 0; i < nt; i++) { const x = x0 + (i + .5) * (x1 - x0) / nt + (srand(i + 51) - .5) * 1.2, z = fH + 2.6 + srand(i + 57) * 3.2; tree(world, x, z, 1.35 + srand(i + 53) * .4, i + 61, M, -drop); }
   { const cg = new THREE.Group(); cg.position.y = -drop; world.add(cg); // shrubs along the foot of the building and two benches on the paving
-    for (let x = x0 + .6; x < x1 - .4; x += 1.1 + srand(Math.round(x * 3) + 451) * .5) { const r = .38 + srand(Math.round(x * 7) + 455) * .16, k = Math.abs(Math.round(x * 11)); ball(cg, [r * 1.25, r, r * 1.1], M.leaf[k % 4], x, r * .8, 1.9 + srand(Math.round(x * 5) + 453) * .3, { seg: 10, rings: 7 }); ball(cg, [r * .8, r * .7, r * .8], M.leaf[(k + 1) % 4], x + r * .7, r * .55, 2.05, { seg: 9, rings: 6 }); }
+    for (let x = x0 + .6; x < x1 - .4; x += 1.1 + srand(Math.round(x * 3) + 451) * .5) { const r = .38 + srand(Math.round(x * 7) + 455) * .16, k = Math.abs(Math.round(x * 11)); ball(cg, [r * 1.25, r, r * 1.1], M.leaf[k % 4], x, r * .8, 1.9 + srand(Math.round(x * 5) + 453) * .3, { seg: 14, rings: 10, minSeg: 10, minRings: 7 }); ball(cg, [r * .8, r * .7, r * .8], M.leaf[(k + 1) % 4], x + r * .7, r * .55, 2.05, { seg: 12, rings: 9, minSeg: 9, minRings: 6 }); }
     ORNAMENTS.bench(cg, x0 + (x1 - x0) * .3, .9, { ry: 0 }); ORNAMENTS.bench(cg, x0 + (x1 - x0) * .72, .9, { ry: 0 }); }
 }
 function balconyHangingPot(world, ctx, x, z, seed, M) {
@@ -1445,7 +1454,7 @@ function buildWorld(ctx) {
       if (y > fH && Math.abs(x - fW / 2) < 4) continue; // the drive stays open
       const r = 1.1 + srand(i * 7 + 709) * 1.3;
       tree(world, x, y, r, i + 800, M, heightAt(x, y) - .05);
-      if (srand(i * 11 + 713) < .35) { const s = .35 + srand(i * 13 + 717) * .5; far.push({ p: [x + 2.2, heightAt(x + 2.2, y + 1) + s * .4, y + 1], ry: srand(i) * 6, s: [s * 1.3, s * .75, s] }); }
+      if (!garden && srand(i * 11 + 713) < .35) { const s = .35 + srand(i * 13 + 717) * .5; /* boulders belong to farm hills, not to the streets round a back garden */ far.push({ p: [x + 2.2, heightAt(x + 2.2, y + 1) + s * .4, y + 1], ry: srand(i) * 6, s: [s * 1.3, s * .75, s] }); }
     }
     instances(world, sphereGeo(12, 9), M.rock, far);
   }
@@ -1823,28 +1832,21 @@ class FarmControls {
     else if (e.key === "Home" || e.key === "r") { this.hooks.reset?.(); e.preventDefault(); }
   }
   fit(fW, fH, margin, animate, zoom = 1) {
-    // a portrait screen looking at a landscape farm (or the reverse) turns the camera to look straight down
-    // the farm's long axis (from the west), so the farm fills the screen's height instead of a 45 % band;
-    // the usual 22° three-quarter view would project the turned farm to a near-square box
-    // A balcony is always seen from outside, looking at the building (never turned side-on), framed tight
-    // to the slab and its railing so it fills the screen; the facade and courtyard fill the rest.
-    // A garden is seen from its bottom fence toward the house, so the house, patio and lawn read as one back
-    // garden (turned side-on, the house became a strip of roofs down one edge); only a farm turns.
-    const balcony = this.env === "balcony", portrait = this.size.h > this.size.w, turn = this.env !== "balcony" && this.env !== "backyard" && portrait !== (fH > fW);
-    const t = new THREE.Vector3(fW / 2, 0, this.env === "backyard" ? fH / 2 - GARDEN_PATIO - 1.5 : fH / 2), theta = (turn ? -90 : CAM.az) * DEG, phi = CAM.el * DEG, mx = balcony ? .3 : Math.max(margin * .6, 1.7), corners = [];
-    const back = this.env === "backyard" ? GARDEN_PATIO + .5 : mx; // a garden keeps its patio and the house's back wall in frame
-    [[-mx, -back], [fW + mx, -back], [fW + mx, fH + mx], [-mx, fH + mx]].forEach(([x, z]) => corners.push(new THREE.Vector3(x, 0, z), new THREE.Vector3(x, 2.5, z)));
-    const saved = { target: this.target.clone(), dist: this.dist, theta: this.theta, phi: this.phi };
-    this.target.copy(t); this.theta = theta; this.phi = phi; let dist = Math.max(fW, fH) * 1.6;
-    for (let k = 0; k < 6; k++) { this.dist = dist; this.update(); let m = 0; corners.forEach((c) => { const v = c.clone().project(this.camera); m = Math.max(m, Math.abs(v.x), Math.abs(v.y)); }); dist *= m / .985; }
-    let y0 = 1, y1 = -1; this.dist = dist; this.update(); corners.forEach((c) => { const v = c.clone().project(this.camera); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); });
-    this.homeTurn = turn; this.homeFrac = (y1 - y0) / 2; // share of the viewport height the farm spans at the home view (harness check)
+    // Where the camera stands for the whole space is worked out in home-view.js (pure maths, tested):
+    // a farm turns to run its long axis up a portrait screen; a balcony on a portrait screen is seen along
+    // its length from outside the building; a back garden is framed on the garden and its patio, with the
+    // house behind cropped by the top of the frame. `bars` (px) keeps the space clear of the phone's
+    // full-screen controls.
+    const bars = this.bars, inset = bars ? { top: bars.top / this.size.h, bottom: bars.bottom / this.size.h } : undefined;
+    const v = homeView({ env: this.env, fW, fH, margin, aspect: this.size.w / this.size.h, fov: CAM.fov, az: CAM.az, el: CAM.el, patio: GARDEN_PATIO, inset });
+    const t = new THREE.Vector3(v.target.x, 0, v.target.z), theta = v.theta, phi = v.phi, dist = v.dist;
+    this.homeTurn = v.turn; this.homeFrac = v.frac; // share of the viewport height the space's own ground spans at the home view (harness check)
     const pad = Math.max(margin, 2);
     // Small pots should remain inspectable even when the surrounding farm is large.
     this.lim = { minDist: 2.5, maxDist: dist * 1.35, minPhi: 26 * DEG, maxPhi: 82 * DEG, x0: -pad, x1: fW + pad, z0: -pad, z1: fH + pad };
     this.home = { target: t.clone(), dist: dist * zoom, theta, phi }; this.fitDist = dist;
-    if (animate) { this.target.copy(saved.target); this.dist = saved.dist; this.theta = saved.theta; this.phi = saved.phi; this.clampView(); this.animateTo(this.home, 600); }
-    else { this.stopMotion(); cancelAnimationFrame(this.raf); this.dist = dist * zoom; this.clampView(); this.update(); } // an instant fit also ends any animation or fling still running
+    if (animate) { this.clampView(); this.animateTo(this.home, 600); }
+    else { this.stopMotion(); cancelAnimationFrame(this.raf); this.target.copy(t); this.theta = theta; this.phi = phi; this.dist = dist * zoom; this.clampView(); this.update(); } // an instant fit also ends any animation or fling still running
   }
 }
 
@@ -2021,13 +2023,19 @@ export default function Grove3D(props) {
         nodes.forEach((n) => {
           const a = st.anchors[n.dataset.zone]; if (!a) return;
           let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9; const pts = a.corners.map(([x, z]) => { const q = project(x, 0, z, pv); minX = Math.min(minX, q.x); maxX = Math.max(maxX, q.x); minY = Math.min(minY, q.y); maxY = Math.max(maxY, q.y); return q; });
-          pts.sort((u, v) => v.y - u.y); const f0 = pts[0], f1 = pts[1], c = project(a.cx, 0, a.cz, pv); // the two lowest points on screen = the front edge
+          const c = project(a.cx, 0, a.cz, pv);
+          // where the footprint's near side crosses the vertical through its centre: a pill hung "in front" starts
+          // there, so a strip seen along its length (a phone balcony) keeps its pill beside it, not below its far end
+          let frontY = -1e9; pts.forEach((u, i) => { const v = pts[(i + 1) % pts.length]; if ((u.x - c.x) * (v.x - c.x) > 0 || u.x === v.x) return; frontY = Math.max(frontY, u.y + (v.y - u.y) * (c.x - u.x) / (v.x - u.x)); }); if (frontY < -1e8) frontY = maxY;
+          pts.sort((u, v) => v.y - u.y); const f0 = pts[0], f1 = pts[1]; // the two lowest points on screen = the front edge
           const badge = !!n.querySelector(".g3-badge");
           byId.set(n.dataset.zone, n);
           // a thin area (a planter strip along a balcony wall) would vanish under its own pill: hang the pill
           // just in front of it instead, so the planters stay visible
-          const fy = (f0.y + f1.y) / 2, thin = a.thin || maxY - minY < 20 * ls * 2.2;
-          items.push({ id: n.dataset.zone, x: thin ? c.x : (f0.x + f1.x) / 2, y: thin ? maxY + 20 * ls + 6 : fy, cx: c.x, cy: c.y, on: f0.on && f1.on && c.on, px: maxX - minX, w: a.w * ls, h: 20 * ls, badge: badge ? 24 * ls : 0, area: a.area, sel: a.sel, jobs: badge ? 1 : 0 });
+          // a small bed gets the same treatment when the ground in front of it is free (labels.js decides)
+          const fy = (f0.y + f1.y) / 2, ph = 20 * ls, thin = a.thin || maxY - minY < ph * 2.2, small = thin || maxY - minY < ph * 5.5;
+          items.push({ id: n.dataset.zone, x: (f0.x + f1.x) / 2, y: fy, cx: c.x, cy: c.y, on: f0.on && f1.on && c.on, px: maxX - minX, w: a.w * ls, h: ph, badge: badge ? 24 * ls : 0, area: a.area, sel: a.sel, jobs: badge ? 1 : 0,
+            box: { x0: minX, y0: minY, x1: maxX, y1: maxY }, thin, below: small ? { x: c.x, y: frontY + ph + 6 } : null });
         });
         placeLabels(items, { W: S.W, H: S.H, far, mobile: st.coarse }).forEach(({ id, x, y, show }) => {
           const n = byId.get(id);
@@ -2221,7 +2229,7 @@ export default function Grove3D(props) {
     if (st.controls.env !== P.env) { st.controls.env = P.env; st.fitted = false; }
     const ctx = { data: P.data, zones: P.zones, roads: P.roads, crops: P.crops, fW: P.fW, fH: P.fH, margin: P.margin, env: P.env, pathTexture: P.pathTexture, roadWidth: P.roadWidth, todayKey: P.todayKey || todayLocalKey(), actualToday: P.actualToday, hits: st.hits, plotHits: st.plotHits, M: st.M,
       plants: [], tufts: [], pots: [], herd: [], fruit: new Map(), fruitDrop: new Map(), details: [], motion: { smoke: [], bees: [] }, vanes: [], keep: [], device: { mobile: st.mobile, reduced: st.reduced }, fences: { plain: { posts: [], rails: [] }, picket: { posts: [], caps: [], rails: [] }, rail: { posts: [], bars: [], rails: [] } }, growth: { glows: [], poles: [], tags: [[], [], [], [], [], []] } };
-    const t0 = performance.now(); setDetail(st.mobile ? PHONE_DETAIL : 1); try { st.world = buildWorld(ctx); } finally { setDetail(1); } st.herd = ctx.herd; st.vanes = ctx.vanes; st.hanging = ctx.hanging || []; st.buildMs = performance.now() - t0;
+    const t0 = performance.now(); setDetail(detailFor({ mobile: st.mobile, env: P.env, zones: P.zones.length, plants: (P.data?.garden?.plots || []).reduce((n, p) => n + (p.status === "planted" ? +p.plantCount || 0 : 0), 0) })); try { st.world = buildWorld(ctx); } finally { setDetail(1); } st.herd = ctx.herd; st.vanes = ctx.vanes; st.hanging = ctx.hanging || []; st.buildMs = performance.now() - t0;
     // Only animate plants whose stage actually changed as the preview date moves.
     // Other farm edits and the initial render should never make the garden jump.
     const nextStages = new Map(), changed = [], animateGrowth = !st.reduced && st.cropStages && st.cropDay !== P.todayKey;
@@ -2288,6 +2296,7 @@ export default function Grove3D(props) {
     fullRef.current = full; const st = state.current, el = host.current, isPreview = mobile && !full;
     setFocusId("");
     st?.controls?.setCooperative(!full);
+    if (st?.controls) st.controls.bars = full && mobile ? { top: 92, bottom: 108 } : null; // the area chip + close button, and the control bar
     st?.controls?.setEnabled(!isPreview); // the preview tile takes no gestures: one tap opens full screen
     // Open on `click`, not `pointerup`: the browser fires click after pointerup, and if full screen were already
     // open by then the click would land on whatever full-screen control sits under the finger (Exit, the X).

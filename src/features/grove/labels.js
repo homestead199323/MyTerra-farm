@@ -11,7 +11,8 @@
 
 export const LABEL = { minPx: 28, minPxFarMobile: 64, pad: 3, edge: 4 };
 
-/** items: [{ id, x, y, cx, cy, w, h, badge, px, area, sel, jobs, on }]; opts: { W, H, far, mobile }.
+/** items: [{ id, x, y, cx, cy, w, h, badge, px, area, sel, jobs, on, box?, below?, thin? }]; opts: { W, H, far, mobile }.
+    `box` is the footprint's screen box, `below` the anchor for a pill hung in front of a small area.
     (x, y) is the front-edge anchor the pill hangs from; (cx, cy) is the footprint centre on screen and decides
     whether the zone counts as on screen (defaults to the anchor), so a zone you zoom into keeps its name while
     its centre is in view even when its front edge has left the bottom. Returns one { id, x, y, show } per item,
@@ -19,6 +20,16 @@ export const LABEL = { minPx: 28, minPxFarMobile: 64, pad: 3, edge: 4 };
 export function placeLabels(items, { W, H, far = false, mobile = false }) {
   const minPx = far && mobile ? LABEL.minPxFarMobile : LABEL.minPx;
   const maxVisible = Math.max(5, Math.min(18, Math.floor(W * H / 35000)));
+  // A small area would disappear under its own pill, so the pill hangs in front of it (`below`, just under the
+  // footprint on screen) when that spot is not another area's ground; a thin strip always hangs it in front.
+  const area = (b) => Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0);
+  const shared = (a, b) => area({ x0: Math.max(a.x0, b.x0), x1: Math.min(a.x1, b.x1), y0: Math.max(a.y0, b.y0), y1: Math.min(a.y1, b.y1) });
+  items = items.map((it) => {
+    if (!it.below) return it;
+    const b = { x0: it.below.x - it.w / 2, x1: it.below.x + it.w / 2 + (it.badge || 0), y0: it.below.y - it.h, y1: it.below.y };
+    const taken = !it.thin && items.some((o) => o !== it && o.box && shared(b, o.box) > area(b) * .3);
+    return taken ? it : { ...it, x: it.below.x, y: it.below.y };
+  });
   const order = items.map((it, i) => ({ it, i })).sort((u, v) => (v.it.sel - u.it.sel) || ((v.it.jobs ? 1 : 0) - (u.it.jobs ? 1 : 0)) || (v.it.area - u.it.area));
   const placed = [], out = new Array(items.length);
   for (const { it, i } of order) {
