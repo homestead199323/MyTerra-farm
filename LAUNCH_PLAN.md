@@ -602,3 +602,23 @@
   block at dusk with amber windows. NOT verified: a real phone, frame rate, the turn limit by finger. Known: the
   street only shows in low side-on views of a large balcony; all-zones desktop is 835 k triangles against the
   800 k budget in MAP_STYLE (it was 835 k before this work).
+  **Rendering pass shipped 2026-11-10 (`11c4945`):** asked to fix bugs and make the 3D fast. Measured first.
+  The scene environment map was about 61 % of each frame and Standard shading on matte surfaces a further
+  30 % on the balcony, so: no scene environment, matte surfaces are Lambert, the room map's fill is folded
+  into the hemisphere light (`fillLight`), glossy surfaces keep the map for reflections only
+  (`setEnvironment`). `bake()` now merges welded, indexed geometry (`bakeSource`, `mergeBaked`). Bug fixed:
+  every world rebuild leaked about three geometries (a cloned shape kept its `shared` flag, so the disposer
+  skipped it). Before → after on headless Chrome with a software rasteriser (relative only, NOT phone frame
+  rates): balcony 4 × 1.5 m phone frame 2028 → 560 ms, vertices 179 k → 67 k, geometry 5.1 → 1.9 MB; garden
+  phone 1608 → 592 ms, 449 k → 196 k, 11 → 3.9 MB; all-zones phone 2302 → 963 ms, 856 k → 515 k, 15.9 →
+  6.4 MB; all-zones desktop 2977 → 1363 ms, 1.48 M → 796 k, 30.8 → 11.6 MB; growth-preview rebuild 308 →
+  109 ms. Triangles and draw calls unchanged. Picture: mean difference 2.5–6 of 255 against the old render;
+  plaster and animals read a touch flatter and lighter. Small pictures NOT re-rendered (the icon harness now
+  uses the same light; a re-render would shift them by 6–14 of 255). Sweep with no findings: all-zones at
+  four hours with rain, snow and overcast, zoo, beds, crops, growth steps, card open and Escape, resize,
+  expand, orbit. Verified: 185 + 3 tests, ESLint, Vite build (sandbox and Mac), built bundle walked locally;
+  production `dpl_7RNUxASju6NyiUQV2fSwiQm6nHJX` READY, live `Grove3D-BucxeKTL.js` carries `g3gloss`, no
+  `__g3harness`, CSP header present; demo on www.myterra.farm as a 4 × 1.5 m balcony at 390 px draws the map,
+  opens the card, Escape closes it. NOT verified: any real GPU or phone, frame rate, battery, heat. Not done:
+  fewer triangles (crops and trees are the bulk; all-zones desktop still 835 k against the 800 k budget),
+  partial rebuilds (the whole world still rebuilds on any change).
