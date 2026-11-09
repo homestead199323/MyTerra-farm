@@ -571,6 +571,19 @@
   READY, live `index-CTEKPECF.js` carries the new hint, live `Grove3D-tROKO_0a.js` carries `minSeg`, no harness
   strings, CSP header present; the demo on www.myterra.farm run as a 4 × 1.5 m balcony at 390 px shows the new
   framing in the starter map, the Today tile and full screen. NOT verified: a real phone, gestures, frame rate.
-  Seen, not fixed (slices 2–3): the area sheet covers the whole phone screen; festoon wire reads as black dashes
-  by day; at dusk every facade window is the same blank rectangle; a wide garden on a portrait phone is still
-  limited by its width.
+  Seen, not fixed (slice 3): festoon wire reads as black dashes by day; at dusk every facade window is the same
+  blank rectangle; a wide garden on a portrait phone is still limited by its width.
+  **Slice 2 shipped (`41d995c`):** the area card is `ZoneSheet` — a bottom sheet 52 % of the screen high on
+  phones and windows under 760 px (handle pulls it to full height), a 400 px right-hand panel on wider windows;
+  not modal, closes with X or Escape only; `cover.js` tells the camera what the card hides and `focusZone` frames
+  the area in the rest. Card content: per-planting stage pictures with the current stage framed (the generic
+  stage key is gone), "1 row" grammar, no colliding "Edit spacing" / stage select, no double divider or focus
+  outline. Area selector is a white chip with the app's own menu and job counts; phone bar is Growth · Reset (X
+  is the one close control); crop card and hint sit below the chip; Growth legend wraps on phones. Verified:
+  180 + 3 tests, ESLint, Vite build (sandbox and Mac); Playwright at 390 × 844 (balcony, garden, farm, dark)
+  and 1280 × 900; production `dpl_5XgiqzakbY317X24XfjWQqJyhusJ` READY, live `index-CiBNWtLL.js` carries "Make
+  this card taller", live `Grove3D-BrO58iqe.js` carries "Areas on the map", live CSS carries `q-growth-steps`;
+  the demo on www.myterra.farm run as a 4 × 1.5 m balcony at 390 px: sheet 439 px high over the framed planter,
+  Escape closes the card and keeps the map open, bar shows Growth and Reset. NOT verified: a real phone, the
+  handle drag by finger, VoiceOver. Departure to know about: this card is not a small centred card (the app's
+  rule for pop-ups); the job pop-up still is.
