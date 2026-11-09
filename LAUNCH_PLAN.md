@@ -558,3 +558,19 @@
   totals have no thousands separators and transactions show ISO dates; the Growth legend's last label is
   clipped at 375 px (already noted above). GitHub reports the repo moved to `homestead199323/MyTerra-farm`
   (pushes still redirect).
+- [~] **3D map refinement (2026-11-09, owner request "revisit the whole 3D map and assets; refine graphics, UX and UI").**
+  Audit + three slices in `docs/superpowers/specs/2026-11-09-map-refine-design.md`: (1) framing and phone
+  readability, (2) map UI, (3) graphics polish. **Slice 1 shipped (`14d64d9`):** `home-view.js` works out the
+  home view (tested): a balcony on a portrait phone is seen along its length (4 × 1.5 m: floor 20 % → 35 % of
+  the screen height, camera 24 m → 20 m), a back garden is framed on the garden and patio instead of the roofs,
+  the phone's bars are kept clear; phones build balconies and back gardens at full detail (no more hexagonal
+  tomatoes), farm tier keeps crowns round (all-zones phone 393 k → 423 k triangles, 185 calls); small areas hang
+  their pill in front of the bed; balcony block has depth and a roof; phone tile hint "Tap the map to open it".
+  Verified: 172 + 3 tests, ESLint, Vite build (sandbox and Mac); Playwright on g3-balcony (`?small=1` new),
+  g3-garden, g3-all at 390 × 844 and 1280 × 900, day and `?hour=21`; production `dpl_Bx1PJEXo3QDVdAm6PRzwA4gEkgfL`
+  READY, live `index-CTEKPECF.js` carries the new hint, live `Grove3D-tROKO_0a.js` carries `minSeg`, no harness
+  strings, CSP header present; the demo on www.myterra.farm run as a 4 × 1.5 m balcony at 390 px shows the new
+  framing in the starter map, the Today tile and full screen. NOT verified: a real phone, gestures, frame rate.
+  Seen, not fixed (slices 2–3): the area sheet covers the whole phone screen; festoon wire reads as black dashes
+  by day; at dusk every facade window is the same blank rectangle; a wide garden on a portrait phone is still
+  limited by its width.
