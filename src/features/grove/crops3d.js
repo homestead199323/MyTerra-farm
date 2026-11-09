@@ -251,7 +251,7 @@ export function cropScale(size, stage, name = "") { // plants spill a little ove
 let cropMat = null, cropDepth = null;
 export function cropMaterials(TIME) {
   if (cropMat) return { mat: cropMat, depth: cropDepth };
-  cropMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 });
+  cropMat = new THREE.MeshLambertMaterial({ vertexColors: true }); // matte leaves: Lambert (see toy.js flat)
   cropMat.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = TIME; sh.uniforms.uWind = WIND;
     sh.vertexShader = sh.vertexShader

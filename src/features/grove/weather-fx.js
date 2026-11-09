@@ -38,7 +38,7 @@ export function buildPrecip(kind, count, mat) {
 /* clouds: each is 4–6 overlapping spheres; every vertex carries its cloud's centre (g3c) so the whole cloud
    wraps together as it drifts downwind */
 export function cloudMaterial(radius, color = 0xf6f5f1) {
-  const m = new THREE.MeshStandardMaterial({ color, roughness: .9, metalness: 0 });
+  const m = new THREE.MeshLambertMaterial({ color });
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, { uWind: WIND, uDrift: WX.drift, uRadius: { value: radius } });
     sh.vertexShader = sh.vertexShader

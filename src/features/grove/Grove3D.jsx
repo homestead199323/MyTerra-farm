@@ -33,7 +33,7 @@ import { createBrain } from "./herd-brain";
 import { buildSwallows, buildButterflies, swallowCount, butterflyCount } from "./fauna-fx";
 import { GROUND_TONES, pathTones } from "./palette";
 import { TREE_RE } from "./crop-families";
-import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, detailFor, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
+import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, detailFor, setEnvironment, fillLight, bakeSource, mergeBaked, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
@@ -92,7 +92,7 @@ else if (g3anim > .5) { transformed.y += sin(uTime * 2.1 + g3phase * 6.28) * .05
     .replace("#include <alphatest_fragment>", "diffuseColor.a *= g3va;\n#include <alphatest_fragment>");
 }
 function motionMat(color, smoke, vertexColors = false) {
-  const m = new THREE.MeshStandardMaterial({ color, roughness: 1, transparent: smoke, opacity: 1, depthWrite: !smoke, emissive: smoke ? 0xffffff : 0x000000, emissiveIntensity: smoke ? .25 : 0, vertexColors });
+  const m = new THREE.MeshLambertMaterial({ color, transparent: smoke, opacity: 1, depthWrite: !smoke, emissive: smoke ? 0xffffff : 0x000000, emissiveIntensity: smoke ? .25 : 0, vertexColors });
   m.forceSinglePass = true; m.onBeforeCompile = motionShader; m.customProgramCacheKey = () => "g3motion"; return m;
 }
 
@@ -134,7 +134,7 @@ function materials() {
       vertexShader: "varying vec2 vU; void main() { vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
       fragmentShader: "varying vec2 vU; void main() { float r = length(vU - .5) * 2., a = pow(clamp(1. - r, 0., 1.), 1.3) * .42; gl_FragColor = vec4(.13, .16, .05, a); }",
     }),
-    glow: new THREE.MeshStandardMaterial({ color: 0xffc83d, emissive: 0xffb300, emissiveIntensity: .55, roughness: .5, transparent: true, opacity: .95 }),
+    glow: new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0xffb300, emissiveIntensity: .55, transparent: true, opacity: .95 }),
     stageTag: STAGE_COLOR.map((c, i) => flat(c, { rough: .6, emissive: i === 5 ? 0x8a6a10 : 0x000000, ei: 1 })), tagPole: flat(PAL.tagPole),
     fruit: (color) => flat(color, { rough: .45, emissive: color, ei: .1 }), fruitDrop: (color) => Object.assign(motionMat(color, false), { transparent: true }),
     select: layered(new THREE.MeshBasicMaterial({ color: 0xf7c552, transparent: true, opacity: .22, depthWrite: false }), 14),
@@ -1577,7 +1577,8 @@ export function buildTreeIcon({ name, stage }) {
   return g;
 }
 /* Merge every static mesh that shares a material into one draw call. Instanced meshes, the
-   hit boxes and the ground are left alone. Turns thousands of draw calls into a couple of hundred. */
+   hit boxes and the ground are left alone. Turns thousands of draw calls into a couple of hundred.
+   The merge itself is toy.js `bakeSource` + `mergeBaked`: indexed, and written straight into one set of arrays. */
 function bake(world, keep) {
   world.updateMatrixWorld(true);
   const groups = new Map(), drop = [];
@@ -1586,19 +1587,11 @@ function bake(world, keep) {
     const key = m.material.uuid + "|" + (m.castShadow ? 1 : 0) + (m.receiveShadow ? 1 : 0) + "|" + (m.renderOrder || 0);
     let g = groups.get(key);
     if (!g) { g = { material: m.material, cast: m.castShadow, receive: m.receiveShadow, depth: m.customDepthMaterial, order: m.renderOrder || 0, geos: [] }; groups.set(key, g); }
-    const geo = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
-    if (!geo.attributes.normal) geo.computeVertexNormals();
-    if (!geo.attributes.uv) geo.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
-    Object.keys(geo.attributes).forEach((a) => { if (a !== "position" && a !== "normal" && a !== "uv") geo.deleteAttribute(a); });
-    geo.applyMatrix4(m.matrixWorld);
-    g.geos.push(geo); drop.push(m);
+    g.geos.push({ geo: bakeSource(m.geometry), matrix: m.matrixWorld }); drop.push(m);
   });
   drop.forEach((m) => { m.parent.remove(m); });
   groups.forEach((g) => {
-    const merged = g.geos.length === 1 ? g.geos[0] : mergeGeometries(g.geos, false);
-    if (!merged) return;
-    if (g.geos.length > 1) g.geos.forEach((x) => x.dispose());
-    const mesh = new THREE.Mesh(merged, g.material);
+    const mesh = new THREE.Mesh(mergeBaked(g.geos), g.material);
     mesh.castShadow = g.cast; mesh.receiveShadow = g.receive; mesh.renderOrder = g.order;
     if (g.depth) mesh.customDepthMaterial = g.depth;
     world.add(mesh);
@@ -2009,7 +2002,10 @@ export default function Grove3D(props) {
     renderer.domElement.addEventListener("webglcontextlost", lost);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(FIXED_SKY.fog);
-    const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .22; pmrem.dispose();
+    // the room environment map lights only the glossy materials (toy.js setEnvironment); everything matte gets the
+    // same soft fill from one ambient light instead of two cube-map lookups per pixel
+    const pmrem = new THREE.PMREMGenerator(renderer), envTex = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
+    const lin = new THREE.Color();
     const camera = new THREE.PerspectiveCamera(CAM.fov, 1, 1, 4000);
     // bright, soft, toy-box light: a white sky with a pale green bounce, one warm sun with faint soft shadows
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9fb48a, .85); scene.add(hemi);
@@ -2027,9 +2023,9 @@ export default function Grove3D(props) {
     st.sky = FIXED_SKY;
     st.applySky = (s) => {
       st.sky = s;
-      hemi.color.set(s.hemiSky); hemi.groundColor.set(s.hemiGround); hemi.intensity = s.hemiIntensity;
+      { const f = fillLight(lin.set(s.hemiSky).toArray(), lin.set(s.hemiGround).toArray(), s.hemiIntensity, s.envIntensity); hemi.color.setRGB(f.sky[0], f.sky[1], f.sky[2]); hemi.groundColor.setRGB(f.ground[0], f.ground[1], f.ground[2]); hemi.intensity = 1; } // the sky's own bounce + the fill the environment map used to give
       sun.color.set(s.sunColor); sun.intensity = s.sunIntensity; sun.shadow.intensity = s.shadowIntensity;
-      renderer.toneMappingExposure = s.exposure; scene.environmentIntensity = s.envIntensity;
+      renderer.toneMappingExposure = s.exposure;
       scene.background = new THREE.Color(s.fog);
       if (st.fogRange) scene.fog = new THREE.Fog(s.fog, st.fogRange.near * (s.fogNear ?? 1), st.fogRange.far);
       NIGHT.value = clamp((3 - s.elevation) / 9, 0, 1); // windows and lamps come on as the sun sets
@@ -2072,6 +2068,7 @@ export default function Grove3D(props) {
         group.rotation.x = swing * WIND.value.y; group.rotation.z = -swing * WIND.value.x;
       });
       if (st.M) st.M.glow.emissiveIntensity = .45 + .3 * Math.sin(TIME.value * 2.2);
+      setEnvironment(envTex, st.sky.envIntensity); // glossy materials reflect this map's own environment (a no-op unless it changed)
       renderer.render(scene, camera);
       st.calls = renderer.info.render.calls;
       // zone names hang just above the front edge of the thing they name (the footprint edge nearest the
@@ -2275,7 +2272,7 @@ export default function Grove3D(props) {
       if (st.rowHoverOutline) st.rowHoverOutline.geometry.dispose(); rowHoverMaterial.dispose();
       if (st.world) disposeWorld(st.world);
       if (st.fx?.clouds) { st.fx.clouds.geometry.dispose(); st.fx.clouds.material.dispose(); } if (st.fx?.precip) { st.fx.precip.dispose(); st.fx.precip.geometry.dispose(); }
-      renderer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement); state.current = null;
+      setEnvironment(null, .22); envTex.dispose(); renderer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement); state.current = null;
     };
   }, []);
   // (re)build the world only when something on the map changed

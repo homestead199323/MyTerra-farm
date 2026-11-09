@@ -265,7 +265,7 @@ export function animalShader(sh, depth) {
 let mats = null;
 export function animalMaterials(TIME) {
   if (mats) return mats;
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, metalness: 0 });
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true }); // matte coats: Lambert (see toy.js flat)
   mat.onBeforeCompile = (sh) => { sh.uniforms.uTime = TIME; animalShader(sh, false); }; mat.customProgramCacheKey = () => "g3animal";
   const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
   depth.onBeforeCompile = (sh) => { sh.uniforms.uTime = TIME; animalShader(sh, true); }; depth.customProgramCacheKey = () => "g3animalDepth";

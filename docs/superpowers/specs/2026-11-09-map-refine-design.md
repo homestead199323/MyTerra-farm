@@ -94,6 +94,28 @@ model changed, and day colours are untouched (the icons are rendered by day).
 Measured: balcony 4 x 1.5 m on a phone 60 k -> 88 k triangles, 47 -> 56 draw calls; balcony 11 x 4.5 m on
 desktop 144 k -> 173 k, 69 -> 78; garden and farm unchanged (218 k; 423 k phone / 835 k desktop, 185 calls).
 
+## Rendering pass — speed and memory (2026-11-10)
+
+Asked for after the three slices: fix bugs, make the 3D rendering fast and efficient. Measured first, then
+changed what the measurements pointed at.
+
+- Found by switching things off one at a time on the software rasteriser: the scene environment map was about
+  61 % of the frame; Standard shading on matte surfaces a further 30 % on the balcony; the procedural surface
+  grain 9–11 % and shadows 9 % (both kept, they are the look).
+- Changed: no scene environment; matte surfaces are Lambert; the room map's fill is folded into the hemisphere
+  light; glossy surfaces keep the room map for reflections only. Baked geometry is indexed and merged directly
+  into typed arrays.
+- Bug: every world rebuild (growth preview, any change) leaked about three geometries, because cloning a
+  cached shape copied its `shared` flag and the disposer skipped it. Merged geometry is now never flagged.
+- Not changed: triangles, draw calls, shadows, surface grain, the full rebuild on every change. The small
+  pictures were not re-rendered.
+- Sweep with no findings: all-zones at 06:00, 12:00, 18:00, 02:00 with rain, snow and overcast; zoo, beds and
+  crops harnesses; growth steps, area card open and Escape, resize, expand and exit, orbit — no page errors,
+  no console warnings, no lost WebGL context.
+
+Numbers are in `docs/MAP_STYLE.md` §8. They come from headless Chrome without a GPU, so they rank the changes;
+they are not phone frame rates.
+
 ## Verification per slice
 
 `npm test`, ESLint, Vite build; Playwright screenshots of `g3-balcony` (`?small=1` too), `g3-garden`,

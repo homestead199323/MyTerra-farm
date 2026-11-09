@@ -6,6 +6,7 @@
    MARKER: GROVE_TOY_KIT_V1
    ═══════════════════════════════════════════ */
 import * as THREE from "three";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { TOY, STAGE_HEX } from "./palette";
 
@@ -119,12 +120,45 @@ export function flat(color, { rough = .88, metal = 0, side = THREE.FrontSide, tr
   const key = [color, rough, metal, side, transparent ? 1 : 0, opacity, emissive, ei, vertexColors ? 1 : 0, depthWrite ? 1 : 0, physical ? 1 : 0, env, variant].join("|");
   let m = mats.get(key);
   if (!m) {
-    const Mat = physical ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial;
-    m = new Mat({ color, roughness: rough, metalness: metal, side, transparent, opacity, emissive, emissiveIntensity: ei, vertexColors, depthWrite, envMapIntensity: env });
+    // Matte surfaces (roughness .5 and up, no metal) are Lambert: at these roughness values the physical model's
+    // highlight is invisible, and its per-pixel maths was a third of a balcony's frame. Glass, water and metal
+    // stay physically based. `rough` still separates cache entries, so nothing that shared a material splits.
+    const matte = !physical && !(metal > 0) && !(rough < .5);
+    if (matte) m = new THREE.MeshLambertMaterial({ color, side, transparent, opacity, emissive, emissiveIntensity: ei, vertexColors, depthWrite });
+    else m = new (physical ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial)({ color, roughness: rough, metalness: metal, side, transparent, opacity, emissive, emissiveIntensity: ei, vertexColors, depthWrite, envMapIntensity: env });
     if (transparent) m.forceSinglePass = true;
+    if (isGlossy(m)) {
+      // glossy: reflections come from the environment map, the soft fill from the scene's lights like everything else
+      // (without this the fill would be counted twice: once from the map, once from the hemisphere light)
+      m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_maps>", "#include <lights_fragment_maps>\n#if defined( USE_ENVMAP ) && defined( RE_IndirectDiffuse )\n\tiblIrradiance = vec3( 0. );\n#endif"); };
+      m.customProgramCacheKey = () => "g3gloss";
+      if (ENV.tex) { m.envMap = ENV.tex; m.envMapIntensity = ENV.intensity; }
+    }
     mats.set(key, m);
   }
   return m;
+}
+/* ---------- environment reflections only where they show (2026-11-09) ----------
+   Every material used to sample the room environment map for its ambient light: on matte surfaces that is two
+   blurred cube-map lookups per pixel for a soft glow a plain ambient light gives for free (it was 61 % of the
+   frame on a software rasteriser). Now only glossy materials (glass, water, metal: physical, metalness > 0 or
+   roughness < .5) carry the map, for reflections only; the scene has no `environment`. The fill it gave is folded
+   into the one hemisphere light: `fillLight()` returns the sky and ground colours to add for a sky state's
+   envIntensity (fitted against screenshots of the old lighting). */
+const ENV = { tex: null, intensity: .22 };
+export const ENV_FILL = { color: [.907, .907, 1], gain: 5.36 }; // linear RGB x (gain x envIntensity): 1.18 at the daytime .22
+/* hemisphere colours (linear RGB, to use at intensity 1) for a sky preset plus the environment's fill */
+export function fillLight(hemiSky, hemiGround, hemiIntensity, envIntensity) {
+  const k = envIntensity * ENV_FILL.gain, add = (c) => c.map((v, i) => v * hemiIntensity + ENV_FILL.color[i] * k);
+  return { sky: add(hemiSky), ground: add(hemiGround) };
+}
+const isGlossy = (m) => m.isMeshPhysicalMaterial === true || m.metalness > 0 || m.roughness < .5;
+/* Called by a map before every frame it draws: cheap when nothing changed, and it lets two maps on one page
+   (each with its own WebGL context and its own copy of the environment map) share the material cache. */
+export function setEnvironment(tex, intensity) {
+  if (ENV.tex === tex && ENV.intensity === intensity) return;
+  ENV.tex = tex; ENV.intensity = intensity;
+  mats.forEach((m) => { if (!isGlossy(m)) return; if (m.envMap !== tex) { if (!m.envMap || !tex) m.needsUpdate = true; m.envMap = tex; } m.envMapIntensity = intensity; });
 }
 /* layered flat planes (paths, patches) sit on the ground with a polygon offset so they never z-fight */
 export function layered(mat, n) { mat.polygonOffset = true; mat.polygonOffsetFactor = -1; mat.polygonOffsetUnits = -n; return mat; }
@@ -161,6 +195,51 @@ export function coneGeo(r, h, seg = 12) { return cached(`k|${q(r)}|${q(h)}|${seg
 export function discGeo(r, seg = 24) { seg = sg(seg, 10); return cached(`d|${q(r)}|${seg}`, () => new THREE.CircleGeometry(r, seg)); }
 export function planeGeo(w, h) { return cached(`p|${q(w)}|${q(h)}`, () => new THREE.PlaneGeometry(w, h)); }
 
+/* ---------- baking: many static meshes of one material become one indexed geometry ----------
+   `bakeSource(geo)` is the form a primitive is merged in: position / normal / uv only, and always indexed — a
+   geometry without an index (rounded boxes) gets one by welding its identical vertices. Cached per primitive.
+   `mergeBaked(items)` writes every item's vertices, moved by its world matrix, straight into one set of arrays
+   (no clone per mesh, which was most of a world rebuild) and returns a NEW geometry the caller owns: it is not
+   flagged shared, so a rebuild frees it (a lone primitive used to be cloned with its `shared` flag and leaked). */
+const baked = new WeakMap();
+export function bakeSource(src) {
+  let g = baked.get(src);
+  if (!g) {
+    g = new THREE.BufferGeometry();
+    g.setAttribute("position", src.attributes.position.clone());
+    if (src.attributes.normal) g.setAttribute("normal", src.attributes.normal.clone());
+    g.setAttribute("uv", src.attributes.uv ? src.attributes.uv.clone() : new THREE.Float32BufferAttribute(new Float32Array(src.attributes.position.count * 2), 2));
+    if (src.index) g.setIndex(src.index.clone());
+    if (!g.attributes.normal) g.computeVertexNormals();
+    if (!g.index) { const welded = mergeVertices(g, 1e-4); g.dispose(); g = welded; }
+    baked.set(src, g);
+  }
+  return g;
+}
+const N3 = new THREE.Matrix3();
+export function mergeBaked(items) {
+  let nv = 0, ni = 0;
+  for (const it of items) { nv += it.geo.attributes.position.count; ni += it.geo.index.count; }
+  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  let vo = 0, io = 0;
+  for (const { geo, matrix } of items) {
+    const p = geo.attributes.position.array, n = geo.attributes.normal.array, ix = geo.index.array, c = geo.attributes.position.count, e = matrix.elements, m = N3.getNormalMatrix(matrix).elements;
+    for (let i = 0, o = vo * 3; i < c * 3; i += 3, o += 3) {
+      const x = p[i], y = p[i + 1], z = p[i + 2], a = n[i], b = n[i + 1], d = n[i + 2];
+      pos[o] = e[0] * x + e[4] * y + e[8] * z + e[12]; pos[o + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; pos[o + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+      const nx = m[0] * a + m[3] * b + m[6] * d, ny = m[1] * a + m[4] * b + m[7] * d, nz = m[2] * a + m[5] * b + m[8] * d, l = Math.hypot(nx, ny, nz) || 1;
+      nor[o] = nx / l; nor[o + 1] = ny / l; nor[o + 2] = nz / l;
+    }
+    uv.set(geo.attributes.uv.array, vo * 2);
+    for (let i = 0; i < ix.length; i++) idx[io + i] = ix[i] + vo;
+    vo += c; io += ix.length;
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute("position", new THREE.BufferAttribute(pos, 3)); out.setAttribute("normal", new THREE.BufferAttribute(nor, 3)); out.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  out.setIndex(new THREE.BufferAttribute(idx, 1));
+  return out;
+}
+
 /* ---------- mesh helpers: every one adds to a group and returns the mesh ---------- */
 function place(m, x, y, z, { rx = 0, ry = 0, rz = 0, cast = true, receive = true, s = null } = {}) {
   m.position.set(x, y, z); m.rotation.set(rx, ry, rz, "YXZ"); m.castShadow = cast; m.receiveShadow = receive;
@@ -196,6 +275,16 @@ export function instances(g, geo, mat, items, { cast = true, receive = true } = 
   im.instanceMatrix.needsUpdate = true; im.castShadow = cast; im.receiveShadow = receive; g.add(im); return im;
 }
 
+/* A rounded box for a Parts model: built once per size (the constructor was a tenth of every world rebuild),
+   welded so it has an index like every other primitive — otherwise one box in a model forced the whole model
+   to three loose vertices per triangle — and handed out as a copy, because Parts.add moves its vertices. */
+const partBoxes = new Map();
+function partBox(w, h, d, seg, r) {
+  const key = [w, h, d, seg, r].map((v) => Math.round(v * 1e4)).join("|");
+  let g = partBoxes.get(key);
+  if (!g) { const raw = new RoundedBoxGeometry(w, h, d, seg, r); g = mergeVertices(raw, 1e-4); raw.dispose(); partBoxes.set(key, g); }
+  const out = g.clone(); out.userData = {}; return out;
+}
 /* ---------- vertex-coloured part builder: merges coloured primitives into one geometry (crops, props) ---------- */
 export class Parts {
   constructor() { this.geos = []; this.detail = DETAIL.value; }
@@ -210,7 +299,7 @@ export class Parts {
     this.geos.push(geo); return geo;
   }
   sphere(r, color, o = {}) { return this.add(new THREE.SphereGeometry(1, this.seg(o.seg || 12, 6), this.seg(o.rings || 9, 4)), color, { ...o, scale: Array.isArray(r) ? r : [r, r, r] }); }
-  rbox(w, h, d, color, o = {}) { const mn = Math.min(w, h, d); return this.add(new RoundedBoxGeometry(w, h, d, o.seg || 1, Math.min(o.r ?? mn * .3, mn / 2 - .001)), color, o); }
+  rbox(w, h, d, color, o = {}) { const mn = Math.min(w, h, d); return this.add(partBox(w, h, d, o.seg || 1, Math.min(o.r ?? mn * .3, mn / 2 - .001)), color, o); }
   cyl(rt, rb, h, color, o = {}) { return this.add(new THREE.CylinderGeometry(rt, rb, h, this.seg(o.seg || 10), 1, !!o.open), color, o); }
   cone(r, h, color, o = {}) { return this.add(new THREE.ConeGeometry(r, h, o.seg || 8), color, o); }
   caps(r, len, color, o = {}) { return this.add(new THREE.CapsuleGeometry(r, len, Math.max(2, Math.round((o.cap || 3) * this.detail)), this.seg(o.seg || 9)), color, o); }

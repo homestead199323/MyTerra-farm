@@ -9,7 +9,7 @@ import { FAMILIES, cropSlug, TREE_KEYS } from "../src/features/grove/crop-famili
 import { buildCrops } from "../src/features/grove/crops3d";
 import { buildHerd } from "../src/features/grove/animals3d";
 import { buildZoneIcon, buildTreeIcon } from "../src/features/grove/Grove3D";
-import { PAL, rboxGeo, flat } from "../src/features/grove/toy";
+import { PAL, rboxGeo, flat, setEnvironment, fillLight } from "../src/features/grove/toy";
 import { CROP_MAP } from "../src/data/crops";
 import { fixture } from "./fixture";
 
@@ -20,11 +20,14 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 const pmrem = new THREE.PMREMGenerator(renderer), env = pmrem.fromScene(new RoomEnvironment(), .04).texture;
+/* same light model as the map: the room map only feeds glossy materials, its soft fill is folded into the hemisphere light */
+setEnvironment(env, .22);
+const lin = new THREE.Color(), FILL = fillLight(lin.set(0xffffff).toArray(), lin.set(0xcfdcc0).toArray(), .85, .22);
 
 /* a scene with the map's light: white sky + pale green bounce, one warm sun high in the afternoon */
 function stage(obj, { el = 26, az = -32, ground = true, pad = .08, frame = null } = {}) {
-  const scene = new THREE.Scene(); scene.environment = env; scene.environmentIntensity = .22;
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcfdcc0, .85));
+  const scene = new THREE.Scene(), hemi = new THREE.HemisphereLight(0xffffff, 0xcfdcc0, 1); hemi.color.setRGB(...FILL.sky); hemi.groundColor.setRGB(...FILL.ground);
+  scene.add(hemi);
   const box = frame || new THREE.Box3().setFromObject(obj), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3()), R = Math.max(sz.x, sz.y, sz.z);
   const sun = new THREE.DirectionalLight(0xfff3e4, 2.1); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.radius = 4; sun.shadow.bias = -.0004; sun.shadow.normalBias = .02; sun.shadow.intensity = .62;
   sun.position.copy(c).add(new THREE.Vector3(.55, 1.25, -.35).normalize().multiplyScalar(R * 4)); sun.target.position.copy(c);
