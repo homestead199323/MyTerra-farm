@@ -622,6 +622,25 @@
   opens the card, Escape closes it. NOT verified: any real GPU or phone, frame rate, battery, heat. Not done:
   fewer triangles (crops and trees are the bulk; all-zones desktop still 835 k against the 800 k budget),
   partial rebuilds (the whole world still rebuilds on any change).
+  **Look C, slice 1 — true-to-life crops, shipped 2026-11-10 (`d6ca0a0`):** Dervis asked for "more quality
+  and more realistic" assets. He rejected two sample strengths (A toy-finish, B botanical) and chose C from
+  side-by-side pictures of a pepper, an apple tree and a cow: leaf veins, bark, glossy fruit, real leaf
+  blades, baked shade. Order: crops first (balcony crops), then trees, then animals. This slice: `plantkit.js`
+  (leaf blades, lathed fruit, per-pixel surface detail, two materials: solid + double-sided blades) and
+  `crops-real.js` (tomato, sweet and hot pepper, lettuce, rocket, spinach, chard, kale, radish, basil, parsley,
+  sage, mint, oregano, thyme, rosemary, strawberry — every crop in `CONTAINER_FRIENDLY`). Five levels of detail
+  by plant count (`cropTier`), triangle budgets per plant 8,000 / 2,300 / 950 / 650 / 650 in
+  `tests/crops-real.test.js`. Parsley, sage, oregano, rocket and hot pepper got their own `FAMILIES` entries and
+  pictures; 68 small pictures re-rendered or added, plus the herbs / raised / container area tiles. Style doc:
+  MAP_STYLE §0 and §10. Cost, software rasteriser, phone tile, ±10 %: balcony 4 × 1.5 m 284 → 320 ms; balcony
+  11 × 4.5 m 370 → 454 ms; 36-bed farm 657 → 754 ms (triangles went DOWN on the bigger scenes; the extra time
+  is leaf blades overlapping). Verified: 194 + 3 tests, ESLint, build (sandbox and Mac); production
+  `dpl_7RDn4QRrNRSMkY3ia1YYrRFymPXP` READY, live Grove3D bundle carries `g3plant-v1`, no `__g3harness`, CSP
+  present; demo balcony draws the map. NOT verified: the new plants on production itself (the demo balcony
+  starts with empty troughs; they were seen in the harnesses only), any real phone or GPU. Open: Grove3D chunk
+  is 229.7 KB gzip against the 230 KB budget (226.9 KB as served) — the next crop batch needs the budget
+  raised or crops-real.js loaded as its own chunk; the other 30-odd crops, all trees and all animals are still
+  the toy models, so a mixed bed shows both looks; fine-leaved herbs are harder to read in the small pictures.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a
