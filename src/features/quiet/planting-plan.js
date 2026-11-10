@@ -1,4 +1,12 @@
-import { bedLength, bedRows, layoutPlots, axisOf, modernRect } from "./farm-model";
+import { bedLength, bedRows, layoutPlots, axisOf, modernRect, zoneGeometry } from "./farm-model";
+/** A planting whose spacing & layout can be edited: its bed geometry and its laid-out planting, or null. */
+export function editablePlanting(data, plot) {
+  const raw = plot && plot.status !== "harvested" && (data.zones || []).find((z) => z.id === plot.zone);
+  if (!raw) return null;
+  const zone = zoneGeometry(raw, data.farmW, data.farmH);
+  const laid = layoutPlots(zone, data.garden?.plots || []).find((p) => p.id === plot.id);
+  return laid && laid.layout ? { zone, plot: laid } : null;
+}
 import { crowdingFactor, spacingGuide } from "../../data/spacing.js";
 const TREE_NAMES = new Set([
   "Apple",

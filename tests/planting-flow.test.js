@@ -57,3 +57,17 @@ test('Only plants and spacing are entered: the row length comes from the plants,
   assert(full.layout.lengthM <= bed.wM);
   assert(full.rows >= 2);
 });
+
+import { editablePlanting } from '../src/features/quiet/planting-plan.js';
+test('A planting in a bed can be edited from its detail; harvested or bed-less ones cannot', () => {
+  const bed = { id: 'b', type: 'veg', wM: 9, hM: 1.2 };
+  const leek = { name: 'Leek', cat: 'Vegetable', spacing: 15 };
+  const plan = planPlanting(bed, [], plantingInput({ plantCount: 18, mode: 'plants', spacingCM: 15 }, leek, bed), leek);
+  const plot = { id: 'p', zone: 'b', crop: 'Leek', plantCount: 18, status: 'planted', layout: plan.layout };
+  const data = { farmW: 50, farmH: 50, zones: [bed], garden: { plots: [plot] } };
+  const e = editablePlanting(data, plot);
+  assert.equal(e.plot.id, 'p');
+  assert.equal(e.zone.wM, 9);
+  assert.equal(editablePlanting(data, { ...plot, status: 'harvested' }), null);
+  assert.equal(editablePlanting(data, { ...plot, zone: 'gone' }), null);
+});

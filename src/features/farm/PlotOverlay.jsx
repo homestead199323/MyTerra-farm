@@ -8,7 +8,10 @@ import { rCM } from "../../lib/regional";
 import { plotAreaM2, buildZoneSpaceMap } from "../../lib/farm-calc";
 import FarmIcon from "../../components/FarmIcon";
 import Journal from "../quiet/Journal";
-import {relation, growthOf} from "../quiet/farm-model";
+import {relation, growthOf, STAGES} from "../quiet/farm-model";
+import PlantArt from "../quiet/PlantArt";
+import PlantingLayoutEditor from "../quiet/PlantingLayoutEditor";
+import { editablePlanting } from "../quiet/planting-plan";
 import { toggleStep, isAwaitingSowing, startGrowing, sowVerb, nextStepAfter } from "../../lib/sowing";
 import { toast } from "../../lib/toast";
 import { recordRemoval } from "../../lib/memory";
@@ -45,6 +48,9 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
   const showComp = plot.zone && compObj && compZonePlots.length > 0 && (compGood.length > 0 || compBad.length > 0);
 
   const [confirmDel, setConfirmDel] = useState(false);
+  const [editLayout, setEditLayout] = useState(false);
+  const editable = setData ? editablePlanting(data, plot) : null;
+  const setObserved = (v) => setData({...data, garden: {...data.garden, plots: data.garden.plots.map(a => a.id === plot.id ? {...a, observedStage: v === "" ? null : +v, observedStageDate: v ? todayLocalKey() : null} : a)}});
   const [harvKg, setHarvKg] = useState(null); // null = not asked yet
   const [harvEdited, setHarvEdited] = useState(false);
   const growth = growthOf(plot, crop, todayLocalKey());
@@ -113,6 +119,33 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
         <Pill>💧 {crop.waterFreq}</Pill>
         {zone && <Pill c={C.blue} bg={C.waterBg}>📍 {zone.name}</Pill>}
       </div>
+
+      {plot.status !== "harvested" && (
+        <Card style={{marginBottom:14,padding:"12px 14px"}}>
+          {/* where this planting is on its way to harvest: its five stages, the current one marked */}
+          <ol className="q-growth-steps" aria-label={`Growth stages: now ${growth.label}`}>
+            {STAGES.slice(1).map((label, i) => (
+              <li key={label} className={i + 1 === growth.index ? "on" : i + 1 < growth.index ? "done" : ""} aria-current={i + 1 === growth.index ? "step" : undefined}>
+                <PlantArt crop={plot.crop} stage={i + 1} size={30} />
+                <small>{label}</small>
+              </li>
+            ))}
+          </ol>
+          {setData && (
+            <div className="q-row q-wrap q-plant-actions">
+              <label className="q-stage-select">
+                Growth stage
+                <select aria-label={`Observed stage for ${plot.name || plot.crop}`} value={plot.observedStage ?? ""} onChange={e => setObserved(e.target.value)}>
+                  <option value="">Use estimate</option>
+                  {STAGES.slice(1).map((l, i) => <option value={i + 1} key={l}>{l}</option>)}
+                </select>
+              </label>
+              {editable && !editLayout && <button type="button" className="q-text-button" onClick={() => setEditLayout(true)}>Edit spacing & layout</button>}
+            </div>
+          )}
+        </Card>
+      )}
+      {editLayout && editable && <PlantingLayoutEditor data={data} setData={setData} zone={editable.zone} plot={editable.plot} onDone={() => setEditLayout(false)}/>}
 
       {(plot.plantCount > 0 || plot.qty > 0 || plot.expectedYieldKg > 0) && (
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8,marginBottom:14}}>
