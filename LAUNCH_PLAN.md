@@ -643,5 +643,5 @@
   READY on www.myterra.farm, live `index-qPxzYcG7.js` carries eight new string markers and none of three removed
   ones, CSP header present. NOT verified: the screens in a browser. Left for the owner (report in Project doc
   `claude/knowledge-audit-2026-11-10.md`): several vegetable yields are optimistic rather than conservative and
-  the offset grid multiplies them; Pacific NW cities sit in the hot-South US region; copper sprays are not sold
-  to UK home gardeners; no apple or pear in the crop list.
+  the offset grid multiplies them; Pacific NW cities sit in the hot-South US region; copper is the stock answer in many crop cards although the RHS lists no fungicide
+  amateurs can buy for peach leaf curl (other uses and countries not checked); no apple or pear in the crop list.
