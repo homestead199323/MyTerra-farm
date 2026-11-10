@@ -655,6 +655,27 @@
   Known weak points: thin crops (onion, garlic, carrot, grain) leave beds looking emptier on a zoomed-out farm
   than the chunky models did; fine-leaved crops are small in the list pictures; okra pods hide in the leaves.
   Still toy models: all 19 fruit and nut trees and all 14 animals (next slices).
+  **Look C, slice 3 — fruit and nut trees, shipped 2026-11-10 (`b98c94e`):** 19 species in `trees-real.js`,
+  each with its own habit, bark, separate leaves and fruit in the harvest window; drawn through `buildCrops`
+  as instanced meshes with five levels of detail by tree count (budget 16,000 / 6,500 / 3,200 / 2,200 / 2,000
+  triangles a tree). 76 tree pictures and the orchard tile re-rendered. All-zones farm 396 k triangles,
+  635 ms on the software rasteriser (696 ms before). Production `dpl_DM7dWaxG8vjpY4y5qyWbdziVGWgk` READY.
+  **Look C, slice 4 — animals, shipped 2026-11-10 (`88bd1c5`):** same rig, brain and one-mesh herd; new models
+  and material in `animals3d.js` (marker `GROVE_ANIMALS_3D_V3`). Lofted trunk with chest and belly, lofted
+  legs with knee and hock, cupped ears, hair and feather blades, toes, breed patches cut crisp per pixel from
+  a field in the vertices, coat grain, shine on eyes, hooves, horns and beaks. Leaner trunks, smaller heads,
+  shorter-backed horse. New levels of detail by herd size (`animalTier`: 0 up to 6 animals, 1 up to 16, 2 up
+  to 40, 3 beyond; phone on a big farm one lower), budgets in `tests/animals-real.test.js`. 14 animal
+  pictures and the barn, coop and pasture tiles re-rendered. Zoo harness, 25 animals, phone level, software
+  rasteriser: herd 17.6 k → 28.6 k triangles, 312 → 322 ms (inside the noise); a desktop herd of seven or
+  more is lighter than before (a cow was 5,168 triangles at every herd size). Verified: 203 + 3 tests,
+  ESLint, build (sandbox and Mac); production `dpl_HtQWC3E1cpTzszTB8QRwvgihFzTd` READY, live Grove3D bundle
+  carries `g3animal-c1`, no `__g3harness`, CSP present, demo balcony draws the map. NOT verified: animals or
+  trees on production itself (the demo balcony has neither; seen in the harnesses only), any real phone or
+  GPU. Honest limits: the animals are simplified anatomy (no shoulders, muscle or face modelling) — clearly
+  better surfaces and silhouettes than the toy build, well short of a sculpt. The decoration trees round the
+  farm and in gardens are still toy models. Grove3D chunk 237.5 KB gzip of the 240 KB budget: the next
+  addition to the 3D map has to split the chunk or remove something.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a
