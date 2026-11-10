@@ -4,32 +4,40 @@ import { cropGeometry, cropKey, cropTier } from '../src/features/grove/crops3d.j
 import { realCrop } from '../src/features/grove/crops-real.js';
 import { PlantKit, SURF } from '../src/features/grove/plantkit.js';
 import { CONTAINER_FRIENDLY } from '../src/lib/suggest.js';
+import { CROP_MAP } from '../src/data/crops.js';
+import { treeKey } from '../src/features/grove/crop-families.js';
+
+const CROPS = [...CROP_MAP.keys()].filter((n) => !treeKey(n));
 
 const tris = (g) => g.index.count / 3;
 // triangles one plant may cost at each level of detail (docs/MAP_STYLE.md §9)
 const BUDGET = [8000, 2300, 950, 650, 650];
 
-test('every crop suggested for a balcony has a true-to-life model', () => {
-  for (const name of CONTAINER_FRIENDLY) assert.ok(realCrop(name), `${name} has a model in crops-real.js`);
-  assert.equal(realCrop('Carrot'), null, 'a crop without one keeps its older model');
+test('every crop has a true-to-life model of its own', () => {
+  const greens = realCrop('Some Unknown Leaf').idx;
+  for (const name of [...CONTAINER_FRIENDLY, ...CROPS]) assert.notEqual(realCrop(name).idx, greens, `${name} has its own entry in crops-real.js`);
+  assert.notEqual(realCrop('Sweet Potato').idx, realCrop('Potato').idx); assert.notEqual(realCrop('Watermelon').idx, realCrop('Melon').idx); assert.notEqual(realCrop('Broad Bean').idx, realCrop('Bean (Dry)').idx);
   assert.notEqual(realCrop('Pepper (Hot)').idx, realCrop('Pepper (Sweet)').idx, 'hot and sweet peppers are different plants');
 });
 
 test('true-to-life crops stay inside their triangle budget at every stage and level of detail', () => {
-  for (const name of [...CONTAINER_FRIENDLY, 'Pepper (Hot)', 'Sage']) {
+  const over = [];
+  for (const name of [...new Set([...CROPS, 'Sage', 'Rocket', 'Chive', 'Some Unknown Leaf'])]) {
     for (let stage = 2; stage <= 5; stage++) {
       let last = Infinity;
       for (let tier = 0; tier <= 4; tier++) {
         const g = cropGeometry(name, stage, tier), n = tris(g);
-        assert.ok(n <= BUDGET[tier], `${name} stage ${stage} tier ${tier}: ${n} triangles is over ${BUDGET[tier]}`);
+        if (n > BUDGET[tier]) over.push(`${name} s${stage} t${tier}: ${n} > ${BUDGET[tier]}`);
         assert.ok(n <= last, `${name} stage ${stage}: tier ${tier} is not heavier than tier ${tier - 1}`);
         assert.ok(Array.from(g.attributes.position.array).every(Number.isFinite), `${name}: finite vertices`);
         last = n;
       }
     }
-    const young = cropGeometry(name, 2, 0), grown = cropGeometry(name, 5, 0); young.computeBoundingBox(); grown.computeBoundingBox();
-    assert.ok(grown.boundingBox.max.y > young.boundingBox.max.y, `${name} grows taller between stage 2 and the harvest window`);
+    // stage 4, not 5: onions and garlic flop over when they are ready
+    const young = cropGeometry(name, 2, 0), grown = cropGeometry(name, 4, 0); young.computeBoundingBox(); grown.computeBoundingBox();
+    assert.ok(grown.boundingBox.max.y > young.boundingBox.max.y, `${name} grows taller between stage 2 and stage 4`);
   }
+  assert.deepEqual(over, [], 'models over their triangle budget');
 });
 
 test('a plant model splits into solid parts and leaf blades, each carrying its surface kind', () => {
@@ -42,7 +50,7 @@ test('a plant model splits into solid parts and leaf blades, each carrying its s
   assert.ok(leafy > g.groups[1].count * .6, 'the second group is mostly leaf blade (plus petals and calyx lobes)');
   let fruit = 0; for (let i = 0; i < s.count; i++) if (s.getX(i) === SURF.fruit) fruit++;
   assert.ok(fruit > 100, 'ripe tomatoes carry the fruit-skin surface');
-  const old = cropGeometry('Carrot', 5, 0); assert.equal(old.groups.length, 0); assert.ok(old.attributes.g3s, 'older models join the same material with a plain surface');
+  const seed = cropGeometry('Carrot', 1, 0); assert.equal(seed.groups.length, 0); assert.ok(seed.attributes.g3s, 'the seedling joins the same material with a plain surface');
 });
 
 test('a leaf blade is a pointed sheet along +z with veins mapped across it', () => {
@@ -60,6 +68,6 @@ test('level of detail follows how many plants share the map', () => {
   assert.equal(cropTier(8, false), 0); assert.equal(cropTier(24, false), 0); assert.equal(cropTier(25, false), 1);
   assert.equal(cropTier(90, false), 1); assert.equal(cropTier(91, false), 2); assert.equal(cropTier(301, false), 3); assert.equal(cropTier(5000, false), 4);
   assert.equal(cropTier(8, true), 1, 'the phone farm tier is one step lighter'); assert.equal(cropTier(5000, true), 4);
-  assert.notEqual(cropKey('Tomato', 5, 0), cropKey('Tomato', 5, 1)); assert.equal(cropKey('Carrot', 5, 0, 0), cropKey('Carrot', 5, 3, 0), 'older models keep their own three levels');
+  assert.notEqual(cropKey('Tomato', 5, 0), cropKey('Tomato', 5, 1)); assert.notEqual(cropKey('Tomato', 5, 0), cropKey('Carrot', 5, 0));
   assert.equal(cropKey('Tomato', 1, 0), cropKey('Lettuce', 1, 0), 'every crop shares the sprout');
 });
