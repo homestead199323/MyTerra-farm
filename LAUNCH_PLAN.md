@@ -641,6 +641,20 @@
   is 229.7 KB gzip against the 230 KB budget (226.9 KB as served) — the next crop batch needs the budget
   raised or crops-real.js loaded as its own chunk; the other 30-odd crops, all trees and all animals are still
   the toy models, so a mixed bed shows both looks; fine-leaved herbs are harder to read in the small pictures.
+  **Look C, slice 2 — every remaining crop, shipped 2026-11-10 (`654d478`):** eggplant, okra, potato, sweet
+  potato, celery, rhubarb, cabbage, broccoli, cauliflower, Brussels sprouts, carrot, parsnip, fennel, dill,
+  chamomile, beetroot, turnip, leek, garlic, chives, onion, pumpkin, squash, courgette, cucumber, watermelon,
+  melon, broad bean, lentil, bean and pea, maize, grain, sunflower, lavender, raspberry, blackberry, grape,
+  asparagus, artichoke. 56 entries in `REAL`; an unknown crop grows as a plain leafy rosette. The old family
+  kits are deleted from crops3d.js. All 212 crop pictures re-rendered (142 changed) plus five area tiles. Software rasteriser,
+  phone tile, ±10 %: 36-bed farm 657 ms before look C → 689 ms now, 433 k → 348 k triangles; back garden
+  376 → 396 ms. Grove3D chunk 231.8 KB gzip (228.9 KB as served); budget raised from 230 to 240 KB instead of
+  splitting the file, which would not shrink the download. Verified: 194 + 3 tests, ESLint, build (sandbox
+  and Mac); production `dpl_BVhkF8Q2jNKdyULrncAcz218AzTv` READY, live bundle carries the new crop list, CSP
+  present, demo balcony draws the map. NOT verified: the new plants on production itself, any real phone.
+  Known weak points: thin crops (onion, garlic, carrot, grain) leave beds looking emptier on a zoomed-out farm
+  than the chunky models did; fine-leaved crops are small in the list pictures; okra pods hide in the leaves.
+  Still toy models: all 19 fruit and nut trees and all 14 animals (next slices).
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a
