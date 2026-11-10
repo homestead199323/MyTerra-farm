@@ -1,4 +1,5 @@
 import PlantingForm from '../quiet/PlantingForm';
+import BedDirectionPicker from "../quiet/BedDirectionPicker";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { C, F, SX } from "../../lib/theme";
@@ -219,6 +220,10 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
     const snapped = opts && opts.drag && activeGrid ? snapZone(g, zones.filter(function(z){ return z.id !== id; }), activeGrid, farmW, farmH, opts.resize) : g;
     const c = clampGeom(snapped);
     upZ(id, {...c, x: c.xM / farmW * 100, y: c.yM / farmH * 100, w: c.wM / farmW * 100, h: c.hM / farmH * 100});
+  }
+  function rotateBed(z) {
+    const c = clampGeom({...z, wM: z.hM, hM: z.wM});
+    upZ(z.id, {...c, rowAxis: z.rowAxis === 'vertical' ? 'horizontal' : 'vertical'});
   }
   function handlePlaceAt(xM, yM, type) {
     // Ornament placement wins when an ornament type is armed (or dragged in)
@@ -571,12 +576,13 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
                 <MeterField label="Width" value={sz.wM} min={.2} max={farmW} onCommit={function(n) { commitGeom("wM", n); }}/>
                 <MeterField label="Height" value={sz.hM} min={.2} max={farmH} onCommit={function(n) { commitGeom("hM", n); }}/>
               </div>
+              {isPlantZone && sz.type !== "orchard" && <BedDirectionPicker zone={sz} fits={!(sz.hM>farmW||sz.wM>farmH)} onRotate={function(){ rotateBed(sz); }}/>}
               <details className="q-inset"><summary>Rows & appearance</summary><div className="q-grid2">
                 {isPlantZone&&<label>Number of rows<input type="number" min="1" max="100" value={rowsDraft??String(sz.rowCount||bedRows(sz))} onChange={e=>{const t=e.target.value;setRowsDraft(t);const n=+t;if(t!==""&&Number.isInteger(n)&&n>=1&&n<=100)upZ(sz.id,{rowCount:n});}} onBlur={()=>setRowsDraft(null)}/></label>}
                 <label>Material<select value={sz.material||"wood"} onChange={e=>upZ(sz.id,{material:e.target.value})}><option value="wood">Natural wood</option><option value="stone">Pale stone</option><option value="metal">Soft metal</option></select></label>
                 <label>Colour<select value={sz.color||"sage"} onChange={e=>upZ(sz.id,{color:e.target.value})}><option value="sage">Sage</option><option value="clay">Clay</option></select></label>
                 {["water","pasture","compost"].includes(sz.type)&&<label>Shape<select value={sz.shape||"rectangle"} onChange={e=>upZ(sz.id,{shape:e.target.value})}><option value="rectangle">Rectangle</option><option value="oval">Oval</option></select></label>}
-              </div><div className="q-row q-wrap"><button className="q-secondary" disabled={sz.hM>farmW||sz.wM>farmH} title={sz.hM>farmW||sz.wM>farmH?"The rotated area would not fit within your farm dimensions":undefined} onClick={()=>{const c=clampGeom({...sz,wM:sz.hM,hM:sz.wM});upZ(sz.id,{...c,rowAxis:sz.rowAxis==='vertical'?'horizontal':'vertical'});}}>Rotate 90°</button><button className="q-secondary" onClick={()=>{const z={...sz,id:uid(),name:sz.name+' copy',...clampGeom({...sz,xM:sz.xM+.5,yM:sz.yM+.5})};setData({...data,zones:[...data.zones,z]});setSel(z.id);}}>Duplicate area</button></div><small>Duplicating copies the area and its appearance. Plantings and animals stay in their original area.</small></details>
+              </div><div className="q-row q-wrap"><button className="q-secondary" disabled={sz.hM>farmW||sz.wM>farmH} title={sz.hM>farmW||sz.wM>farmH?"The rotated area would not fit within your farm dimensions":undefined} onClick={()=>rotateBed(sz)}>Rotate 90°</button><button className="q-secondary" onClick={()=>{const z={...sz,id:uid(),name:sz.name+' copy',...clampGeom({...sz,xM:sz.xM+.5,yM:sz.yM+.5})};setData({...data,zones:[...data.zones,z]});setSel(z.id);}}>Duplicate area</button></div><small>Duplicating copies the area and its appearance. Plantings and animals stay in their original area.</small></details>
               <div style={{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap"}}>
                 <select value={sz.type} aria-label="Zone type"
                   onChange={function(e) { upZ(sz.id, {type: e.target.value}); }}

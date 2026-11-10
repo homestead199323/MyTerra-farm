@@ -2,8 +2,8 @@ import { spacingGuide, plantDensity } from "../../data/spacing.js";
 import BedPlan from "./BedPlan";
 
 const PATTERNS = [
-  ["rows", "Straight rows", "Plants line up across rows."],
-  ["offset", "Biointensive grid", "Offset rows; every plant the same distance apart."],
+  ["rows", "Grid", "Plants line up in straight rows."],
+  ["offset", "Hexagonal (biointensive)", "Every other row is shifted; each plant is the same distance from its neighbours."],
 ];
 
 function GridIcon({ offset, vertical }) {
@@ -38,6 +38,7 @@ export default function PlantingControls({
   plots,
   crops,
   editId,
+  showAxis = true,
 }) {
   const orchard = zone?.type === "orchard",
     scatter = value.pattern === "scatter",
@@ -99,6 +100,7 @@ export default function PlantingControls({
       )}
       {!scatter && (
         <>
+          {showAxis && (
           <fieldset className="q-pattern-picker">
             <legend>Row direction</legend>
             <div className="q-grid2">
@@ -121,9 +123,10 @@ export default function PlantingControls({
               ))}
             </div>
           </fieldset>
+          )}
           {!orchard && (
             <fieldset className="q-pattern-picker">
-              <legend>Planting grid</legend>
+              <legend>Planting pattern</legend>
               <div className="q-grid2">
                 {PATTERNS.map(([key, label, description]) => (
                   <label key={key} className={value.pattern === key ? "is-selected" : ""}>
@@ -134,7 +137,7 @@ export default function PlantingControls({
                       checked={value.pattern === key}
                       onChange={() => update({ pattern: key, spacingCM: undefined, rowSpacingCM: undefined })}
                     />
-                    <GridIcon offset={key === "offset"} vertical={vertical} />
+                    <GridIcon offset={key === "offset"} vertical={showAxis && vertical} />
                     <strong>{label}</strong>
                     <small>{description}</small>
                   </label>
@@ -143,6 +146,12 @@ export default function PlantingControls({
             </fieldset>
           )}
         </>
+      )}
+      {!showAxis && !scatter && (
+        <small>
+          Rows run {vertical ? "top to bottom" : "left to right"} along this bed. Change the bed's row
+          direction on the farm map.
+        </small>
       )}
       <div className="q-grid2">
         <label className={field("plantCount").className}>

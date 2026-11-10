@@ -13,6 +13,7 @@ import './growth-preview.test.js';
 import './crop-detail.test.js';
 import './crops-real.test.js';
 import './toy.test.js';
+import './planting-flow.test.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {companionsFor,relation,growthOf,validatePlantingLayout,bedLength,bedRows,animalZone,freePlantingRows} from '../src/features/quiet/farm-model.js';

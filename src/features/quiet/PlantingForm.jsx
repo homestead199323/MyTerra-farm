@@ -20,6 +20,7 @@ import {
   earliestPlantOut,
 } from "../nursery/nursery-model";
 import { applySeedlingStage } from "../../lib/seedling-stage";
+import { usesSeedling } from "./planting-mode";
 import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
@@ -70,7 +71,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
   const prop = crop ? propagationOf(crop) : null,
     nurseries = nurseryZones(data),
     canNursery = !!crop && prop.method !== "direct" && !fromBatch && zone?.type !== "orchard";
-  const fromSeed = canNursery && nurseries.length > 0 && (form.fromSeed ?? prop.method === "transplant");
+  const fromSeed = usesSeedling({ canNursery, nurseries, form });
   const frost = frostDates(data),
     covered = zone?.type === "greenhouse";
   const plantOutDate =
@@ -281,6 +282,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
           <PlantingControls
             value={input}
             onChange={update}
+            showAxis={false}
             plan={plan}
             crop={crop}
             zone={zone}
@@ -311,23 +313,15 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
         value={form.name}
         onChange={(e) => update({ ...form, name: e.target.value })}
       />
-      {canNursery && (
+      {canNursery && fromSeed && (
         <section className="q-inset q-seed-choice">
-          <label className="q-row">
-            <input
-              type="checkbox"
-              checked={fromSeed}
-              disabled={!nurseries.length}
-              onChange={(e) => update({ ...form, fromSeed: e.target.checked })}
-            />
-            <strong>Start from seed in the nursery</strong>
-          </label>
-          {!nurseries.length ? (
-            <small>
-              Add a Seedling Nursery area on your farm map to raise seedlings before planting out.
-            </small>
-          ) : fromSeed ? (
-            <>
+          <div className="q-row q-between">
+            <strong>Start as seedling in the nursery</strong>
+            <button type="button" className="q-text-button" onClick={() => update({ ...form, fromSeed: false })}>
+              Plant directly instead
+            </button>
+          </div>
+          <>
               <div className="q-grid2">
                 {nurseries.length > 1 && (
                   <Sel
@@ -382,14 +376,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
               {seedPlan && seasonNote(crop, plantOutDate, frost, covered) && (
                 <p className="q-warning">{seasonNote(crop, plantOutDate, frost, covered)}</p>
               )}
-            </>
-          ) : (
-            <small>
-              {prop.method === "either"
-                ? "Usually fine sown direct too."
-                : "Or plant bought seedlings directly."}
-            </small>
-          )}
+          </>
         </section>
       )}
       {!fromSeed && (
@@ -408,6 +395,23 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
         value={form.cost}
         onChange={(e) => update({ ...form, cost: e.target.value })}
       />
+      {canNursery && !fromSeed && (
+        <section className="q-inset q-seed-choice">
+          <button
+            type="button"
+            className="q-secondary"
+            disabled={!nurseries.length}
+            onClick={() => update({ ...form, fromSeed: true })}
+          >
+            Start as seedling
+          </button>
+          <small>
+            {nurseries.length
+              ? "Raise it from seed in your nursery first, then plant it out. Shows the sowing plan, trays and dates."
+              : "Add a Seedling Nursery area on your farm map to raise seedlings before planting out."}
+          </small>
+        </section>
+      )}
       {error && (
         <p role="alert" className="q-warning">
           {error}
