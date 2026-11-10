@@ -622,3 +622,26 @@
   opens the card, Escape closes it. NOT verified: any real GPU or phone, frame rate, battery, heat. Not done:
   fewer triangles (crops and trees are the bulk; all-zones desktop still 835 k against the 800 k budget),
   partial rebuilds (the whole world still rebuilds on any change).
+- [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
+  plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
+  `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a
+  cross-file check (names, months, steps, spacing, yields, livestock keys). Fixed: base-list pests that do not
+  occur in Western Europe (squash vine borer, squash bug, cucumber beetle, pepper weevil, corn earworm, armyworm,
+  sweet potato weevil; Colorado beetle relabelled, late blight is #1) with the American ones kept in the US
+  regions; per-plant yields of dry bean, lentil, chickpea and sunflower seed (10–400× too high); wheat seed rate
+  (150 → about 20 g/m²); potato storage 4–7°C; olive and watermelon variety yields (Mediterranean numbers were
+  shown in Western Europe); a cherry-tree pH/feed line that had leaked into the Cherry tomato variety;
+  Mediterranean leftovers (broad bean, fennel, dill, lemon). Northern Europe: aubergine, melon, watermelon,
+  peach, apricot, fig, sweet potato, lentil no longer "not viable" (the region holds Germany, Poland, Austria,
+  Hungary). Animals: cow breeding moved June (283 d → March calves), pig breeding November (114 d → March
+  litters), goat drying-off before kidding; kitchen scraps illegal for hens and pigs in UK/EU; foulbrood
+  notifiable; goat disbudding vet-only in the UK; live-plucking banned; donkey 0.2 ha; Merino fleece 4–5 kg;
+  egg/milk prefill per species. Preserving: tomatoes need added acid; botulism spore temperatures; curing salt
+  for all smoked/air-dried meat; garlic/herbs in oil 4 days; honey not under 12 months; compost ratio; drip
+  under mulch. Assistant: preserving chips/answers no longer print internal keys and `undefined`.
+  Verified: 185 + 3 tests, ESLint, Vite build (sandbox and Mac); production `dpl_FwCUWEziGuQeCdkBkxRfmJrZCWW8`
+  READY on www.myterra.farm, live `index-qPxzYcG7.js` carries eight new string markers and none of three removed
+  ones, CSP header present. NOT verified: the screens in a browser. Left for the owner (report in Project doc
+  `claude/knowledge-audit-2026-11-10.md`): several vegetable yields are optimistic rather than conservative and
+  the offset grid multiplies them; Pacific NW cities sit in the hot-South US region; copper sprays are not sold
+  to UK home gardeners; no apple or pear in the crop list.
