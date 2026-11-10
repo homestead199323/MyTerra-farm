@@ -156,3 +156,23 @@ test('Conservative yields: a variety never swaps a regional yield for the base o
     }
   }
 });
+test('Pacific Northwest uses the maritime (Western Europe) guide and keeps dollars', async () => {
+  const { searchCity } = await import('../src/data/cities.js');
+  const { currencyCode } = await import('../src/lib/money.js');
+  const region = (q, country) => searchCity(q).find((c) => c.city === q && (!country || c.country === country)).region;
+  for (const [q, c] of [['Seattle', 'US'], ['Portland', 'US'], ['Vancouver', 'Canada'], ['Victoria', 'Canada'], ['Oregon', 'US'], ['Washington', 'US'], ['British Columbia', 'Canada']])
+    assert.equal(region(q, c), 'western_europe', q);
+  assert.equal(region('Los Angeles', 'US'), 'us_warm');
+  assert.equal(region('Maryland', 'US'), region('Baltimore', 'US'));
+  // with no usable device locale the farm's town decides, before the climate group
+  const nav = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { value: { languages: [] }, configurable: true });
+  try {
+    assert.equal(currencyCode({ city: 'Seattle, US', region: 'western_europe' }), 'USD');
+    assert.equal(currencyCode({ city: 'Vancouver, Canada', region: 'western_europe' }), 'CAD');
+    assert.equal(currencyCode({ city: 'Leeds, UK', region: 'western_europe' }), 'EUR');
+    assert.equal(currencyCode({ city: 'Leeds, UK', region: 'western_europe', currency: 'GBP' }), 'GBP');
+  } finally {
+    if (nav) Object.defineProperty(globalThis, 'navigator', nav); else delete globalThis.navigator;
+  }
+});

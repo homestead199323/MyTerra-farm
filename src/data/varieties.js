@@ -364,7 +364,7 @@ export const VAR_RO = {
   ],
   "Raspberry": [
     {name:"Dorman Red",days:365,note:"South US standard. Heat-tolerant. Summer-fruiting.",yld:0.5},
-    {name:"Tulameen",days:365,note:"Large fruit. Good in Pacific NW warm areas. Excellent flavour.",yld:0.7},
+    {name:"Tulameen",days:365,note:"Large fruit. Best in the cooler parts of the region. Excellent flavour.",yld:0.7},
     {name:"Heritage",days:365,note:"Autumn-fruiting. Very productive. Reliable in warm US conditions.",yld:0.5},
     {name:"Caroline",days:365,note:"Autumn-fruiting. Very large fruit. Good disease resistance.",yld:0.6},
   ],
@@ -388,7 +388,7 @@ export const VAR_RO = {
   "Tomato": [
     {name:"Early Girl",days:52,note:"Very early. Reliable in short cold seasons. Classic NE small tomato.",yld:2.5},
     {name:"Stupice",days:52,note:"Czech heirloom. Very cold-tolerant. Small red. Excellent for short seasons.",yld:2.5},
-    {name:"Glacier",days:55,note:"Coldest-tolerant outdoor tomato. Small but reliable. Pacific NW/NE.",yld:2.1},
+    {name:"Glacier",days:55,note:"Coldest-tolerant outdoor tomato. Small but reliable in short seasons.",yld:2.1},
     {name:"Black Krim",days:69,note:"Heirloom. Complex flavour. Good in short US cold seasons.",yld:2.5},
     {name:"Jetstar",days:72,note:"VF resistant. Good flavour. Reliable mid-season for NE/Midwest.",yld:3.1},
   ],

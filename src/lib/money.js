@@ -2,7 +2,7 @@
    MONEY — the grower's own currency (UX pass 2026-09-28)
    Amounts are stored as plain numbers; only the symbol changes.
    Order: Settings choice (data.currency) → the device locale's country
-   (en-GB → £, en-US → $, sv-SE → kr) → climate region (US regions → $) → €.
+   (en-GB → £, en-US → $, sv-SE → kr) → the farm's town (US → $, Canada → CAD) → climate region (US regions → $) → €.
    ═══════════════════════════════════════════ */
 const COUNTRY_CCY = {
   GB: "GBP", UK: "GBP", US: "USD", CA: "CAD", AU: "AUD", NZ: "NZD", IE: "EUR", NL: "EUR", BE: "EUR",
@@ -25,6 +25,9 @@ export function currencyCode(data) {
     const m = /[-_]([A-Za-z]{2})(?:$|[-_])/.exec(String(l || ""));
     if (m && COUNTRY_CCY[m[1].toUpperCase()]) return COUNTRY_CCY[m[1].toUpperCase()];
   }
+  const city = String((data && data.city) || "");
+  if (/, US$/.test(city)) return "USD";
+  if (/, Canada$/.test(city)) return "CAD";
   const r = data && data.region;
   if (r === "us_warm" || r === "us_cold") return "USD";
   return "EUR";
