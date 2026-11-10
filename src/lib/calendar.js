@@ -56,7 +56,7 @@ export const CROP_DIFFICULTY = {
     "Tomato","Pepper (Sweet)","Cucumber","Carrot","Onion","Beetroot","Cabbage",
     "Potato","Garlic","Leek","Pumpkin","Corn","Oregano","Rosemary","Sage",
     "Thyme","Parsley","Dill","Chamomile","Lavender","Broccoli","Brussels Sprouts",
-    "Fennel","Sweet Potato","Lentil","Chickpea",
+    "Fennel","Sweet Potato","Lentil","Chickpea","Apple","Pear",
   ],
   hard: [
     "Eggplant","Pepper (Hot)","Watermelon","Melon","Celery","Asparagus","Okra",

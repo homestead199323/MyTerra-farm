@@ -199,6 +199,20 @@ export const VARIETIES = {
     {name:"Red/Masoor",days:85,note:"Fast cooking. Splits easily. High yield.",yld:0.0025},
     {name:"Castelluccio",days:95,note:"Italian PDO lentil. Small, brown-green. Earthy. Premium.",yld:0.002},
   ],
+  Apple: [
+    {name:"Discovery",days:365,note:"Early eater, ready August. Eat off the tree; does not keep. Good disease resistance.",yld:13},
+    {name:"James Grieve",days:365,note:"Mid-season, eats and cooks. Reliable in cool, wet areas. Partly self-fertile.",yld:15},
+    {name:"Egremont Russet",days:365,note:"Nutty russet. October. Keeps to December. Compact tree.",yld:13},
+    {name:"Falstaff",days:365,note:"Self-fertile, frost-tolerant blossom, heavy crops. Keeps to December. Good first tree.",yld:17},
+    {name:"Bramley's Seedling",days:365,note:"The cooking apple. Very vigorous; needs two other varieties nearby. Keeps to March.",yld:18},
+  ],
+  Pear: [
+    {name:"Conference",days:365,note:"The reliable one. Sets fruit even in poor springs. October. Partly self-fertile.",yld:12},
+    {name:"Concorde",days:365,note:"Compact, heavy cropping, good flavour. Good for small gardens. Partly self-fertile.",yld:10},
+    {name:"Beth",days:365,note:"Early (late Aug-Sep). Small sweet fruit. Compact and reliable.",yld:9},
+    {name:"Williams' Bon Chrétien",days:365,note:"Classic early pear (Bartlett). September. Does not keep; good for bottling.",yld:10},
+    {name:"Doyenné du Comice",days:365,note:"Finest flavour. Needs a warm sheltered spot and a pollination partner.",yld:8},
+  ],
 };
 
 export const VAR_RO = {
@@ -273,6 +287,20 @@ export const VAR_RO = {
     {name:"Golden Bantam",days:78,note:"Open-pollinated classic. Seed-saveable. Traditional Med field corn base.",yld:0.25},
     {name:"Peaches and Cream",days:83,note:"Bi-colour. Sweet and tender. Popular in Med home gardens.",yld:0.29},
   ],
+  Apple: [
+    {name:"Golden Delicious",days:365,note:"The standard southern European apple. Heavy, regular crops. Needs summer water.",yld:17},
+    {name:"Gala",days:365,note:"Early (Aug). Sweet. Colours well in warm areas.",yld:15},
+    {name:"Fuji",days:365,note:"Late (Oct-Nov). Very sweet, keeps for months. Needs a long season.",yld:15},
+    {name:"Granny Smith",days:365,note:"Late, sharp, keeps well. Tolerates heat.",yld:16},
+    {name:"Anna",days:365,note:"Low-chill. The choice for hot coasts. Ripens June-July. Needs a partner (Dorsett Golden).",yld:12},
+  ],
+  Pear: [
+    {name:"Williams",days:365,note:"Classic early pear. August. Eat fresh or bottle; does not keep.",yld:10},
+    {name:"Abate Fetel",days:365,note:"Long Italian pear. September. Sweet, keeps to winter.",yld:10},
+    {name:"Conference",days:365,note:"Reliable setter. Keeps well.",yld:11},
+    {name:"Santa Maria",days:365,note:"Early (July-Aug). Heavy crops in heat.",yld:11},
+    {name:"Coscia",days:365,note:"Small early Italian pear (July). Very sweet. Heat-tolerant.",yld:8},
+  ],
   },
   // NORTHERN EUROPE
   northern_europe: {
@@ -316,6 +344,20 @@ export const VAR_RO = {
     {name:"Minipop",days:65,note:"Baby corn. Pick before pollination. Reliable in cool NE.",yld:0.12},
     {name:"Lark",days:72,note:"Early. Good sugars. Bred for cooler northern conditions.",yld:0.17},
     {name:"Sweet Nugget",days:70,note:"Early-season. Good cold germination. NE climate adapted.",yld:0.15},
+  ],
+  Apple: [
+    {name:"Discovery",days:365,note:"Early eater (Aug-Sep). Hardy; a favourite in Scandinavia. Does not keep.",yld:13},
+    {name:"James Grieve",days:365,note:"Mid-season, eats and cooks. Reliable in cool, wet summers.",yld:15},
+    {name:"Elstar",days:365,note:"Aromatic dessert apple. September-October. Keeps to January.",yld:15},
+    {name:"Belle de Boskoop",days:365,note:"Sharp cooker and keeper. Vigorous; needs two other varieties nearby.",yld:18},
+    {name:"Aroma",days:365,note:"Swedish. Hardy, reliable, good flavour. September-October.",yld:14},
+  ],
+  Pear: [
+    {name:"Conference",days:365,note:"The most reliable setter in cool springs.",yld:8},
+    {name:"Williams Christ",days:365,note:"Classic early pear (Williams). Needs a warm wall in the north.",yld:7},
+    {name:"Clapp's Favourite",days:365,note:"Early and hardy. Eat straight away; does not keep.",yld:7},
+    {name:"Gute Luise",days:365,note:"Louise Bonne. Sweet September pear for sheltered gardens.",yld:6},
+    {name:"Alexander Lucas",days:365,note:"Large late pear. Keeps to December. Needs pollination partners.",yld:7},
   ],
   },
   // US WARM
@@ -375,6 +417,20 @@ export const VAR_RO = {
     {name:"Chardonnay",days:365,note:"Premium white. CA and warm coastal US standard.",yld:6},
     {name:"Thompson Seedless",days:365,note:"Table grape. Seedless. Raisins. Dominant in CA. Needs heat.",yld:7.5},
   ],
+  Apple: [
+    {name:"Anna",days:365,note:"Low-chill (200-300 hours). Ripens June-July. Needs a partner (Dorsett Golden).",yld:9},
+    {name:"Dorsett Golden",days:365,note:"Low-chill. Pollinates Anna. For the Gulf Coast, Florida and low desert.",yld:9},
+    {name:"Gala",days:365,note:"Early, sweet. Reliable across the upper South and California.",yld:11},
+    {name:"Fuji",days:365,note:"Late, very sweet, keeps for months. Wants a long warm season.",yld:11},
+    {name:"Pink Lady",days:365,note:"Very late (Oct-Nov). Needs a long hot season. Keeps well.",yld:10},
+  ],
+  Pear: [
+    {name:"Kieffer",days:365,note:"Tough, fireblight-tolerant. Hard fruit, best for canning and cooking. Heavy crops.",yld:12},
+    {name:"Orient",days:365,note:"Fireblight-resistant. Large, mild fruit. Good for the Deep South.",yld:11},
+    {name:"Moonglow",days:365,note:"Fireblight-resistant. Soft, sweet dessert pear. August.",yld:10},
+    {name:"Warren",days:365,note:"Fireblight-resistant. Best flavour of the southern pears. Slow to start bearing.",yld:8},
+    {name:"Bartlett",days:365,note:"Classic dessert and canning pear. For California and the dry West; blights badly in the humid South.",yld:10},
+  ],
   },
   // US COLD
   us_cold: {
@@ -418,6 +474,20 @@ export const VAR_RO = {
     {name:"Marquette",days:365,note:"Cold-hardy red. Good wine quality. Minnesota bred. Disease-resistant.",yld:4},
     {name:"Brianna",days:365,note:"White. Very cold-hardy. Good in WI/MN/northern plains.",yld:4},
     {name:"Niagara",days:365,note:"White table/juice grape. Cold-hardy. Classic NE US.",yld:4.7},
+  ],
+  Apple: [
+    {name:"Honeycrisp",days:365,note:"Very crisp and sweet. Hardy to zone 3. Keeps for months.",yld:14},
+    {name:"Liberty",days:365,note:"Resistant to scab, rust and fireblight. Easy first tree. Zone 4.",yld:16},
+    {name:"Haralson",days:365,note:"Tart Minnesota classic. Very hardy (zone 3). Good for pies. Keeps well.",yld:15},
+    {name:"McIntosh",days:365,note:"Classic Northeast apple. September. Hardy. Prone to scab.",yld:15},
+    {name:"Zestar",days:365,note:"Early (late Aug). Crisp and sweet. Hardy to zone 3.",yld:13},
+  ],
+  Pear: [
+    {name:"Bartlett",days:365,note:"Classic dessert and canning pear. Zone 5. Prone to fireblight.",yld:9},
+    {name:"Bosc",days:365,note:"Russet skin, firm, good for baking. Late. Zone 5.",yld:8},
+    {name:"Seckel",days:365,note:"Small, very sweet. Some fireblight resistance. Zone 5.",yld:7},
+    {name:"Ure",days:365,note:"Very hardy (zone 3). Small, sweet fruit. For the prairies.",yld:6},
+    {name:"Summercrisp",days:365,note:"Hardy to zone 4. Early. Eat crisp, straight off the tree.",yld:7},
   ],
   },
 };

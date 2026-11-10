@@ -59,6 +59,8 @@ export const COMP = {
   Olive: { good: ["Lavender","Rosemary","Sage","Oregano"], bad: ["Walnut"] },
   Fig: { good: ["Rosemary","Mint","Strawberry","Oregano"], bad: ["Walnut"] },
   Pomegranate: { good: ["Basil","Mint","Lavender","Rosemary"], bad: ["Walnut"] },
+  Apple: { good: ["Garlic","Chamomile","Lavender"], bad: ["Potato","Walnut"] },
+  Pear: { good: ["Garlic","Chamomile","Lavender"], bad: ["Walnut"] },
   Peach: { good: ["Garlic","Onion","Basil","Strawberry","Tansy"], bad: ["Potato","Tomato","Raspberry","Walnut"] },
   Apricot: { good: ["Basil","Rosemary","Tansy","Garlic"], bad: ["Tomato","Pepper (Sweet)","Walnut"] },
   Almond: { good: ["Lavender","Oregano","Rosemary"], bad: ["Walnut"] },

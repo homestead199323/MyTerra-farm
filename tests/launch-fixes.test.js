@@ -176,3 +176,25 @@ test('Pacific Northwest uses the maritime (Western Europe) guide and keeps dolla
     if (nav) Object.defineProperty(globalThis, 'navigator', nav); else delete globalThis.navigator;
   }
 });
+test('Apple and pear are full crops in every region', async () => {
+  const { CROPS, CROP_MAP } = await import('../src/data/crops.js');
+  const { getRegionalCrop, getRegionalVarieties } = await import('../src/lib/regional.js');
+  const { cropMeasureType } = await import('../src/lib/farm-calc.js');
+  const { isTreeCrop, cropFitsZone } = await import('../src/features/quiet/planting-plan.js');
+  const { getCropDifficulty } = await import('../src/lib/calendar.js');
+  const { BLOSSOM } = await import('../src/data/frost.js');
+  assert.equal(CROPS.length, 72);
+  const keys = Object.keys(CROP_MAP.get('Plum')).sort();
+  for (const name of ['Apple', 'Pear']) {
+    const crop = CROP_MAP.get(name);
+    assert.deepEqual(Object.keys(crop).sort(), keys, name);
+    assert(isTreeCrop(crop) && cropFitsZone(crop, { type: 'orchard' }) && BLOSSOM.has(name));
+    assert.equal(cropMeasureType(name, 'western_europe'), 'plants');
+    assert(getCropDifficulty(name));
+    for (const region of ['western_europe', 'mediterranean', 'northern_europe', 'us_warm', 'us_cold']) {
+      const rc = getRegionalCrop(crop, region);
+      assert(rc && rc.yld > 0 && rc.pests.length >= 3, `${region} ${name}`);
+      assert.equal(getRegionalVarieties(name, region).length, 5, `${region} ${name}`);
+    }
+  }
+});

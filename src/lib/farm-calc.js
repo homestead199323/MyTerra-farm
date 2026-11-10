@@ -14,7 +14,7 @@ import { rCM } from "./regional";
 export function cropMeasureType(cropName, region) {
   const crop = rCM(region).get(cropName);
   if (!crop) return "plants";
-  if (["Olive","Grape","Fig","Pomegranate","Peach","Plum","Cherry","Apricot",
+  if (["Apple","Pear","Olive","Grape","Fig","Pomegranate","Peach","Plum","Cherry","Apricot",
        "Walnut","Almond","Chestnut","Quince","Persimmon","Lemon","Orange",
        "Hazelnut","Raspberry","Strawberry"].includes(cropName)) return "plants";
   if (["Wheat","Corn"].includes(cropName)) return "area";

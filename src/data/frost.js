@@ -26,7 +26,7 @@ export const HALF_HARDY = new Set([
   "Chickpea", "Lentil", "Artichoke", "Pomegranate", "Fig", "Olive",
 ]);
 
-export const BLOSSOM = new Set(["Peach", "Apricot", "Plum", "Cherry", "Almond", "Strawberry"]);
+export const BLOSSOM = new Set(["Peach", "Apricot", "Plum", "Cherry", "Almond", "Strawberry", "Apple", "Pear"]);
 export const CITRUS = new Set(["Lemon", "Orange"]);
 
 /** Crops that should be picked before a frost (fruit or tubers ruined by it). Potato excluded: tubers sit safe underground. */

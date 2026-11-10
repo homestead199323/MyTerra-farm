@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    CROPS 3D — every crop on the map is a small rounded plant model built from geometry
-   (no cut-out artwork): eleven plant families cover all 70 crops, each one shaped by its
+   (no cut-out artwork): eleven plant families cover all 72 crops, each one shaped by its
    growth stage — a sprout, a seedling, a growing plant, a maturing plant with green
    fruit, and the harvest-window plant carrying ripe fruit in full colour. Models are
    vertex-coloured and built in a unit footprint (1 = the plant's spread), so one
