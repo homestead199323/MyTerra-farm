@@ -45,12 +45,13 @@ export default function PlantingControls({
     byRows = value.mode === "rows" && !scatter,
     vertical = value.axis === "vertical";
   // an auto row length is never written back to the form, so it keeps following the plants until the grower types one
+  // Row length is not a grower input: the bed sets it, and a planting takes only the length its plants need.
   const update = (patch) => {
-    const next = { ...value, ...patch, startM: undefined, alongStartM: undefined };
-    if (!("lengthM" in patch)) next.lengthM = value.lengthAuto ? undefined : value.lengthM;
+    const next = { ...value, ...patch, startM: undefined, alongStartM: undefined, lengthM: undefined };
     delete next.lengthAuto;
     onChange(next);
   };
+  const hex = value.pattern === "offset";
   const guide = spacingGuide(crop, value.pattern === "offset" ? "offset" : "rows");
   const alongMax = zone ? (vertical ? zone.hM : zone.wM) : 0;
   const density = scatter ? 0 : plantDensity(value.spacingCM, value.rowSpacingCM);
@@ -61,7 +62,10 @@ export default function PlantingControls({
     Number(value.spacingCM) >= guide.hexCM * 0.985 &&
     Number(value.rowSpacingCM) >= guide.rowCM * 0.97;
   // which field fixes the problem: the first one-tap fix's field, or the field a bad number lives in
-  const problem = plan?.problem || null, badField = problem ? (problem.kind === "input" ? problem.field : problem.fixes[0]?.field || null) : null;
+  const problem = plan?.problem || null,
+    fixes = (problem?.fixes || []).filter((f) => f.field !== "lengthM" && f.field !== "rowCount"),
+    rawBad = problem ? (problem.kind === "input" ? problem.field : fixes[0]?.field || problem.fixes?.[0]?.field || null) : null,
+    badField = rawBad === "lengthM" || rawBad === "rowCount" ? "plantCount" : rawBad;
   const hints = {
     lengthM: problem?.free ? `Longest free run here: ${problem.free.lengthM.toFixed(1)} m` : "Between 0.3 m and the bed length",
     rowCount: problem?.free ? `Free width here fits fewer rows` : "A whole number, 1 or more",
@@ -155,7 +159,7 @@ export default function PlantingControls({
       )}
       <div className="q-grid2">
         <label className={field("plantCount").className}>
-          {orchard ? "Trees" : "Plants"}
+          {orchard ? "Number of trees" : "Number of plants"}
           <input
             type="number"
             min="1"
@@ -167,34 +171,8 @@ export default function PlantingControls({
           />
           {hint("plantCount")}
         </label>
-        {!scatter && (
-          <label className={field("rowCount").className}>
-            Rows
-            <input
-              type="number"
-              min="1"
-              step="1"
-              inputMode="numeric"
-              aria-invalid={field("rowCount").invalid || undefined}
-              value={byRows ? (value.rowCount ?? "") : plan?.rows || ""}
-              onChange={(e) => update({ mode: "rows", rowCount: e.target.value })}
-            />
-            {hint("rowCount")}
-          </label>
-        )}
-      </div>
-      <small>
-        {scatter
-          ? "Trees are placed naturally, keeping the spacing below from every other tree."
-          : "Type how many plants (or how many rows) — the rest fills in. Row length follows your plants until you change it."}
-      </small>
-      <div className="q-grid2">
         <label className={field("spacingCM").className}>
-          {scatter
-            ? "Space between trees (cm)"
-            : value.pattern === "offset"
-              ? "Plant spacing (cm, all directions)"
-              : "In-row spacing (cm)"}
+          {scatter ? "Space between trees (cm)" : hex ? "Spacing between plants (cm)" : "Between plants (cm)"}
           <input
             type="number"
             min="1"
@@ -204,13 +182,13 @@ export default function PlantingControls({
             onChange={(e) =>
               update({
                 spacingCM: e.target.value,
-                rowSpacingCM: value.pattern === "offset" ? undefined : value.rowSpacingCM,
+                rowSpacingCM: hex ? undefined : value.rowSpacingCM,
               })
             }
           />
           {hint("spacingCM")}
         </label>
-        {!scatter && (
+        {!scatter && !hex && (
           <label className={field("rowSpacingCM").className}>
             Between rows (cm)
             <input
@@ -224,32 +202,23 @@ export default function PlantingControls({
             {hint("rowSpacingCM")}
           </label>
         )}
-        {!scatter && (
-          <label className={field("lengthM").className}>
-            Row length (m){value.lengthAuto && !badField ? <em className="q-auto-tag"> auto</em> : null}
-            <input
-              type="number"
-              min="0.3"
-              step="0.1"
-              max={alongMax}
-              aria-invalid={field("lengthM").invalid || undefined}
-              value={plan?.layout?.lengthM ?? value.lengthM ?? alongMax}
-              onChange={(e) => update({ lengthM: e.target.value })}
-            />
-            {hint("lengthM")}
-            {value.lengthAuto && !badField ? <small className="q-auto-note">Set from your plants · bed is {alongMax} m</small> : null}
-          </label>
-        )}
       </div>
+      <small>
+        {scatter
+          ? "Trees are placed naturally, keeping this spacing from every other tree."
+          : hex
+            ? "Hexagonal: every plant is this far from each neighbour, in the row and across rows."
+            : `Rows fill along the bed (${alongMax} m); the planting uses only the space its plants need.`}
+      </small>
       <p className="q-spacing-guide">
         Guide for {crop?.name}:{" "}
         {scatter
           ? `${crop?.spacing} cm between trees`
-          : value.pattern === "offset"
-            ? `${guide.hexCM} cm biointensive spacing (rows ${guide.rowCM} cm apart)`
-            : `${guide.inRowCM} cm in the row, ${guide.rowCM} cm between rows`}
-        {(String(value.spacingCM) !== String(scatter ? crop?.spacing : guide.inRowCM) ||
-          (!scatter && String(value.rowSpacingCM) !== String(guide.rowCM))) && (
+          : hex
+            ? `${guide.hexCM} cm between every plant`
+            : `${guide.inRowCM} cm between plants, ${guide.rowCM} cm between rows`}
+        {(String(value.spacingCM) !== String(scatter ? crop?.spacing : hex ? guide.hexCM : guide.inRowCM) ||
+          (!scatter && !hex && String(value.rowSpacingCM) !== String(guide.rowCM))) && (
           <>
             {" · "}
             <button
@@ -274,7 +243,7 @@ export default function PlantingControls({
       <div role="status" className="q-planting-summary">
         <strong>
           {plan?.count || 0} {orchard ? "trees" : "plants"}
-          {!scatter && ` · ${plan?.rows || 0} rows`}
+          {!scatter && ` · ${plan?.rows || 0} ${plan?.rows === 1 ? "row" : "rows"}`}
           {density > 0 && ` · ${density >= 10 ? Math.round(density) : density.toFixed(1)} per m²`}
         </strong>
         {yieldKg != null && <span>Estimated harvest: ~{yieldKg} kg</span>}
@@ -299,9 +268,9 @@ export default function PlantingControls({
         <div className="q-problem" role="alert">
           <strong>{problem?.kind === "space" ? "Doesn’t fit yet" : "Check this value"}</strong>
           <p>{plan.error}</p>
-          {problem?.fixes?.length > 0 && (
+          {fixes.length > 0 && (
             <div className="q-problem-fixes">
-              {problem.fixes.map(function (f) {
+              {fixes.map(function (f) {
                 return (
                   <button type="button" key={f.field + f.label} className="q-secondary" onClick={function () { update(f.patch); }}>
                     {f.label}

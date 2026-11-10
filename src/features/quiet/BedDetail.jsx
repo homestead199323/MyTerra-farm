@@ -118,6 +118,7 @@ export default function BedDetail({ zone: rawZone, data, setData, onPlot, highli
                         axis: axisOf(zone, p.layout),
                         mode: "plants",
                         startM: undefined,
+                        lengthM: undefined,
                         plantCount: p.plantCount || 1,
                       });
                     }}

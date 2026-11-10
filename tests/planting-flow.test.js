@@ -36,3 +36,24 @@ test('Hexagonal (offset) spacing makes rows sqrt(3)/2 of the plant spacing', () 
   const input = plantingInput({ plantCount: 20, mode: 'plants', pattern: 'offset', spacingCM: 30 }, tomato, bed);
   assert.equal(input.rowSpacingCM, 26);
 });
+
+test('Only plants and spacing are entered: the row length comes from the plants, capped by the bed', () => {
+  const bed = { id: 'b', type: 'veg', wM: 9, hM: 1.2 };
+  const leek = { name: 'Leek', cat: 'Vegetable', spacing: 15 };
+  // hexagonal: one spacing; rows sit sqrt(3)/2 of it apart so every neighbour is 15 cm away
+  const hex = planPlanting(bed, [], plantingInput({ plantCount: 18, mode: 'plants', pattern: 'offset', spacingCM: 15 }, leek, bed), leek);
+  assert.equal(hex.error, '');
+  assert.equal(hex.count, 18);
+  assert.equal(hex.layout.rowSpacingCM, 13);
+  assert(hex.layout.lengthM < bed.wM, 'a small planting leaves the rest of the bed free');
+  // grid: plant spacing and row spacing are separate
+  const grid = planPlanting(bed, [], plantingInput({ plantCount: 40, mode: 'plants', pattern: 'rows', spacingCM: 20, rowSpacingCM: 30 }, leek, bed), leek);
+  assert.equal(grid.error, '');
+  assert.equal(grid.layout.spacingCM, 20);
+  assert.equal(grid.layout.rowSpacingCM, 30);
+  // more plants than one bed-length row holds wrap onto more rows; rows never exceed the bed
+  const full = planPlanting(bed, [], plantingInput({ plantCount: 100, mode: 'plants', pattern: 'rows', spacingCM: 15, rowSpacingCM: 20 }, leek, bed), leek);
+  assert.equal(full.error, '');
+  assert(full.layout.lengthM <= bed.wM);
+  assert(full.rows >= 2);
+});
