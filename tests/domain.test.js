@@ -11,6 +11,7 @@ import './labels.test.js';
 import './designer-fit.test.js';
 import './growth-preview.test.js';
 import './crop-detail.test.js';
+import './crops-real.test.js';
 import './toy.test.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';

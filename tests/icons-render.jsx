@@ -76,7 +76,7 @@ const ANIMALS = ["Chicken", "Goat", "Sheep", "Cow", "Pig", "Rabbit", "Duck", "Tu
 
 export const jobs = [];
 // crops: one representative name per family entry, plus the default leafy greens
-FAMILIES.forEach(([re]) => { const name = re.source.split("|")[0]; jobs.push({ kind: "crop", name, slug: cropSlug(name) }); });
+FAMILIES.forEach(([re]) => { const name = re.source.split("|")[0].replace(/\\/g, ""); jobs.push({ kind: "crop", name, slug: cropSlug(name) }); });
 jobs.push({ kind: "crop", name: "Greens", slug: "greens" });
 TREE_KEYS.forEach((k) => jobs.push({ kind: "tree", name: k, slug: k }));
 ANIMALS.forEach((a) => jobs.push({ kind: "animal", name: a, slug: a.toLowerCase().replace(/ /g, "-") }));

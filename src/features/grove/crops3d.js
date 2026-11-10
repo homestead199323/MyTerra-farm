@@ -6,10 +6,14 @@
    vertex-coloured and built in a unit footprint (1 = the plant's spread), so one
    geometry per crop and stage is instanced across the farm and scaled by the real
    spacing; leaves sway in the vertex shader from the shared clock.
+   2026-11-10: crops listed in crops-real.js are true-to-life models instead (look C, docs/MAP_STYLE.md §10);
+   the family models below remain for every other crop.
    MARKER: GROVE_CROPS_3D_V1
    ═══════════════════════════════════════════ */
 import * as THREE from "three";
 import { Parts, clamp01, WIND, DETAIL } from "./toy";
+import { plantMaterials, plainSurface } from "./plantkit";
+import { realCrop, realGeometry } from "./crops-real";
 
 const HPI = Math.PI / 2;
 function rng(seed) { let t = (Math.floor(seed * 1000003) ^ 0x5bd1e995) >>> 0; return () => { t = (t + 0x6d2b79f5) >>> 0; let x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
@@ -232,14 +236,26 @@ const BUILD = { leafy, head, root, allium, bush, vine, climber, stalk, herb, ber
 
 /* ---------- geometry cache: one buffer per crop family entry and stage ---------- */
 const cache = new Map();
-export function cropGeometry(name, stage, lod = 0) {
-  const st = Math.max(1, Math.min(5, stage)), fam = cropFamily(name), key = cropKey(name, st, lod);
+/* `tier` is the level of detail for the true-to-life models (crops-real.js): 0 a few plants seen close, up to 4 a
+   whole field. Older family models keep their own three levels (`lod`). */
+export function cropGeometry(name, stage, tier = 0, lod = Math.min(2, tier)) {
+  const st = Math.max(1, Math.min(5, stage)), key = cropKey(name, st, tier, lod);
   if (cache.has(key)) return cache.get(key);
-  const P = new Parts(); P.detail = (lod === 2 ? .5 : lod === 1 ? .66 : 1) * (DETAIL.value < 1 ? .7 : 1); // phones: lighter still // level of detail: a big farm gets lighter plant models
-  if (st === 1) sprout(P); else BUILD[fam.family](P, fam.o, st);
-  const g = P.build(); g.userData.shared = true; cache.set(key, g); return g; // shared across world rebuilds
+  const real = st > 1 ? realCrop(name) : null; let g;
+  if (real) g = realGeometry(real, st, tier);
+  else {
+    const fam = cropFamily(name), P = new Parts(); P.detail = (lod === 2 ? .5 : lod === 1 ? .66 : 1) * (DETAIL.value < 1 ? .7 : 1); // phones: lighter still
+    if (st === 1) sprout(P); else BUILD[fam.family](P, fam.o, st);
+    g = plainSurface(P.build());
+  }
+  g.userData.shared = true; cache.set(key, g); return g; // shared across world rebuilds
 }
-export function cropKey(name, stage, lod = 0) { const st = Math.max(1, Math.min(5, stage)); return st === 1 ? `sprout|${lod}` : `${cropFamily(name).idx}|${st}|${lod}`; }
+export function cropKey(name, stage, tier = 0, lod = Math.min(2, tier)) {
+  const st = Math.max(1, Math.min(5, stage)); if (st === 1) return `sprout|${lod}`;
+  const real = realCrop(name); return real ? `real${real.idx}|${st}|${tier}` : `${cropFamily(name).idx}|${st}|${lod}`;
+}
+/* how many plants share the map decides how much each one may cost (budgets in docs/MAP_STYLE.md §9) */
+export function cropTier(count, phone) { return Math.min(4, (count > 900 ? 4 : count > 300 ? 3 : count > 90 ? 2 : count > 24 ? 1 : 0) + (phone ? 1 : 0)); }
 /* the model space is a unit footprint; scale by the plant's real spread in metres */
 const SCALE_CAP = { stalk: .55, climber: .55, bush: .7, vine: .95, berry: .7, head: .8, spears: .6, rhubarb: .9, artichoke: .9 };
 export function cropScale(size, stage, name = "") { // plants spill a little over their spacing (lush, not sparse), tall crops never balloon with wide spacing
@@ -248,16 +264,14 @@ export function cropScale(size, stage, name = "") { // plants spill a little ove
 }
 
 /* ---------- material: matte vertex colours, leaves sway from the shared clock ---------- */
-let cropMat = null, cropDepth = null;
+let cropMat = null, cropThin = null, cropDepth = null;
 export function cropMaterials(TIME) {
-  if (cropMat) return { mat: cropMat, depth: cropDepth };
-  cropMat = new THREE.MeshLambertMaterial({ vertexColors: true }); // matte leaves: Lambert (see toy.js flat)
-  cropMat.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = TIME; sh.uniforms.uWind = WIND;
-    sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nuniform float uTime; uniform vec3 uWind;")
-      .replace("#include <begin_vertex>", `#include <begin_vertex>
-{ vec3 g3c = instanceMatrix[3].xyz;
+  if (cropMat) return { mat: cropMat, thin: cropThin, depth: cropDepth };
+  // one material for every crop: matte by default, with veins, shine and light through the leaf where a model asks (plantkit.js)
+  const pair = plantMaterials({
+    key: "-wind-v2",
+    vertexHead: "uniform float uTime; uniform vec3 uWind;",
+    vertexExtra: `{ vec3 g3c = instanceMatrix[3].xyz;
   float g3seed = fract(sin(dot(g3c.xz, vec2(12.9898, 78.233))) * 43758.5453);
   float g3ph = dot(g3c.xz, uWind.xy) * .35 - uTime * (1.2 + uWind.z * 1.8);
   float g3gust = .65 + .35 * sin(g3ph);
@@ -266,21 +280,22 @@ export function cropMaterials(TIME) {
   // Convert the shared world wind to the plant's rotated local axes.
   vec2 g3local = vec2(dot(g3world, normalize(instanceMatrix[0].xz)), dot(g3world, normalize(instanceMatrix[2].xz)));
   float g3bend = smoothstep(.02, .65, position.y);
-  transformed.xz += g3local * g3bend * .06 * (.5 + uWind.z) * (.8 + .4 * g3seed); }`);
-  };
-  cropMat.customProgramCacheKey = () => "g3crop-wind-v2";
+  transformed.xz += g3local * g3bend * .06 * (.5 + uWind.z) * (.8 + .4 * g3seed); }`,
+  });
+  cropMat = pair.solid; cropThin = pair.thin;
+  [cropMat, cropThin].forEach((m) => { const patch = m.onBeforeCompile; m.onBeforeCompile = (sh) => { sh.uniforms.uTime = TIME; sh.uniforms.uWind = WIND; patch(sh); }; });
   cropDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
-  return { mat: cropMat, depth: cropDepth };
+  return { mat: cropMat, thin: cropThin, depth: cropDepth };
 }
 /* draws every collected plant: items are { key, name, stage, x, y, z, s, ry } in world metres */
 export function buildCrops(g, items, TIME, focusBounds) {
   if (!items.length) return;
-  const { mat } = cropMaterials(TIME), byKey = new Map(), lod = Math.min(2, (items.length > 900 ? 2 : items.length > 350 ? 1 : 0) + (DETAIL.value < 1 ? 1 : 0)); // the whole farm shares one level of detail; phones one step lighter
-  items.forEach((it) => { const key = cropKey(it.name, it.stage, lod); it.lod = lod; let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
+  const { mat, thin } = cropMaterials(TIME), byKey = new Map(), phone = DETAIL.value < 1, lod = Math.min(2, (items.length > 900 ? 2 : items.length > 350 ? 1 : 0) + (phone ? 1 : 0)), tier = cropTier(items.length, phone); // the whole farm shares one level of detail; phones one step lighter
+  items.forEach((it) => { const key = cropKey(it.name, it.stage, tier, lod); it.lod = lod; it.tier = tier; let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), E = new THREE.Euler();
   const box = focusBounds ? new THREE.Box3() : null;
   byKey.forEach((list) => {
-    const geo = cropGeometry(list[0].name, list[0].stage, list[0].lod || 0), im = new THREE.InstancedMesh(geo, mat, list.length);
+    const geo = cropGeometry(list[0].name, list[0].stage, list[0].tier || 0, list[0].lod || 0), im = new THREE.InstancedMesh(geo, geo.groups.length ? [mat, thin] : mat, list.length); // true-to-life models: solid parts + leaf blades
     if (focusBounds && !geo.boundingBox) geo.computeBoundingBox();
     list.forEach((it, i) => {
       P.set(it.x, it.y, it.z); E.set(0, it.ry || 0, 0); Q.setFromEuler(E); S.setScalar(it.s); M4.compose(P, Q, S); im.setMatrixAt(i, M4);
