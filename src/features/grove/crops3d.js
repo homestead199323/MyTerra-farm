@@ -77,8 +77,8 @@ export function cropMaterials(TIME) {
 /* draws every collected plant: items are { key, name, stage, x, y, z, s, ry } in world metres */
 export function buildCrops(g, items, TIME, focusBounds) {
   if (!items.length) return;
-  const { mat, thin } = cropMaterials(TIME), byKey = new Map(), phone = DETAIL.value < 1, trees = items.reduce((n, it) => n + (it.tree ? 1 : 0), 0), tier = cropTier(items.length - trees, phone), tTier = treeTier(trees, phone); // crops share one level of detail, trees another; phones one step lighter
-  items.forEach((it) => { it.tier = it.tree ? tTier : tier; const key = it.tree ? `tree|${it.name}|${it.stage >= 5 ? 1 : 0}|${tTier}` : cropKey(it.name, it.stage, tier); let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
+  const { mat, thin } = cropMaterials(TIME), byKey = new Map(), phone = DETAIL.value < 1, deco = items.reduce((n, it) => n + (it.deco ? 1 : 0), 0), trees = items.reduce((n, it) => n + (it.tree && !it.deco ? 1 : 0), 0), tier = cropTier(items.length - trees - deco, phone), tTier = treeTier(trees, phone), dTier = Math.max(1, treeTier(deco, phone)); // decoration trees never get the heaviest model and never change the orchard's level // crops share one level of detail, trees another; phones one step lighter
+  items.forEach((it) => { it.tier = it.tree ? (it.deco ? dTier : tTier) : tier; const key = it.tree ? `tree|${it.name}|${it.stage >= 5 ? 1 : 0}|${it.tier}` : cropKey(it.name, it.stage, tier); let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), E = new THREE.Euler();
   const box = focusBounds ? new THREE.Box3() : null;
   byKey.forEach((list) => {

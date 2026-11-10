@@ -35,6 +35,7 @@ import { GROUND_TONES, pathTones } from "./palette";
 import { TREE_RE } from "./crop-families";
 import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, detailFor, setEnvironment, fillLight, bakeSource, mergeBaked, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
+import { DECO_TREES } from "./trees-real";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
 import { ORNAMENTS, wheelbarrow, barrel, crates, birdbath, mailbox, scarecrow, tractor, ladder, fruitCrate, rake, lilyPads, reeds, jetty, silo, cloche, hoseReel, hayScatter } from "./props3d";
@@ -101,13 +102,14 @@ function materials() {
   const L = (c, n) => layered(flat(c, { rough: .95 }), n);
   return {
     // ground layers (look A: fine shader texture, no images)
-    lawn: (color = PAL.lawn) => texture(L(color, 6), "meadow"), soil: (color = PAL.soil) => texture(L(color, 6), "soil"), gravel: texture(L(PAL.gravel, 6), "gravel"), stoneFloor: (color = PAL.stone) => L(color, 6), concrete: L(PAL.concrete, 6), earth: (color = PAL.earth) => L(color, 6), pavers: L(0xe7e3da, 5), hay: flat(PAL.hay, { rough: .95 }), hayFloor: L(PAL.straw, 7),
+    lawn: (color = PAL.lawn) => texture(L(color, 6), "meadow"), soil: (color = PAL.soil) => texture(L(color, 6), "soil"), gravel: texture(L(PAL.gravel, 6), "gravel"), stoneFloor: (color = PAL.stone) => texture(L(color, 6), "stone"), concrete: texture(L(PAL.concrete, 6), "concrete"), earth: (color = PAL.earth) => texture(L(color, 6), "soil"), pavers: texture(L(0xe7e3da, 5), "stone"), hay: texture(flat(PAL.hay, { rough: .95 }), "hay"), hayFloor: texture(L(PAL.straw, 7), "hay"),
     // structure
-    cream: flat(PAL.cream), white: flat(PAL.white), trim: flat(PAL.trim, { rough: .8 }), panel: flat(PAL.panel), stone: flat(PAL.stone), stoneDark: flat(PAL.stoneDark), rock: nightTint(flat(PAL.rock), .6, [.12, .15, .24]), concreteSolid: flat(PAL.concrete),
+    // look C (docs/MAP_STYLE.md §11): every structural material carries its own surface
+    cream: texture(flat(PAL.cream), "plaster"), white: flat(PAL.white), trim: flat(PAL.trim, { rough: .8 }), panel: texture(flat(PAL.panel), "planks"), stone: texture(flat(PAL.stone), "stone"), stoneDark: texture(flat(PAL.stoneDark), "stone"), rock: texture(nightTint(flat(PAL.rock), .6, [.12, .15, .24]), "concrete"), concreteSolid: texture(flat(PAL.concrete), "concrete"),
     wood: texture(flat(PAL.wood), "wood"), woodMid: texture(flat(PAL.woodMid), "wood"), woodDark: texture(flat(PAL.woodDark), "wood"), woodPale: texture(flat(PAL.woodPale), "wood"), bark: flat(0x8a5a36),
-    roofClay: texture(flat(PAL.terracotta, { variant: "roof" }), "roof"), roofSlate: texture(flat(PAL.slate, { variant: "roof" }), "roof"), // tiled roofs
-    terracotta: flat(PAL.terracotta), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: flat(PAL.zinc, { rough: .6, metal: .15 }), metal: flat(PAL.metal, { rough: .5, metal: .3 }), dark: flat(PAL.dark), ink: flat(0x4a3f36),
-    barn: flat(PAL.barn), barnDark: flat(PAL.barnDark), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
+    roofClay: texture(flat(PAL.terracotta, { variant: "roof" }), "roof"), roofSlate: texture(flat(PAL.slate, { variant: "roof" }), "slate"), // tiled roofs
+    terracotta: texture(flat(PAL.terracotta), "clay"), sheet: texture(flat(PAL.slate, { variant: "sheet" }), "zinc"), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: texture(flat(PAL.zinc, { rough: .6, metal: .15 }), "zinc"), metal: texture(flat(PAL.metal, { rough: .5, metal: .3 }), "metal"), dark: flat(PAL.dark), ink: flat(0x4a3f36),
+    barn: texture(flat(PAL.barn), "planks"), barnDark: texture(flat(PAL.barnDark), "planks"), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
     glass: nightTint(nightGlow(flat(PAL.glass, { transparent: true, opacity: .34, rough: .12, physical: true, env: 1.5, side: THREE.DoubleSide, depthWrite: false }), 2.0), .8, [1, .62, .25]), // the greenhouse glows warm after dark
     winGlass: nightTint(nightGlow(flat(0x9fc9dc, { rough: .18, metal: .05, physical: true, env: 1.4 }), .55, [1, .62, .22]), .92, [1, .66, .24]), // lit windows are warm amber after dark (look A), not blown out to white
     lamp: nightGlow(flat(0xd9b35c, { rough: .4, metal: .5 }), 1.3),
@@ -117,16 +119,16 @@ function materials() {
     winDark: nightTint(flat(PAL.winGlass, { rough: .18, metal: .05, physical: true, env: 1.4, variant: "winDark" }), .82, [.1, .14, .26]),
     facadeB: texture(flat(PAL.plasterPeach, { variant: "facadeB" }), "plaster"), facadeC: texture(flat(PAL.plasterStone, { variant: "facadeC" }), "plaster"),
     road: nightTint(texture(flat(PAL.asphalt, { rough: .96, variant: "road" }), "gravel"), .78, [.1, .13, .23]), kerb: nightTint(flat(PAL.kerb, { variant: "kerb" }), .7, [.15, .19, .31]), roadLine: nightTint(flat(PAL.white, { variant: "roadLine" }), .55, [.2, .25, .4]),
-    shutter: flat(PAL.woodMid, { variant: "shutter" }),
+    shutter: texture(flat(PAL.woodMid, { variant: "shutter" }), "planks"),
     facade: texture(flat(PAL.plaster, { variant: "facade" }), "plaster"), tileA: texture(flat(PAL.stone, { variant: "tile" }), "tile"), tileB: texture(flat(PAL.concrete, { variant: "tile" }), "tile"),
     rug: flat(0xc98a63, { rough: 1 }), rugIn: flat(0xeee0c8, { rough: 1 }), bin: flat(0x4f6e45, { rough: .7 }), nLawn: texture(layered(flat(0x9cb55a, { rough: .96, variant: "nlawn" }), 2), "lawn"),
     water: flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4 }), pondWater: ripple(flat(PAL.water, { rough: .14, metal: 0, physical: true, env: 1.4, variant: "pond" }), { time: TIME, ripple: WX.ripple }),
-    yard: flat(PAL.yard, { rough: .95 }), yardRim: flat(PAL.yardRim, { rough: .95 }),
+    yard: texture(flat(PAL.yard, { rough: .95 }), "soil"), yardRim: flat(PAL.yardRim, { rough: .95 }),
     solar: flat(PAL.solar, { rough: .25, metal: .3, physical: true, env: 1.3 }), solarFrame: flat(PAL.solarFrame, { rough: .5, metal: .2 }),
-    hedge: texture(nightTint(foliage(flat(PAL.hedge, { rough: .95 }), { sway: .02, freq: .6, from: .4 }), .55, [.07, .17, .12]), "leaf"),
-    leaf: [...PAL.leaf, PAL.leafOlive, PAL.leafCitrus].map((c) => texture(nightTint(foliage(flat(c, { rough: .95 }), { sway: .06, freq: .25, from: 1.2 }), .55, [.07, .17, .12]), "leaf")), // 0-3 greens, 4 silvery olive, 5 deep citrus / fig
+    hedge: texture(nightTint(foliage(flat(PAL.hedge, { rough: .95 }), { sway: .02, freq: .6, from: .4 }), .55, [.07, .17, .12]), "hedge"),
+    leaf: [...PAL.leaf, PAL.leafOlive, PAL.leafCitrus].map((c) => texture(nightTint(foliage(flat(c, { rough: .95 }), { sway: .06, freq: .25, from: 1.2 }), .55, [.07, .17, .12]), "hedge")), // 0-3 greens, 4 silvery olive, 5 deep citrus / fig
     tuft: nightTint(flat(0x6f9440, { rough: 1 }), .6, [.06, .12, .1]), flower: PAL.flower.map((c) => nightTint(flat(c, { rough: .9 }), .75, [.12, .14, .22])), flowerStem: flat(0x6fa05a, { rough: 1 }),
-    compost: PAL.compost.map((c) => flat(c, { rough: 1 })), hive: PAL.hive.map((c) => flat(c)), pot: flat(PAL.pot), potRim: flat(PAL.potRim), mulch: layered(flat(PAL.mulch, { rough: 1 }), 13), mulchRim: layered(flat(PAL.soilLight, { rough: 1 }), 12),
+    compost: PAL.compost.map((c) => flat(c, { rough: 1 })), hive: PAL.hive.map((c) => flat(c)), pot: texture(flat(PAL.pot), "clay"), potRim: texture(flat(PAL.potRim), "clay"), mulch: texture(layered(flat(PAL.mulch, { rough: 1 }), 13), "soil"), mulchRim: layered(flat(PAL.soilLight, { rough: 1 }), 12),
     netting: flat(0xffffff, { transparent: true, opacity: .14, side: THREE.DoubleSide, depthWrite: false, rough: 1 }), shade: flat(0xeef2e6, { rough: .95 }),
     hit: new THREE.MeshBasicMaterial({ visible: false }),
     blob: new THREE.ShaderMaterial({ // soft round contact shadow (radial falloff in the shader, no texture); merged by bake()
@@ -184,11 +186,15 @@ function contact() { /* retired 2026-10-05: blurred AO patches broke the flat-co
 
 /* ---------- reusable structures ---------- */
 function tree(g, x, z, r, seed, M, y = 0, leafIdx = null) {
+  // a marker now; once the world is assembled plantDecoTrees makes it a true-to-life model (on the property) or a toy crown (backdrop)
+  const mk = new THREE.Object3D(); mk.position.set(x, y, z); mk.userData.decoTree = { x, z, r, seed, y, leafIdx }; g.add(mk);
+  if (M.blob) disc(g, r * 1.12, M.blob, x, y + .028, z, { seg: 20, cast: false, receive: false }); // a soft dark patch grounds every tree
+}
+function toyTree(g, x, z, r, seed, M, y = 0, leafIdx = null) { // a backdrop tree: round crowns in the leafy hedge surface, cheap per pixel
   if (y) { const tg = new THREE.Group(); tg.position.y = y; g.add(tg); g = tg; }
   const th = r * .55 + .3, leaf = M.leaf[leafIdx ?? Math.floor(srand(seed + 3) * 4)], spin = srand(seed) * 6.28;
   const trunk = tube(g, r * .11, r * .16, th + r * .6, M.bark, x, (th + r * .6) / 2, z, { seg: 12 }); trunk.rotation.z = (srand(seed + 7) - .5) * .06;
   const top = th + r * .9;
-  if (M.blob) disc(g, r * 1.12, M.blob, x, .028, z, { seg: 20, cast: false, receive: false }); // look A: a soft dark patch grounds every tree
   // two short branches forking out of the trunk into the crown
   [0, 2.4].forEach((a, i) => pill(g, [x, th + r * .25, z], [x + Math.cos(spin + a) * r * .38, th + r * .75 + i * r * .1, z + Math.sin(spin + a) * r * .38], r * .055, M.bark, { seg: 7, cast: false }));
   // a smooth lumpy crown: five overlapping spheres, slightly squashed, the biggest on top, a lighter one where the sun hits
@@ -198,6 +204,18 @@ function tree(g, x, z, r, seed, M, y = 0, leafIdx = null) {
   blob(r * .58, -Math.cos(spin + .9) * r * .48, -r * .2, -Math.sin(spin + .9) * r * .48, .84);
   blob(r * .5, Math.cos(spin + 2.1) * r * .55, -r * .36, Math.sin(spin + 2.1) * r * .55, .8, leaf, 12, 9);
   blob(r * .44, Math.cos(spin + 3.9) * r * .4, r * .3, Math.sin(spin + 3.9) * r * .4, .9, M.leaf[leafIdx != null ? leafIdx : 2], 12, 9); // the sunlit top
+}
+/* Trees standing on the property are look-C models (trees-real.js), drawn with the crops and orchard trees: instanced,
+   swaying, their own level of detail. Backdrop trees (border, street, neighbours, countryside) stay round toy crowns in
+   the leafy surface: fifty look-C crowns cost a third more frame time on a farm, all of it per-pixel leaf shading. */
+function plantDecoTrees(world, ctx, M) {
+  const marks = []; world.updateMatrixWorld(true); world.traverse((o) => { if (o.userData.decoTree) marks.push(o); });
+  const inv = new THREE.Matrix4().copy(world.matrixWorld).invert(), P = new THREE.Vector3();
+  marks.forEach((o) => {
+    const d = o.userData.decoTree, parent = o.parent; P.setFromMatrixPosition(o.matrixWorld).applyMatrix4(inv); o.removeFromParent();
+    if (ctx.fW == null || (P.x >= 0 && P.x <= ctx.fW && P.z >= 0 && P.z <= ctx.fH)) ctx.plants.push({ name: DECO_TREES[d.leafIdx ?? Math.floor(srand(d.seed + 3) * 4)] || "oak", tree: true, deco: true, stage: 4, x: P.x, y: P.y, z: P.z, s: d.r, ry: srand(d.seed) * 6.28 });
+    else toyTree(parent, d.x, d.z, d.r, d.seed, M, d.y, d.leafIdx);
+  });
 }
 /* Fruit trees are the decoration tree scaled by growth stage, plus fruit on the crown: small and green
    while maturing, full colour in the harvest window. Fruit is collected farm-wide, one instanced mesh per colour. */
@@ -263,7 +281,7 @@ function shelter(g, x, z, w, d, M, ry = 0) { // open-sided field shelter: chunky
   const pl = 4, ph = (hi - .35) / pl; // back wall: stacked rounded planks
   for (let i = 0; i < pl; i++) rbox(sg, w, ph - .03, .14, i % 2 ? M.woodMid : M.wood, 0, .12 + ph * (i + .5), -d / 2 + .05, { r: .05 });
   const ang = Math.atan2(hi - lo, d), slope = Math.hypot(d + .6, hi - lo), ry0 = (hi + lo) / 2 + .14;
-  rbox(sg, w + .6, .24, slope, M.slate, 0, ry0, 0, { rx: ang, r: .1, seg: 2 });
+  rbox(sg, w + .6, .24, slope, M.sheet, 0, ry0, 0, { rx: ang, r: .1, seg: 2 }); // a corrugated sheet roof
   pill(sg, [-w / 2 - .3, hi + .26, -d / 2 - .3], [w / 2 + .3, hi + .26, -d / 2 - .3], .13, M.slateDark, { seg: 14 }); // rounded ridge cap
   rbox(sg, w + .6, .1, .12, M.trim, 0, lo + .02, d / 2 + .3, { r: .04, cast: false }); // white fascia on the low edge
   ball(sg, [w * .36, .3, d * .34], M.hay, 0, .16, .1, { seg: 16, rings: 10 });
@@ -1507,7 +1525,7 @@ function buildWorld(ctx) {
   }
   if (balcony) { // a stone slab: no grass, no wild flowers
     buildFences(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M); buildLife(world, ctx, M); buildGlowPools(world, ctx);
-    buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
+    plantDecoTrees(world, ctx, M); buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
     bake(world, new Set([...ctx.hits, ...ctx.plotHits, ctx.ground, ctx.apron, ...ctx.keep]));
     const herd = buildHerd(ctx.herd, TIME); if (herd) { world.add(herd.mesh); ctx.herdMesh = herd; }
     return world;
@@ -1538,7 +1556,7 @@ function buildWorld(ctx) {
   heads.forEach((list, k) => instances(world, sphereGeo(8, 6), M.flower[k], list, { cast: false, receive: false }));
   // everything collected across the zones is drawn once for the whole farm
   buildFences(world, ctx, M); buildTufts(world, ctx, M); buildPots(world, ctx, M); buildGrowth(world, ctx, M); buildFruit(world, ctx, M); buildMotion(world, ctx, M); buildGlowPools(world, ctx); buildLife(world, ctx, M);
-  buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
+  plantDecoTrees(world, ctx, M); buildCrops(world, ctx.plants, TIME, ctx.focusBounds);
   bake(world, new Set([...ctx.hits, ...ctx.plotHits, ctx.ground, ctx.apron, ...ctx.keep])); // the terrain keeps its vertex colours; the vanes stay live
   const herd = buildHerd(ctx.herd, TIME); if (herd) { world.add(herd.mesh); ctx.herdMesh = herd; } // every animal, one draw call, moving in the vertex shader
   // swallows over the farm, butterflies over the flowers (fauna-fx.js) — shown or hidden by the sky state
@@ -1560,7 +1578,7 @@ export function buildZoneIcon({ zone, data, crops, todayKey }) {
   ctx.details.forEach((dd) => { const fn = DETAIL[dd.kind]; if (fn) fn(world, dd.x, dd.z, { ry: dd.ry || 0 }); });
   buildFences(world, ctx, M); buildTufts(world, ctx, M); buildPots(world, ctx, M); buildFruit(world, ctx, M);
   ctx.motion.smoke = []; buildMotion(world, ctx, M);
-  buildCrops(world, ctx.plants, TIME);
+  plantDecoTrees(world, ctx, M); buildCrops(world, ctx.plants, TIME);
   const herd = buildHerd(ctx.herd, TIME); if (herd) world.add(herd.mesh);
   return world;
 }

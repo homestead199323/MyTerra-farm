@@ -13,6 +13,7 @@ import './growth-preview.test.js';
 import './crop-detail.test.js';
 import './crops-real.test.js';
 import './animals-real.test.js';
+import './surfaces.test.js';
 import './toy.test.js';
 import './planting-flow.test.js';
 import test from 'node:test';

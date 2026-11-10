@@ -76,6 +76,14 @@ const SPECIES = {
   avocado: { ...BASE, seed: 43, H: .9, R: 1.0, tall: 1.3, tr: .14, up: .7, inner: 0x24552a, leaf: [0x2f6f33, 0x3a7d3a, 0x28632e], L: .28, w: .45, droop: .4, gloss: .5, dens: 40, fruit: { kind: "pear", color: 0x2f4a2a, s: .048, n: 14, gloss: .3 } },
 };
 SPECIES.citrus = SPECIES.orange;
+/* the trees a user stands on the property (Grove3D tree()): no fruit, their own habit */
+Object.assign(SPECIES, {
+  oak: { ...BASE, seed: 51, H: .8, R: 1.2, tall: .95, tr: .17, limbs: 6, top: 4, gnarl: 1.3, bark: 0x5e4a3a, inner: 0x2f5a28, leaf: [0x3f7a30, 0x4a8836, 0x356e2b, 0x578f3c], L: .2, w: .62, wave: .5, blunt: .5, dens: 48 },
+  lime: { ...BASE, seed: 53, H: .85, R: 1.0, tall: 1.25, up: .75, tr: .13, inner: 0x356b2c, leaf: [0x5a9a3e, 0x68a846, 0x4e8c38], sun: 0x9cc75a, L: .19, w: .85, blunt: .55, dens: 46 },
+  maple: { ...BASE, seed: 55, H: .8, R: 1.1, tall: 1.0, tr: .13, bark: 0x6f6a60, leaf: [0x4f8f3a, 0x5c9c42, 0x6aa84a, 0x437f33], L: .22, w: .95, wave: .6, wide: .5, blunt: .4, dens: 40 },
+  birch: { ...BASE, seed: 57, H: 1.15, R: .8, tall: 1.5, up: .55, tr: .085, bark: 0xe6e2d6, inner: 0x4a7a3a, leaf: [0x6aa84a, 0x7ab554, 0x5c9a40], sun: 0xa8d060, L: .13, w: .7, hang: .3, droop: .4, dens: 52 },
+});
+export const DECO_TREES = ["oak", "lime", "maple", "birch", "olive", "citrus"]; // by the old leaf-colour index: four greens, silvery, deep green
 export const TREE_Q = [1, .5, .25, .12, .08];
 /* how many trees share the map decides how much each one may cost */
 export function treeTier(count, phone) { return Math.min(4, (count > 60 ? 4 : count > 24 ? 3 : count > 10 ? 2 : count > 4 ? 1 : 0) + (phone ? 1 : 0)); }
