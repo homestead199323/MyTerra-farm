@@ -14,6 +14,33 @@ import { getCropDifficulty } from "./calendar";
 import { daysBetweenLocalKeys } from "./utils";
 import { rCR, rCM, getRegionalCalendar, getRegionalVarieties } from "./regional";
 
+// The preservation method a question is about: its exact name, else the method sharing the most
+// distinctive words with the question ("pickle" -> Vinegar Pickling, "pressure canning" -> Pressure Canning).
+const PRES_STOP = new Set(["and","the","for","low","high","acid","making","long","term","storage","preserves","vegetables","hot","water","bath","farmhouse","harvesting","cold"]);
+const presStem = (w) => w.replace(/(ing|ied|ies|ed|es|s)$/, "");
+function findPreservation(q, exactOnly) {
+  let best = null, bestScore = 0;
+  Object.entries(PRESERVATION).forEach(([key, p]) => {
+    if (q.includes(p.name.toLowerCase()) || q.includes(key)) { best = p; bestScore = 99; return; }
+    if (exactOnly) return;
+    const words = (key + " " + p.name).toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2 && !PRES_STOP.has(w));
+    const score = new Set(words.map(presStem).filter((w) => w.length > 2 && q.includes(w))).size;
+    if (score > bestScore) { best = p; bestScore = score; }
+  });
+  return best;
+}
+function preservationAnswer(p) {
+  let r = `${p.icon || "🫙"} ${p.name}\n\n`;
+  r += `Category: ${p.cat} | Difficulty: ${p.difficulty}\n`;
+  r += `Keeps: ${p.shelf}\n\n`;
+  if (p.overview) r += `${p.overview}\n\n`;
+  if (p.ratio) r += `Ratios: ${p.ratio}\n\n`;
+  if (p.method) r += `Method: ${p.method}\n\n`;
+  if (p.storage) r += `Storage: ${p.storage}\n\n`;
+  r += "Full guide in Learn → Preserving.";
+  return r;
+}
+
 function farmKnowledgeEngine(query, data) {
   const q = query.toLowerCase().trim();
   const words = q.split(/\s+/);
@@ -38,6 +65,10 @@ function farmKnowledgeEngine(query, data) {
   const activePlots = data.garden.plots.filter(p => p.status !== "harvested");
   const userAnimals = data.livestock.animals;
   const zones = data.zones;
+
+  // ── 0. A PRESERVATION METHOD ASKED FOR BY NAME (the suggestion chips) ──
+  const namedMethod = findPreservation(q, true);
+  if (namedMethod) return preservationAnswer(namedMethod);
 
   // ── 1. CROP-SPECIFIC QUERIES ──
   const matchedCrop = findCrop(q);
@@ -283,29 +314,19 @@ function farmKnowledgeEngine(query, data) {
   }
 
   // ── 7. PRESERVATION QUERIES ──
-  if (q.match(/preserv|can|pickle|ferment|dry|freeze|store|jam|sauce|smoke|cure/)) {
-    const pKeys = Object.keys(PRESERVATION);
-    const match = pKeys.find(k => q.includes(k.toLowerCase()));
-    if (match) {
-      const p = PRESERVATION[match];
-      let r = `${p.emoji || "🫙"} ${match}\n\n`;
-      r += `Category: ${p.cat} | Difficulty: ${p.diff}\n`;
-      r += `Time: ${p.time}\n\n`;
-      if (p.overview) r += `${p.overview}\n\n`;
-      if (p.ingredients) r += `Ingredients: ${p.ingredients}\n\n`;
-      if (p.steps) r += `Steps:\n${p.steps}\n`;
-      return r;
-    }
+  if (q.match(/preserv|can|pickl|ferment|dry|dehydrat|freez|store|storage|jam|sauce|smok|cure|curing|cheese|cellar/)) {
+    const method = findPreservation(q, false);
+    if (method) return preservationAnswer(method);
     // General preservation advice
     let r = "Food Preservation Methods\n\n";
     r += "Full guides in Learn → Preserving:\n";
     const cats = {};
-    Object.entries(PRESERVATION).forEach(([name, p]) => {
+    Object.values(PRESERVATION).forEach((p) => {
       if (!cats[p.cat]) cats[p.cat] = [];
-      cats[p.cat].push(name);
+      cats[p.cat].push(p.name);
     });
-    Object.entries(cats).slice(0, 6).forEach(([cat, items]) => {
-      r += `\n${cat}: ${items.slice(0, 4).join(", ")}${items.length > 4 ? "..." : ""}\n`;
+    Object.entries(cats).forEach(([cat, items]) => {
+      r += `\n${cat}: ${items.join(", ")}\n`;
     });
     r += "\nAsk me about a specific method like 'how to pickle' or 'how to make jam'.";
     return r;
@@ -441,8 +462,9 @@ function buildAISuggestions(region) {
     if (getRegionalCalendar(name, region)) s.push({e:db.e, q:`${name} monthly calendar`, cat:"Calendar", keys:[name.toLowerCase(),"calendar","month","schedule"]});
   });
   // Preservation suggestions
-  Object.entries(PRESERVATION).forEach(([name, p]) => {
-    s.push({e:p.emoji||"🫙", q:`How to ${name.toLowerCase()}`, cat:"Preservation", keys:[name.toLowerCase(),"preserv","store"]});
+  Object.values(PRESERVATION).forEach((p) => {
+    const nameWords = p.name.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 3);
+    s.push({e:p.icon||"🫙", q:`${p.name} guide`, cat:"Preservation", keys:[...nameWords,"preserv","store"]});
   });
   // General topics
   s.push({e:"🌱", q:"What should I plant now?", cat:"Seasonal", keys:["plant","sow","season","month","now"]});
