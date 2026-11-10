@@ -39,7 +39,7 @@ export function applyTaskCompletion(data, task, logValue, meta) {
       // meta.allowZero: the user deliberately recorded a failed crop (0 kg) — keep it, don't substitute the estimate.
       const typed = Number(logValue);
       const zero = !!(meta && meta.allowZero) && Number.isFinite(typed) && typed <= 0;
-      const kg = typed > 0 ? typed : zero ? 0 : (plot.expectedYieldKg || Math.round((crop && crop.yld ? crop.yld * (Number(plot.plantCount) || 1) : 3) * 10) / 10 || 3);
+      const kg = typed > 0 ? typed : zero ? 0 : (plot.expectedYieldKg || Math.round((crop && crop.yld ? Math.max(0.1, crop.yld * (Number(plot.plantCount) || 1)) : 3) * 10) / 10 || 3);
       const est = zero ? false : isEstimate(data, task, logValue, meta);
       // Trees, soft fruit and perennial herbs stay planted and are due again next season.
       const recurring = isRecurringCrop(crop);

@@ -4,7 +4,7 @@ export const VARIETIES = {
   Tomato: [
     {name:"San Marzano",days:78,note:"Best paste/sauce tomato. Elongated. Low moisture. Italian classic.",yld:5},
     {name:"Roma",days:75,note:"Plum type. Great canning. Determinate — all ripen at once.",yld:5},
-    {name:"Cherry",pH:"6.0-7.5",fert:"NPK 10-10-10 in early spring. Light feeder once established.",days:60,note:"Tiny, sweet. Very prolific. Kids love them. Eat fresh.",yld:3},
+    {name:"Cherry",days:60,note:"Tiny, sweet. Very prolific. Kids love them. Eat fresh.",yld:3},
     {name:"Beefsteak",days:85,note:"Large slicing tomato. 300-500g each. Needs strong stakes.",yld:6},
     {name:"Brandywine",days:90,note:"Heirloom. Exceptional flavor. Pink. Lower yield but worth it.",yld:3},
   ],
@@ -86,11 +86,11 @@ export const VARIETIES = {
     {name:"Round/Stuffing",days:75,note:"Heat-tolerant. Ideal size for stuffing.",yld:4},
   ],
   Watermelon: [
-    {name:"Crimson Sweet",days:85,note:"Classic. 8-12kg. Sweet red flesh. Striped.",yld:8},
-    {name:"Sugar Baby",days:75,note:"Small (3-5kg). Icebox type. Very sweet. Space-efficient.",yld:4},
-    {name:"Charleston Gray",days:90,note:"Large oblong (10-15kg). Good shipping. Disease-resistant.",yld:10},
-    {name:"Moon and Stars",days:100,note:"Heirloom. Dark green + yellow spots. Sweet.",yld:8},
-    {name:"Jubilee",days:85,note:"Long, striped. Classic flavour. Good disease resistance.",yld:9},
+    {name:"Sugar Baby",days:75,note:"Small (3-5kg). Icebox type. Very sweet. The reliable choice under cover.",yld:3},
+    {name:"Crimson Sweet",days:85,note:"Classic striped type. Large fruit — only one or two ripen per plant under glass.",yld:4},
+    {name:"Charleston Gray",days:90,note:"Large oblong. Disease-resistant. Needs a long hot season — marginal even under cover.",yld:4},
+    {name:"Moon and Stars",days:100,note:"Heirloom. Dark green + yellow spots. Sweet. Late — heated greenhouse only.",yld:4},
+    {name:"Jubilee",days:85,note:"Long, striped. Classic flavour. Good disease resistance.",yld:4},
   ],
   Spinach: [
     {name:"Bloomsdale",days:40,note:"Savoyed leaves. Some heat tolerance. Traditional.",yld:0.3},
@@ -136,17 +136,17 @@ export const VARIETIES = {
   ],
   Strawberry: [
     {name:"Albion",days:90,note:"Everbearing. Large sweet fruit. Day-neutral.",yld:0.5},
-    {name:"Camarosa",days:90,note:"High yield. Firm fruit. Good for Mediterranean.",yld:0.6},
+    {name:"Camarosa",days:90,note:"High yield. Firm fruit. Needs a warm, sheltered spot or a tunnel.",yld:0.6},
     {name:"Mara des Bois",days:90,note:"French alpine cross. Intense strawberry flavor.",yld:0.3},
     {name:"Elsanta",days:90,note:"European commercial standard. Firm. Long shelf life.",yld:0.5},
     {name:"Senga Sengana",days:90,note:"Great jam berry. Very fragrant. European classic.",yld:0.4},
   ],
   Olive: [
-    {name:"Arbequina",days:365,note:"Small fruited. High oil. Self-fertile. Cold-tolerant.",yld:20},
-    {name:"Frantoio",days:365,note:"Italian oil variety. Premium quality oil. Classic.",yld:22},
-    {name:"Picual",days:365,note:"World's most planted. High oil yield. Robust flavor.",yld:25},
-    {name:"Kalamata",days:365,note:"Iconic Greek table olive. Almond-shaped. Premium price.",yld:18},
-    {name:"Koroneiki",days:365,note:"Highest oil content of all varieties (~27%). Greek.",yld:22},
+    {name:"Arbequina",days:365,note:"Small fruited. High oil. Self-fertile. Cold-tolerant. Best choice for a pot.",yld:5},
+    {name:"Frantoio",days:365,note:"Italian oil variety. Premium quality oil. Classic.",yld:4},
+    {name:"Picual",days:365,note:"World's most planted. High oil yield. Robust flavor.",yld:4},
+    {name:"Kalamata",days:365,note:"Iconic Greek table olive. Almond-shaped. Needs the most warmth.",yld:3},
+    {name:"Koroneiki",days:365,note:"Highest oil content of all varieties (~27%). Greek.",yld:4},
   ],
   Grape: [
     {name:"Solaris",days:365,note:"German white. Extremely disease-resistant. Good for UK/NW Europe vineyards.",yld:7},
@@ -168,17 +168,17 @@ export const VARIETIES = {
   "Brussels Sprouts": [
     {name:"Long Island Improved",days:100,note:"Compact stalks. Cold-hardy. Classic.",yld:0.8},
     {name:"Falstaff",days:110,note:"Red/purple. Sweet after frost. Beautiful.",yld:0.7},
-    {name:"Catskill",days:90,note:"Early producer. Shorter stalks. Good for Med autumns.",yld:0.6},
+    {name:"Catskill",days:90,note:"Early producer. Shorter stalks. Good where the season is short.",yld:0.6},
   ],
   "Sweet Potato": [
-    {name:"Beauregard",days:100,note:"Orange. Most popular worldwide. Good in Med heat.",yld:3},
+    {name:"Beauregard",days:100,note:"Orange. Most popular worldwide. The most reliable under cover in cool summers.",yld:3},
     {name:"Covington",days:110,note:"Sweet, orange. Disease-resistant. Stores well.",yld:2.5},
     {name:"Murasaki",days:110,note:"Purple skin, white flesh. Japanese. Dry/sweet.",yld:2},
   ],
   Sunflower: [
-    {name:"Mammoth Russian",days:80,note:"Giant. 3m+. Large seed heads. Classic.",yld:0.5},
-    {name:"Black Peredovik",days:90,note:"Oil seed variety. High yield. Bird/chicken feed.",yld:0.6},
-    {name:"Teddy Bear",days:65,note:"Dwarf. Fluffy double flowers. Good bee forage.",yld:0.1},
+    {name:"Mammoth Russian",days:80,note:"Giant. 3m+. Large seed heads. Classic.",yld:0.15},
+    {name:"Black Peredovik",days:90,note:"Oil seed variety. High yield. Bird/chicken feed.",yld:0.08},
+    {name:"Teddy Bear",days:65,note:"Dwarf. Fluffy double flowers. Grown for cut flowers, not seed.",yld:0.02},
   ],
   Artichoke: [
     {name:"Green Globe",days:365,note:"Standard. Large globes. Perennial. Divide every 3-4yr.",yld:5},
@@ -191,19 +191,33 @@ export const VARIETIES = {
     {name:"Finale",days:70,note:"Fast maturity. Bolt-resistant. Good for succession sowing.",yld:0.3},
   ],
   Chickpea: [
-    {name:"Desi",days:100,note:"Small, dark. Traditional Med/Asian. Higher protein.",yld:0.15},
-    {name:"Kabuli",days:110,note:"Large, cream. Hummus type. Lower yield but premium price.",yld:0.12},
+    {name:"Desi",days:100,note:"Small, dark. Traditional Med/Asian. Higher protein.",yld:0.01},
+    {name:"Kabuli",days:110,note:"Large, cream. Hummus type. Lower yield but premium price.",yld:0.008},
   ],
   Lentil: [
-    {name:"Puy (French Green)",days:90,note:"Premium. Holds shape when cooked. Best flavor.",yld:0.1},
-    {name:"Red/Masoor",days:85,note:"Fast cooking. Splits easily. High yield.",yld:0.12},
-    {name:"Castelluccio",days:95,note:"Italian PDO lentil. Small, brown-green. Earthy. Premium.",yld:0.1},
+    {name:"Puy (French Green)",days:90,note:"Premium. Holds shape when cooked. Best flavor.",yld:0.003},
+    {name:"Red/Masoor",days:85,note:"Fast cooking. Splits easily. High yield.",yld:0.004},
+    {name:"Castelluccio",days:95,note:"Italian PDO lentil. Small, brown-green. Earthy. Premium.",yld:0.003},
   ],
 };
 
 export const VAR_RO = {
   // MEDITERRANEAN
   mediterranean: {
+  "Olive": [
+    {name:"Arbequina",days:365,note:"Small fruited. High oil. Self-fertile. Cold-tolerant.",yld:20},
+    {name:"Frantoio",days:365,note:"Italian oil variety. Premium quality oil. Classic.",yld:22},
+    {name:"Picual",days:365,note:"World's most planted. High oil yield. Robust flavor.",yld:25},
+    {name:"Kalamata",days:365,note:"Iconic Greek table olive. Almond-shaped. Premium price.",yld:18},
+    {name:"Koroneiki",days:365,note:"Highest oil content of all varieties (~27%). Greek.",yld:22},
+  ],
+  "Watermelon": [
+    {name:"Crimson Sweet",days:85,note:"Classic. 8-12kg. Sweet red flesh. Striped.",yld:8},
+    {name:"Sugar Baby",days:75,note:"Small (3-5kg). Icebox type. Very sweet. Space-efficient.",yld:4},
+    {name:"Charleston Gray",days:90,note:"Large oblong (10-15kg). Good shipping. Disease-resistant.",yld:10},
+    {name:"Moon and Stars",days:100,note:"Heirloom. Dark green + yellow spots. Sweet.",yld:8},
+    {name:"Jubilee",days:85,note:"Long, striped. Classic flavour. Good disease resistance.",yld:9},
+  ],
   "Potato": [
     {name:"Spunta",days:85,note:"Dutch origin, dominant in Med markets. Yellow flesh. High yield. Versatile.",yld:2.5},
     {name:"Agria",days:95,note:"German/Med standard. Floury. Excellent chips and fries. Very popular.",yld:2.5},
@@ -306,6 +320,20 @@ export const VAR_RO = {
   },
   // US WARM
   us_warm: {
+  "Olive": [
+    {name:"Arbequina",days:365,note:"Small fruited. High oil. Self-fertile. Cold-tolerant.",yld:20},
+    {name:"Frantoio",days:365,note:"Italian oil variety. Premium quality oil. Classic.",yld:22},
+    {name:"Picual",days:365,note:"World's most planted. High oil yield. Robust flavor.",yld:25},
+    {name:"Kalamata",days:365,note:"Iconic Greek table olive. Almond-shaped. Premium price.",yld:18},
+    {name:"Koroneiki",days:365,note:"Highest oil content of all varieties (~27%). Greek.",yld:22},
+  ],
+  "Watermelon": [
+    {name:"Crimson Sweet",days:85,note:"Classic. 8-12kg. Sweet red flesh. Striped.",yld:8},
+    {name:"Sugar Baby",days:75,note:"Small (3-5kg). Icebox type. Very sweet. Space-efficient.",yld:4},
+    {name:"Charleston Gray",days:90,note:"Large oblong (10-15kg). Good shipping. Disease-resistant.",yld:10},
+    {name:"Moon and Stars",days:100,note:"Heirloom. Dark green + yellow spots. Sweet.",yld:8},
+    {name:"Jubilee",days:85,note:"Long, striped. Classic flavour. Good disease resistance.",yld:9},
+  ],
   "Potato": [
     {name:"Kennebec",days:100,note:"High yield. Disease-resistant. All-round. Reliable in SE heat.",yld:3},
     {name:"Yukon Gold",days:90,note:"Buttery yellow flesh. Best in warm dry areas. Classic.",yld:2},

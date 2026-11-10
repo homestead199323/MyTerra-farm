@@ -25,7 +25,7 @@ export const BREEDS = {
     {name:"Local Heritage",note:"Regional breed. Hardy. Adapted to local terrain. Dual purpose."},
   ],
   Sheep: [
-    {name:"Merino",note:"Best wool. Fine fiber. 150-200 fleece/yr."},
+    {name:"Merino",note:"Best wool. Fine fiber. 4-5kg fleece/yr."},
     {name:"Suffolk",note:"Top meat breed. Fast growth. Large."},
     {name:"Dorper",note:"Hair sheep (no shearing). Excellent meat. Heat-tolerant."},
     {name:"East Friesian",note:"Top dairy sheep. 2-3L/day."},
@@ -64,7 +64,7 @@ export const BREEDS = {
   ],
   Bee: [{name:"Italian (Apis mellifera ligustica)",note:"Gentle. Productive. Most popular."},{name:"Carniolan",note:"Very gentle. Cold-hardy. Low swarming."},{name:"Buckfast",note:"Hybrid. Productive. Disease-resistant."}],
   Turkey: [{name:"Broad Breasted Bronze",note:"Commercial. Fast growth to 15kg. Cannot mate naturally."},{name:"Bourbon Red",note:"Heritage. Beautiful. 6-8kg. Good forager. Med-adapted."},{name:"Narragansett",note:"Heritage. Calm. 7-9kg. Cold and heat tolerant."},{name:"Royal Palm",note:"Small ornamental. 4-5kg. Excellent pest control."},{name:"Local Bronze/Black",note:"Regional heritage. Hardy. Self-sustaining. Best for free-range."}],
-  Goose: [{name:"Toulouse",note:"Large grey. 8-10kg. Calm. Excellent for foie gras/confit."},{name:"Embden",note:"Large white. 10-12kg. Fast growth. Good meat."},{name:"Chinese",note:"Light breed. Best layers (60+ eggs). Loud — excellent guard goose."},{name:"Pilgrim",note:"Auto-sexing (males white, females grey). Calm. Dual purpose."},{name:"Sebastopol",note:"Curly-feathered ornamental. Gentle. Good layers."}],
+  Goose: [{name:"Toulouse",note:"Large grey. 8-10kg. Calm. Traditional breed for confit and roasting."},{name:"Embden",note:"Large white. 10-12kg. Fast growth. Good meat."},{name:"Chinese",note:"Light breed. Best layers (60+ eggs). Loud — excellent guard goose."},{name:"Pilgrim",note:"Auto-sexing (males white, females grey). Calm. Dual purpose."},{name:"Sebastopol",note:"Curly-feathered ornamental. Gentle. Good layers."}],
   Quail: [{name:"Coturnix (Japanese)",note:"Standard. 300+ eggs/yr. Mature 6wk. Best for beginners."},{name:"Jumbo Coturnix",note:"Larger meat strain. 300g body. Same laying rate."},{name:"Texas A&M",note:"White. Bred for meat. Calm temperament."},{name:"Pharaoh",note:"Brown speckled. Original Coturnix. Hardy. Most common."},{name:"Button Quail",note:"Tiny ornamental. Not for production. Pets only."}],
   "Guinea Fowl": [{name:"Pearl",note:"Most common. Grey spotted. Hardy. Excellent tick control."},{name:"Lavender",note:"Light grey. Slightly calmer than Pearl."},{name:"White",note:"Visible at night. Slightly more predator-vulnerable."},{name:"Royal Purple",note:"Dark iridescent. Beautiful. Same hardiness as Pearl."}],
   Donkey: [{name:"Standard",note:"110-130cm. General purpose. Guardian. Pack animal."},{name:"Miniature",note:"Under 90cm. Companion. Pet. Light cart only."},{name:"Mammoth",note:"Over 140cm. Draft work. Can breed with horses (mules)."},{name:"Mediterranean Miniature",note:"Sardinian/Sicilian origin. Hardy. Heat-adapted. 80-100cm."}],

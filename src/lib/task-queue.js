@@ -173,7 +173,7 @@ export function buildTaskPlan(data, opts = {}) {
       tasks.push({ key: `species-${type}-bedding`, pri: 2, type: "bedding", emoji: "🛏️", title: `Full bedding change — ${speciesLabel}`, desc: `Strip everything, disinfect surfaces, fresh straw or shavings.`, loc: speciesLoc(type), speciesType: type, headCount, daysOut: 0 });
     }
     if (GRAZER_SPECIES.has(type) && (dayNum + sHash) % 21 === 0) {
-      tasks.push({ key: `species-${type}-paddock`, pri: 2, type: "paddock", emoji: "🔄", title: `Rotate paddock — ${speciesLabel}`, desc: `Move to fresh pasture. Rest current section 21+ days to break parasite cycle.`, loc: speciesLoc(type), speciesType: type, headCount, daysOut: 0 });
+      tasks.push({ key: `species-${type}-paddock`, pri: 2, type: "paddock", emoji: "🔄", title: `Rotate paddock — ${speciesLabel}`, desc: `Move to fresh pasture. Rest the grazed section as long as you can (6+ weeks) to cut worm numbers.`, loc: speciesLoc(type), speciesType: type, headCount, daysOut: 0 });
     }
   });
 

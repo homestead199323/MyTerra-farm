@@ -96,7 +96,7 @@ export function taskAction(task, data) {
     return {
       verb,
       // crop.yld is kg per plant: scale by the planting's count for the suggested amount.
-      amount: { value: plot?.expectedYieldKg || (crop?.yld ? Math.round(crop.yld * (Number(plot?.plantCount) || 1) * 10) / 10 : 0) || 3, step: 0.5, unit: "kg", icon: "🧺" },
+      amount: { value: plot?.expectedYieldKg || (crop?.yld ? Math.round(Math.max(0.1, crop.yld * (Number(plot?.plantCount) || 1)) * 10) / 10 : 0) || 3, step: 0.5, unit: "kg", icon: "🧺" },
       final: isRecurringCrop(crop) ? "Stays planted — due again next season." : "Marks the whole planting as harvested.",
     };
   }

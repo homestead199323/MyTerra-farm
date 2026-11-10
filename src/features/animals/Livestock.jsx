@@ -75,8 +75,8 @@ function Livestock({data, setData}) {
           </button>
           <div className="q-animal-actions">
             <select aria-label={`Area for ${a.name||a.type}`} value={a.zone||""} onChange={e=>setData({...data,livestock:{...data.livestock,animals:data.livestock.animals.map(x=>x.id===a.id?{...x,zone:e.target.value}:x)}})}><option value="">Automatic area</option>{data.zones.filter(z=>['pasture','barn','coop','beehive'].includes(z.type)).map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select>
-            {db?.prod.includes("Eggs")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Eggs"});setCollectQty(String(Math.round(a.count*0.7)))}}>🥚 Collect Eggs</Btn>}
-            {db?.prod.includes("Milk")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Milk"});setCollectQty(String(Math.round(a.count*2.5*10)/10))}}>🥛 Milk</Btn>}
+            {db?.prod.includes("Eggs")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Eggs"});setCollectQty(String(Math.round(a.count*(db.out?.Eggs?.p||0.7))))}}>🥚 Collect Eggs</Btn>}
+            {db?.prod.includes("Milk")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Milk"});setCollectQty(String(Math.round(a.count*(db.out?.Milk?.p||2.5)*10)/10))}}>🥛 Milk</Btn>}
             {db?.prod.includes("Honey")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Honey"});setCollectQty(String(Math.round(a.count*0.5*10)/10))}}>🍯 Honey</Btn>}
             {db?.prod.includes("Wool")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Wool"});setCollectQty(String(a.count*3))}}>🧶 Wool</Btn>}
             {db?.prod.includes("Meat")&&<button type="button" className="q-animal-meat" aria-label={`Process ${a.name||a.type} for meat`} title="Process for meat" onClick={()=>{setShowK(a);setKQ("1")}}>🔪</button>}

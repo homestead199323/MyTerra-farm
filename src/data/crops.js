@@ -2,22 +2,22 @@
 
 export const CROPS = [
   { name:"Tomato",pH:"6.0-7.0",fert:"NPK 5-10-10 at transplant. Side-dress 10-10-10 at 3wk. Switch to high-K liquid tomato feed weekly once trusses set.",emoji:"🍅",cat:"Vegetable",days:95,sowIn:"Feb-Apr",harvest:"Jul-Oct",spacing:50,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Consistent moisture. Greenhouse or polytunnel gives best results — ventilate well. Avoid wetting leaves: late blight is the #1 killer in wet summers.",color:"#e74c3c",yld:3.5,
-    pests:[{n:"Tuta absoluta (tomato leaf miner)",t:"Tuta absoluta: pheromone traps, Bacillus thuringiensis (Bt) spray, remove infested leaves, netting"},{n:"Whitefly (Bemisia tabaci)",t:"Whitefly: yellow sticky traps, neem oil 5ml/L, introduce Encarsia formosa parasitic wasp"},{n:"Aphids",t:"Aphids: soap spray (5ml dish soap per L water), ladybugs, nasturtium trap crop"},{n:"Late blight (Phytophthora)",t:"Late blight: copper hydroxide spray preventive every 10-14d in wet weather, never overhead water"},{n:"Blossom end rot (calcium deficiency)",t:"BER: caused by uneven watering, not a lack of calcium in the soil. Keep the compost evenly moist (twice a day in pots and growbags in hot spells). Eggshells and calcium sprays don't fix it"}],
+    pests:[{n:"Tuta absoluta (tomato leaf miner)",t:"Tuta absoluta: pheromone traps, Bacillus thuringiensis (Bt) spray, remove infested leaves, netting"},{n:"Glasshouse whitefly (Trialeurodes vaporariorum)",t:"Whitefly: yellow sticky traps, neem oil 5ml/L, introduce Encarsia formosa parasitic wasp"},{n:"Aphids",t:"Aphids: soap spray (5ml dish soap per L water), ladybugs, nasturtium trap crop"},{n:"Late blight (Phytophthora)",t:"Late blight: copper hydroxide spray preventive every 10-14d in wet weather, never overhead water"},{n:"Blossom end rot (calcium deficiency)",t:"BER: caused by uneven watering, not a lack of calcium in the soil. Keep the compost evenly moist (twice a day in pots and growbags in hot spells). Eggshells and calcium sprays don't fix it"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🍅"],
     steps:[{d:-14,l:"Prepare soil",t:"Compost 5-8cm, pH 6-7, 30cm deep. Add calcium."},{d:0,l:"Transplant",t:"Bury 2/3 of stem after last frost (late May). 2L water. Stake immediately."},{d:7,l:"Mulch",t:"Straw 5-8cm. Water at base only."},{d:14,l:"First feed",t:"Balanced fertiliser or compost tea."},{d:21,l:"Prune suckers",t:"Cordon types: remove side shoots. Tie to stakes."},{d:35,l:"K feed",t:"High-potassium liquid feed weekly."},{d:45,l:"Pest & blight check",t:"Aphids, whitefly. Copper spray preventive every 10-14d in wet weather."},{d:55,l:"Reduce water",t:"Fruit colouring — slightly less water concentrates flavour."},{d:70,l:"Harvest begins",t:"Pick coloured but firm. Never refrigerate."},{d:85,l:"Season end",t:"Pull plants before first frost. Rotate: no nightshades 3 yrs."}],
     storage:"Room temp 3-5d. Can 12mo+. Oven/dehydrator dry 6mo+. Freeze blanched 8mo."
   },
   { name:"Pepper (Sweet)",pH:"6.0-7.0",fert:"NPK 10-10-10 at transplant. High-K (0-0-50 potassium sulfate) when fruit sets. Compost tea biweekly.",emoji:"🫑",cat:"Vegetable",days:95,sowIn:"Feb-Apr",harvest:"Aug-Oct",spacing:45,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Greenhouse or very warm sheltered wall. Consistent moisture once flowering.",color:"#27ae60",yld:2,
-    pests:[{n:"Aphids",t:"Aphids: soap spray, beneficial insects"},{n:"Pepper weevil",t:"Pepper weevil: hand-pick, crop rotation, destroy infested fruit"},{n:"Powdery mildew",t:"Powdery mildew: milk spray (1:9), good spacing, morning watering"},{n:"Bacterial spot",t:"Bacterial spot: copper spray, remove infected leaves, rotate 3yr"}],
+    pests:[{n:"Aphids",t:"Aphids: soap spray, beneficial insects"},{n:"Red spider mite (under glass)",t:"Red spider mite: mist to raise humidity, ventilate, predatory mite Phytoseiulus persimilis"},{n:"Powdery mildew",t:"Powdery mildew: milk spray (1:9), good spacing, morning watering"},{n:"Bacterial spot",t:"Bacterial spot: copper spray, remove infected leaves, rotate 3yr"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🫑"],
     steps:[{d:0,l:"Transplant",t:"Warm soil 18°C+. 40-50cm apart."},{d:14,l:"Feed",t:"Balanced fertilizer. Mulch."},{d:30,l:"Stake",t:"Support heavy plants."},{d:50,l:"K feed",t:"High-potassium at fruit set."},{d:70,l:"Harvest",t:"Cut with scissors. Green=mild, colored=sweet."}],
     storage:"Fresh 2 weeks fridge. Roast+freeze 12mo. Pickle. Dry for paprika."
   },
   { name:"Potato",pH:"5.5-6.5",fert:"NPK 10-20-20 at planting. Side-dress 0-0-50 potassium at hilling. Avoid fresh manure (causes scab).",emoji:"🥔",cat:"Vegetable",days:100,sowIn:"Mar-May",harvest:"Jun-Oct",spacing:33,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"First earlies from March. Earth up regularly. Water during tuber swell.",color:"#d4a017",yld:2.5,
-    pests:[{n:"Colorado beetle (Leptinotarsa — #1 threat)",t:"Colorado beetle: hand-pick daily (morning when slow), Bt var. tenebrionis, neem, crop rotation ESSENTIAL"},{n:"Late blight",t:"Late blight: copper spray preventive, destroy infected plants, resistant varieties (Kennebec, Sarpo)"},{n:"Wireworm",t:"Wireworm: trap with buried potato halves on sticks, rotate, avoid planting after grass"},{n:"Scab",t:"Scab: keep pH below 6.0, avoid lime, consistent watering, resistant varieties"}],
+    pests:[{n:"Late blight (Phytophthora — #1 threat)",t:"Late blight: copper spray preventive, destroy infected plants, resistant varieties (Kennebec, Sarpo)"},{n:"Colorado beetle (continental Europe)",t:"Colorado beetle: hand-pick adults and orange egg masses, rotate. Not established in the UK or Ireland — it is a notifiable pest there, so report any sighting to the plant health authority (APHA in Britain)"},{n:"Wireworm",t:"Wireworm: trap with buried potato halves on sticks, rotate, avoid planting after grass"},{n:"Scab",t:"Scab: keep pH below 6.0, avoid lime, consistent watering, resistant varieties"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🥔"],
     steps:[{d:-7,l:"Chit",t:"Sprout 1-2cm in light, cool spot."},{d:0,l:"Plant",t:"Trench 10-15cm, 30cm apart, sprouts up."},{d:14,l:"Hill soil",t:"Mound around stems when 15cm tall."},{d:28,l:"Hill again",t:"Potassium feed. Keep hilling."},{d:42,l:"Flowering",t:"Critical water period."},{d:80,l:"Foliage dies",t:"Stop water. Wait 2 weeks."},{d:100,l:"Dig",t:"Fork carefully. Cure 2 weeks dark/cool."}],
-    storage:"4-6 months at 7-10°C dark."
+    storage:"4-6 months at 4-7°C in the dark."
   },
   { name:"Onion",pH:"6.0-7.0",fert:"NPK 10-10-10 early. Switch to high-K at bulbing. Stop nitrogen 4wk before harvest.",emoji:"🧅",cat:"Vegetable",days:110,sowIn:"Feb-Mar, Sep",harvest:"Jul-Sep",spacing:12,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Sets in spring or overwintering varieties. Stop watering when tops fall.",color:"#d4a017",yld:0.15,
     pests:[{n:"Onion fly (Delia antiqua)",t:"Onion fly: companion plant with carrot (confuses both pests), fleece cover, rotate"},{n:"Downy mildew",t:"Downy mildew: copper spray, good spacing, avoid overhead watering"},{n:"White rot",t:"White rot: no cure — rotate 8+ years, never compost infected bulbs"},{n:"Thrips",t:"Thrips: blue sticky traps, neem oil, spinosad"}],
@@ -37,14 +37,14 @@ export const CROPS = [
     steps:[{d:0,l:"Transplant",t:"40-50cm. Slug protection."},{d:14,l:"Heavy feed",t:"Nitrogen rich. Mulch."},{d:45,l:"Heading",t:"Consistent water. Net for butterflies."},{d:80,l:"Harvest",t:"Cut firm head. Leave stalk for mini-heads."}],
     storage:"2-3mo root cellar. Ferment as sauerkraut/kimchi: 12+mo."
   },
-  { name:"Bean (Dry)",pH:"6.0-7.0",fert:"NO nitrogen (they fix their own). Low-P fertilizer if needed. Inoculate with rhizobia if first time growing beans in that soil.",emoji:"🫘",cat:"Vegetable",days:100,sowIn:"May-Jun",harvest:"Sep-Oct",spacing:18,sun:"Full",waterFreq:"Every 3 days",waterNote:"Sow when soil is warm (15°C+). French and runner beans both reliable.",color:"#27ae60",yld:0.3,
+  { name:"Bean (Dry)",pH:"6.0-7.0",fert:"NO nitrogen (they fix their own). Potash/phosphate feed only if the soil is poor. Inoculate with rhizobia if first time growing beans in that soil.",emoji:"🫘",cat:"Vegetable",days:100,sowIn:"May-Jun",harvest:"Sep-Oct",spacing:18,sun:"Full",waterFreq:"Every 3 days",waterNote:"Sow when soil is warm (15°C+). French and runner beans both reliable.",color:"#27ae60",yld:0.03,
     pests:[{n:"Bean weevil (storage)",t:"Bean weevil: freeze dried beans 48hr before storage, seal in airtight containers"},{n:"Aphids",t:"Aphids: soap spray"},{n:"Rust",t:"Rust: resistant varieties, good spacing, avoid overhead watering"},{n:"Anthracnose",t:"Anthracnose: don't work wet plants, rotate 3yr, clean seed"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🫘"],
     steps:[{d:0,l:"Direct sow",t:"3cm deep, soil 15°C+."},{d:14,l:"Emerge",t:"No N fertilizer needed."},{d:35,l:"Flowering",t:"Increase water."},{d:70,l:"Pods drying",t:"Reduce water."},{d:95,l:"Harvest dry",t:"Shell when crispy."}],
     storage:"Dried: 5+ YEARS sealed."
   },
   { name:"Zucchini",pH:"6.0-7.5",fert:"NPK 10-10-10 at planting. Compost side-dress at 3wk. Liquid feed every 2wk during fruiting.",emoji:"🥒",cat:"Vegetable",days:55,sowIn:"May-Jun",harvest:"Jul-Sep",spacing:75,sun:"Full",waterFreq:"Every 2 days",waterNote:"Sow after last frost. Very productive even in cool summers. Pick small.",color:"#2ecc71",yld:5,
-    pests:[{n:"Powdery mildew",t:"Powdery mildew: milk spray 1:9, baking soda 5g/L, good airflow"},{n:"Squash vine borer",t:"Squash vine borer: wrap stem base with foil, Bt injection into stem"},{n:"Aphids",t:"Aphids: soap spray"},{n:"Blossom end rot",t:"BER: consistent watering, calcium"}],
+    pests:[{n:"Powdery mildew",t:"Powdery mildew: milk spray 1:9, baking soda 5g/L, good airflow"},{n:"Slugs and snails (young plants)",t:"Slugs: protect transplants for the first 2-3 weeks — evening patrols, beer traps, plant out sturdy plants"},{n:"Aphids",t:"Aphids: soap spray"},{n:"Blossom end rot",t:"BER: keep watering even — it comes from irregular moisture, not from a lack of calcium in the soil"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🥒"],
     steps:[{d:0,l:"Sow on mound",t:"2 seeds, 2cm deep."},{d:14,l:"Thin + mulch",t:"Keep strongest."},{d:30,l:"Feed",t:"Compost side-dress."},{d:40,l:"Harvest",t:"Pick at 15-20cm DAILY."}],
     storage:"Fresh 1wk. Grate+freeze. Dehydrate."
@@ -62,7 +62,7 @@ export const CROPS = [
     storage:"Blanch+freeze."
   },
   { name:"Cucumber",pH:"6.0-7.0",fert:"NPK 10-10-10 at transplant. Liquid feed weekly during fruiting. Heavy feeder.",emoji:"🥒",cat:"Vegetable",days:60,sowIn:"May-Jun",harvest:"Jul-Sep",spacing:35,sun:"Full",waterFreq:"Daily",waterNote:"Greenhouse varieties best. Outdoor ridge types in sheltered sunny spots.",color:"#27ae60",yld:3,
-    pests:[{n:"Powdery mildew",t:"Powdery mildew: milk spray, airflow, resistant varieties"},{n:"Downy mildew",t:"Downy mildew: copper spray, avoid wet leaves"},{n:"Cucumber beetle",t:"Cucumber beetle: hand-pick, row cover until flowering, kaolin clay spray"},{n:"Spider mites",t:"Spider mites: spray underside of leaves with water, neem oil"}],
+    pests:[{n:"Powdery mildew",t:"Powdery mildew: milk spray, airflow, resistant varieties"},{n:"Downy mildew",t:"Downy mildew: copper spray, avoid wet leaves"},{n:"Glasshouse whitefly",t:"Whitefly: yellow sticky traps, Encarsia formosa parasitic wasp under glass"},{n:"Spider mites",t:"Spider mites: spray underside of leaves with water, neem oil"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🥒"],
     steps:[{d:0,l:"Sow",t:"Warm soil 18°C+. Trellis."},{d:14,l:"Train",t:"Guide vines."},{d:35,l:"Pick",t:"Regular picking=more fruit."},{d:50,l:"Peak",t:"Daily harvest."}],
     storage:"Pickle 12+mo."
@@ -74,7 +74,7 @@ export const CROPS = [
     storage:"Fresh 5-7 days only."
   },
   { name:"Pumpkin",pH:"6.0-7.5",fert:"Very heavy feeder. Compost-rich mound at planting. NPK 10-10-10 every 2wk. High-K at fruit set.",emoji:"🎃",cat:"Vegetable",days:110,sowIn:"May-Jun",harvest:"Sep-Oct",spacing:120,sun:"Full",waterFreq:"Every 3 days",waterNote:"Start indoors May, plant out after frost. Heavy feeder. Curing improves storage.",color:"#e67e22",yld:6,
-    pests:[{n:"Powdery mildew",t:"Powdery mildew: inevitable late season — milk spray delays onset"},{n:"Squash bug",t:"Squash bug: hand-pick eggs (bronze clusters on leaf undersides), neem"},{n:"Vine borer",t:"Vine borer: wrap stem base, Bt injection"}],
+    pests:[{n:"Powdery mildew",t:"Powdery mildew: inevitable late season — milk spray delays onset"},{n:"Slugs and snails (young plants)",t:"Slugs: protect transplants for the first 2-3 weeks — evening patrols, beer traps"},{n:"Cucumber mosaic virus",t:"Mosaic virus: mottled, stunted leaves — remove and bin infected plants, control aphids (they spread it), wash hands and tools"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🎃"],
     steps:[{d:0,l:"Sow",t:"Rich mound. Much space."},{d:21,l:"Running",t:"Guide vines. Feed 2-weekly."},{d:50,l:"Fruit set",t:"Limit 2-3 per vine."},{d:90,l:"Cure",t:"Hard skin, dry stem. Sun 1-2wk."}],
     storage:"3-6mo at 10-15°C."
@@ -88,7 +88,7 @@ export const CROPS = [
   { name:"Broad Bean",pH:"6.5-7.5",fert:"NO nitrogen. Fixes own. Add potassium at flowering. Likes lime.",emoji:"🫘",cat:"Vegetable",days:150,sowIn:"Oct-Nov, Feb-Mar",harvest:"May-Jul",spacing:18,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Classic UK crop. Autumn sowing overwinters well. Pinch tops at flowering against blackfly.",color:"#1e8449",yld:0.5,
     pests:[{n:"Black bean aphid",t:"Black aphid: pinch out growing tips when first pods form (aphid hotspot), soap spray"},{n:"Chocolate spot",t:"Chocolate spot: spacing, airflow, don't overhead water"},{n:"Weevils",t:"Weevils: cosmetic damage, tolerate"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🫘"],
-    steps:[{d:0,l:"Sow",t:"5cm deep, fall on coast."},{d:21,l:"Overwinter",t:"Slow growth."},{d:120,l:"Spring",t:"Potassium. Pinch tops."},{d:160,l:"Harvest",t:"Plump green pods."}],
+    steps:[{d:0,l:"Sow",t:"5cm deep. Autumn sowing suits mild areas; sow Feb-Mar where winters are hard."},{d:21,l:"Overwinter",t:"Slow growth."},{d:120,l:"Spring",t:"Potassium. Pinch tops."},{d:150,l:"Harvest",t:"Plump green pods."}],
     storage:"Shell+freeze. Dry for years."
   },
   { name:"Leek",pH:"6.0-7.0",fert:"Nitrogen-rich. NPK 20-10-10 at transplant. Side-dress compost monthly.",emoji:"🟢",cat:"Vegetable",days:130,sowIn:"Feb-Apr",harvest:"Sep-Mar",spacing:18,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Excellent winter crop. Harvest right through frost. King of the allotment.",color:"#28b463",yld:0.4,
@@ -164,7 +164,7 @@ export const CROPS = [
   { name:"Wheat",pH:"6.0-7.5",fert:"NPK 20-10-10 at sowing. Side-dress nitrogen in early spring if weak.",emoji:"🌾",cat:"Grain",days:270,sowIn:"Oct-Nov",harvest:"Aug",spacing:3,sun:"Full",waterFreq:"Weekly",waterNote:"Winter wheat thrives in maritime climate. Combine in August.",color:"#d4a017",yld:0.01,
     pests:[{n:"Rust",t:"Rust: resistant varieties, fungicide if severe"},{n:"Fusarium head blight",t:"Fusarium: rotate, avoid planting after corn"},{n:"Aphids",t:"Aphids: generally tolerated in grain crops"}],
     stages:["🟤","🌱","🌿","🌾","🌾","🌾"],
-    steps:[{d:0,l:"Broadcast",t:"150g/sqm. Rake in."},{d:120,l:"Spring",t:"N if weak."},{d:180,l:"Heading",t:"No water."},{d:210,l:"Harvest",t:"Thresh. Winnow."}],
+    steps:[{d:0,l:"Broadcast",t:"About 20g of seed per sqm (15-25g). Rake in."},{d:120,l:"Spring",t:"N if weak."},{d:180,l:"Heading",t:"No water."},{d:210,l:"Harvest",t:"Thresh. Winnow."}],
     storage:"Whole berries: 30+ YEARS."
   },
 
@@ -176,7 +176,7 @@ export const CROPS = [
     storage:"Dry strings 1yr+. Smoke. Pickle. Freeze."
   },
   { name:"Eggplant",pH:"6.0-7.0",fert:"NPK 10-10-10 at transplant. Compost tea biweekly. High-K at fruit set.",emoji:"🍆",cat:"Vegetable",days:90,sowIn:"Feb-Apr",harvest:"Aug-Sep",spacing:55,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Greenhouse only. Needs sustained heat. Start early indoors.",color:"#8e44ad",yld:2,
-    pests:[{n:"Flea beetle",t:"Flea beetle: row cover until plants established, kaolin clay"},{n:"Colorado beetle",t:"Colorado beetle: hand-pick, Bt var. tenebrionis"},{n:"Spider mites",t:"Spider mites: mist undersides, neem"},{n:"Verticillium wilt",t:"Verticillium: rotate 4yr, resistant rootstocks, solarize soil"}],
+    pests:[{n:"Aphids",t:"Aphids: soap spray, check shoot tips and leaf undersides"},{n:"Glasshouse whitefly",t:"Whitefly: yellow sticky traps, Encarsia formosa parasitic wasp"},{n:"Spider mites",t:"Spider mites: mist undersides, neem"},{n:"Verticillium wilt",t:"Verticillium: rotate 4yr, resistant rootstocks, solarize soil"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🍆"],
     steps:[{d:0,l:"Transplant",t:"Soil 20°C+. 50-60cm apart. Stake."},{d:14,l:"Mulch+feed",t:"Compost tea. Thick mulch."},{d:45,l:"Support",t:"Stake heavy fruit."},{d:65,l:"Harvest",t:"Glossy skin = ready. Dull = overripe."}],
     storage:"Fresh 3-5 days. Grill+freeze. Preserve in oil."
@@ -194,7 +194,7 @@ export const CROPS = [
     storage:"Fresh 1-2wk."
   },
   { name:"Corn",pH:"6.0-7.0",fert:"Very heavy nitrogen feeder. NPK 30-10-10 at planting. Side-dress nitrogen at knee-high. Again at tasseling.",emoji:"🌽",cat:"Vegetable",days:90,sowIn:"May-Jun",harvest:"Aug-Sep",spacing:28,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Choose early-maturing varieties. Start indoors. Plant in blocks for pollination. Needs warm sheltered spot.",color:"#f1c40f",yld:0.25,
-    pests:[{n:"Corn earworm",t:"Corn earworm: Bt spray at silking, drop mineral oil on silk tips"},{n:"European corn borer",t:"Corn borer: Bt, crop rotation, destroy stalks after harvest"},{n:"Armyworm",t:"Armyworm: Bt, hand-pick"}],
+    pests:[{n:"Birds, mice and badgers",t:"Birds and mice take seed and seedlings — start in modules and net young plants. Badgers and squirrels strip ripe cobs — sturdy fencing or netting"},{n:"Frit fly",t:"Frit fly: start under cover and plant out at the 5-6 leaf stage, or fleece direct sowings until then"},{n:"European corn borer (continental Europe)",t:"Corn borer: Bt, crop rotation, destroy stalks after harvest"},{n:"Smut",t:"Smut: cut off and bin the grey swollen galls before they burst, rotate"}],
     stages:["🟤","🌱","🌿","🌿","🌽","🌽"],
     steps:[{d:0,l:"Sow blocks",t:"Not rows. 25-30cm. Soil 15°C+."},{d:14,l:"Thin",t:"One plant/station. Nitrogen."},{d:40,l:"Tasseling",t:"Don't let water stress."},{d:80,l:"Harvest",t:"Silk brown+dry. Twist+pull."}],
     storage:"Eat immediately. Blanch+freeze. Dry for flour."
@@ -241,7 +241,7 @@ export const CROPS = [
     steps:[{d:0,l:"Plant crowns",t:"Trench 20cm. Don't harvest 2yr."},{d:730,l:"First harvest yr3",t:"Cut spears at 15-20cm for 6wk."}],
     storage:"Blanch+freeze. Pickle."
   },
-  { name:"Pea",pH:"6.0-7.0",fert:"NO nitrogen (fixes own). Low-P fertilizer if needed. Inoculate seeds.",emoji:"🟢",cat:"Vegetable",days:75,sowIn:"Feb-Jun",harvest:"May-Aug",spacing:6,sun:"Full-Partial",waterFreq:"Every 2-3 days",waterNote:"Cool weather crop. Sow direct from Mar. Heavy water at flowering and pod set.",color:"#27ae60",yld:0.2,
+  { name:"Pea",pH:"6.0-7.0",fert:"NO nitrogen (fixes own). Potash/phosphate feed only if the soil is poor. Inoculate seeds.",emoji:"🟢",cat:"Vegetable",days:75,sowIn:"Feb-Jun",harvest:"May-Aug",spacing:6,sun:"Full-Partial",waterFreq:"Every 2-3 days",waterNote:"Cool weather crop. Sow direct from Mar. Heavy water at flowering and pod set.",color:"#27ae60",yld:0.2,
     pests:[{n:"Pea moth",t:"Pea moth: early sowing avoids peak moth flight, fleece"},{n:"Powdery mildew",t:"Powdery mildew: resistant varieties, spacing"},{n:"Aphids",t:"Aphids: soap spray"}],
     stages:["🟤","🌱","🌿","🌿","🌸","🟢"],
     steps:[{d:0,l:"Sow",t:"3cm deep, 5-8cm apart. Support."},{d:21,l:"Train",t:"Guide up support."},{d:45,l:"Flower",t:"Increase water."},{d:60,l:"Pick",t:"Regular = more pods."}],
@@ -301,7 +301,7 @@ export const CROPS = [
     stages:["🌳","🌳","🌳","🌳","🌰","🌰"],
     steps:[{d:0,l:"Plant",t:"Acidic soil preferred. Large tree — plan placement."},{d:30,l:"Establish",t:"Water weekly first 2 years. Mulch heavily."}],
     pests:[{n:"Chestnut blight (Cryphonectria)",t:"Blight: no cure — remove and burn affected wood, plant resistant hybrids, avoid wounding bark"},{n:"Chestnut weevil",t:"Weevil: collect and destroy fallen nuts promptly, keep ground clear under tree"},{n:"Squirrels",t:"Squirrels: main nut thief — harvest promptly as burrs split, trapping where legal"}],
-    storage:"Fresh 1-2wk. Dry/roast 3-6mo. Flour indefinitely."
+    storage:"Fresh 1-2wk. Dry/roast 3-6mo. Flour: about 6 months airtight, longer frozen."
   },
   { name:"Quince",pH:"6.0-7.0",fert:"Light feeder. NPK 10-10-10 in early spring. Compost mulch in autumn. Avoid excess nitrogen.",emoji:"🍐",cat:"Fruit Tree",days:365,sowIn:"Nov-Feb",harvest:"Oct-Nov",spacing:400,sun:"Full",waterFreq:"Every 7-14 days",waterNote:"Hardy and reliable in WE. Water during fruit set, otherwise rain-dependent.",color:"#f1c40f",yld:15,
     stages:["🌳","🌳","🌳","🌸","🍐","🍐"],
@@ -317,7 +317,7 @@ export const CROPS = [
   },
   { name:"Lemon",pH:"5.5-6.5",fert:"Citrus-specific feed (high N summer, balanced winter). Foliar Mg/Fe if leaves yellow.",emoji:"🍋",cat:"Fruit Tree",days:365,sowIn:"Apr-May",harvest:"Year-round (light)",spacing:250,sun:"Full",waterFreq:"Every 5-7 days",waterNote:"Conservatory or heated greenhouse essential — minimum 5°C. Move outdoors Jun-Sep, indoors winter. Acid-loving compost.",color:"#f1c40f",yld:5,
     stages:["🌳","🌳","🌳","🌸","🍋","🍋"],
-    steps:[{d:0,l:"Plant",t:"South-facing wall for heat reflection. Frost-free location only."},{d:30,l:"Establish",t:"Water weekly. Protect from cold first 3 winters."}],
+    steps:[{d:0,l:"Plant",t:"Large pot of citrus compost. Frost-free spot — conservatory or greenhouse over winter."},{d:30,l:"Establish",t:"Water weekly. Bring under cover before the first frost, every winter."}],
     pests:[{n:"Scale insects",t:"Scale: wipe off with soapy cloth, horticultural oil spray, main pest under glass"},{n:"Mealybug",t:"Mealybug: dab with alcohol swab, encourage predators, sticky white clusters in leaf joints"},{n:"Spider mites (dry indoor air)",t:"Spider mites: raise humidity, mist foliage, neem oil — worst on overwintered indoor plants"}],
     storage:"Fresh 2-3wk. Juice + freeze. Preserved lemons (salt) 12+mo."
   },
@@ -353,7 +353,7 @@ export const CROPS = [
   },
   { name:"Dill",pH:"5.5-6.5",fert:"Light feeder. Compost at sowing is enough. Excess nitrogen gives weak floppy stems.",emoji:"🌿",cat:"Herb",days:40,sowIn:"Mar-May, Sep",harvest:"Jun-Sep",spacing:20,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Cool weather herb. Bolts in heat. Succession sow.",color:"#27ae60",yld:0.2,
     stages:["🟤","🌱","🌿","🌿","🌸","🌿"],
-    steps:[{d:0,l:"Direct sow",t:"Don't transplant — tap root. Succession sow every 3wk."},{d:30,l:"Harvest leaves",t:"Before flowering for best flavor."},{d:40,l:"Seed heads",t:"Let some flower for pickle dill."}],
+    steps:[{d:0,l:"Direct sow",t:"Best sown direct — it dislikes root disturbance (module-raised plants must go out young). Succession sow every 3wk."},{d:30,l:"Harvest leaves",t:"Before flowering for best flavor."},{d:40,l:"Seed heads",t:"Let some flower for pickle dill."}],
     pests:[{n:"Aphids",t:"Aphids: soap spray, or leave — dill flowers attract hoverflies and parasitic wasps"},{n:"Carrot fly",t:"Carrot fly: same family as carrot — fleece or barrier if grown near carrots"},{n:"Powdery mildew",t:"Powdery mildew: improve airflow, avoid overhead watering, thin dense stands"}],
     storage:"Dry 1 year. Seeds for pickling indefinitely."
   },
@@ -380,7 +380,7 @@ export const CROPS = [
 
 // ── NEW CROPS: ROOTS + TUBERS ──
   { name:"Sweet Potato",pH:"5.5-6.5",fert:"Low nitrogen — excess N = all vine, no tubers. NPK 5-10-20 (high potassium). Sandy, well-drained soil ideal.",emoji:"🍠",cat:"Vegetable",days:110,sowIn:"May-Jun",harvest:"Sep-Oct",spacing:35,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Greenhouse or polytunnel for reliable harvest. Slips planted late May. Reduce water 3wk before harvest.",color:"#e67e22",yld:2,
-    pests:[{n:"Sweet potato weevil (Med/subtropical)",t:"Weevil: rotate, destroy infested tubers, hill soil over exposed tubers"},{n:"Whitefly",t:"Whitefly: yellow traps"},{n:"Fusarium wilt",t:"Fusarium: resistant varieties, rotate 3yr"}],
+    pests:[{n:"Slugs and wireworm (holes in tubers)",t:"Lift promptly in autumn, avoid ground that was recently grass, control slugs from late summer"},{n:"Whitefly",t:"Whitefly: yellow traps"},{n:"Fusarium wilt",t:"Fusarium: resistant varieties, rotate 3yr"}],
     stages:["🟤","🌱","🌿","🍃","🍠","🍠"],
     steps:[{d:0,l:"Plant slips",t:"Bury 2/3 of slip in mound. Soil must be 18°C+. Greenhouse or polytunnel for best results."},{d:7,l:"Mulch",t:"Black plastic helps soil warm. Vines spread."},{d:80,l:"Reduce water",t:"Tubers swelling. 3 weeks pre-harvest."},{d:110,l:"Harvest",t:"Dig carefully. Cure 7-10d at 27-30°C, 80% humidity."}],
     storage:"Cured: 6-8 months at 13-15°C. Never refrigerate — cold damage below 10°C. Different family than potato — no rotation conflict."
@@ -393,7 +393,7 @@ export const CROPS = [
   },
 
 // ── NEW CROPS: FLOWERS + SEEDS ──
-  { name:"Sunflower",pH:"6.0-7.5",fert:"Moderate feeder. NPK 10-10-10 at planting. Tolerates poor soil. Deep tap root mines nutrients.",emoji:"🌻",cat:"Vegetable",days:80,sowIn:"Apr-May",harvest:"Aug-Oct",spacing:45,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Deep roots. Heavy water at flowering. Easy and reliable.",color:"#f1c40f",yld:0.5,
+  { name:"Sunflower",pH:"6.0-7.5",fert:"Moderate feeder. NPK 10-10-10 at planting. Tolerates poor soil. Deep tap root mines nutrients.",emoji:"🌻",cat:"Vegetable",days:80,sowIn:"Apr-May",harvest:"Aug-Oct",spacing:45,sun:"Full",waterFreq:"Every 3-4 days",waterNote:"Deep roots. Heavy water at flowering. Easy and reliable.",color:"#f1c40f",yld:0.1,
     pests:[{n:"Birds (biggest threat to seeds)",t:"Birds: bag heads with mesh when seeds forming"},{n:"Sunflower moth",t:"Moth: Bt if larvae found"},{n:"Downy mildew",t:"Downy mildew: resistant varieties, spacing"}],
     stages:["🟤","🌱","🌿","🌿","🌻","🌻"],
     steps:[{d:0,l:"Direct sow",t:"2cm deep, 40-50cm apart. Soil 10°C+. Stake tall varieties."},{d:21,l:"Thin + feed",t:"Balanced fertilizer. Protect from slugs while small."},{d:55,l:"Flowering",t:"Massive bee magnet. Cross-pollination improves seed set."},{d:75,l:"Harvest seeds",t:"When back of head turns brown. Cut, hang upside down to dry. Rub out seeds."}],
@@ -402,7 +402,7 @@ export const CROPS = [
 
 // ── NEW CROPS: PERENNIALS ──
   { name:"Artichoke",pH:"6.5-8.0",fert:"Heavy feeder in spring growth. NPK 10-10-10 monthly Mar-Jun. Compost mulch autumn.",emoji:"🌿",cat:"Vegetable",days:180,sowIn:"Mar-Apr",harvest:"Jun-Aug",spacing:90,sun:"Full",waterFreq:"Every 5-7 days",waterNote:"Established plants tolerate dry spells. Mulch heavily for winter protection in cold areas.",color:"#7dcea0",yld:3.5,
-    pests:[{n:"Aphids (artichoke plume moth)",t:"Plume moth: remove affected buds, Bt"},{n:"Slugs on young plants",t:"Slugs: beer traps, copper. Only young plants"},{n:"Botrytis in wet springs",t:"Botrytis: spacing, don't overhead water"}],
+    pests:[{n:"Aphids (blackfly)",t:"Blackfly: squash colonies on stems and buds, soap spray, encourage ladybirds"},{n:"Slugs on young plants",t:"Slugs: beer traps, copper. Only young plants"},{n:"Botrytis in wet springs",t:"Botrytis: spacing, don't overhead water"}],
     stages:["🌱","🌿","🌿","🌿","🌿","🌿"],
     steps:[{d:0,l:"Plant offsets",t:"Root divisions from established plant. 90cm apart. Or seed Imperial Star for first-year crop."},{d:30,l:"Establish",t:"Water weekly first season. Mulch heavily."},{d:365,l:"Year 2+",t:"Harvest globes when scales are tight. Cut 10cm below head. Remove dead stalks in autumn. Divide every 3-4yr."}],
     storage:"Fresh 1-2wk. Hearts in oil 3-6mo. Freeze hearts. Italian: preserved in brine."
@@ -414,7 +414,7 @@ export const CROPS = [
     storage:"Fresh 2wk. Freeze chopped 12mo. Compote, jam, crumble. LEAVES ARE POISONOUS — never eat leaves."
   },
   { name:"Blackberry",pH:"5.5-7.0",fert:"Compost mulch annually. NPK 10-10-10 in spring. Potassium at fruiting.",emoji:"🫐",cat:"Fruit",days:365,sowIn:"Nov-Mar",harvest:"Jul-Sep",spacing:250,sun:"Full-Partial",waterFreq:"Every 3-5 days",waterNote:"Water during fruit set. Once established, rain-dependent in UK.",color:"#2c3e50",yld:3,
-    pests:[{n:"Spotted wing drosophila (Med)",t:"SWD: early harvest, traps, fine mesh over ripening fruit"},{n:"Raspberry beetle",t:"Raspberry beetle: shake onto cloth early morning"},{n:"Cane diseases",t:"Cane disease: remove fruited canes immediately after harvest"}],
+    pests:[{n:"Spotted wing drosophila (SWD)",t:"SWD: early harvest, traps, fine mesh over ripening fruit"},{n:"Raspberry beetle",t:"Raspberry beetle: shake onto cloth early morning"},{n:"Cane diseases",t:"Cane disease: remove fruited canes immediately after harvest"}],
     stages:["🌱","🌿","🌿","🌿","🫐","🫐"],
     steps:[{d:0,l:"Plant canes",t:"Thornless varieties for ease. Post-and-wire support. 2.5-3.5m apart (up to 4m for very vigorous kinds)."},{d:365,l:"Year 2 fruit",t:"Fruit on LAST year's canes. After harvest, cut fruited canes to ground. Tie in new canes."}],
     storage:"Very perishable fresh (2-3 days). Freeze immediately. Jam, wine, syrup, dry."
@@ -422,18 +422,18 @@ export const CROPS = [
 
 // ── NEW CROPS: LEGUME STAPLES ──
   { name:"Fennel",pH:"6.0-8.0",fert:"Light feeder. Compost at planting sufficient. Don't over-feed — reduces bulb flavor.",emoji:"🌿",cat:"Vegetable",days:80,sowIn:"Apr-Jul",harvest:"Jul-Oct",spacing:25,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Bulbing fennel best for UK. Bolt-resistant varieties for early sowing. Mulch to keep cool.",color:"#27ae60",yld:0.3,
-    pests:[{n:"Aphids",t:"Aphids: soap spray"},{n:"Bolting (heat stress — #1 problem)",t:"Bolting: sow for autumn harvest in Med. Spring sowing bolts in summer heat"}],
+    pests:[{n:"Aphids",t:"Aphids: soap spray"},{n:"Bolting (heat stress — #1 problem)",t:"Bolting: set off by cold snaps, drought and root disturbance. Sow from late May to July, keep evenly moist, use bolt-resistant varieties"}],
     stages:["🟤","🌱","🌿","🌿","🌿","🌿"],
-    steps:[{d:0,l:"Direct sow",t:"Don't transplant — tap root. 25cm apart. Autumn sowing best in Med climate."},{d:21,l:"Thin + mulch",t:"Keep moist. Hill soil around swelling bulb."},{d:60,l:"Harvest",t:"Cut at soil level when bulb is tennis-ball sized. Feathery fronds edible too."}],
+    steps:[{d:0,l:"Sow",t:"Sow direct, or in modules and plant out young — root disturbance makes it bolt. 25cm apart. Main sowing late May-July."},{d:21,l:"Thin + mulch",t:"Keep moist. Hill soil around swelling bulb."},{d:60,l:"Harvest",t:"Cut at soil level when bulb is tennis-ball sized. Feathery fronds edible too."}],
     storage:"Fresh 1-2wk fridge. Roast, braise, raw in salads. Seeds: dry for spice (1yr+). Italian staple."
   },
-  { name:"Lentil",pH:"6.0-8.0",fert:"NO nitrogen (fixes own). Low-P if needed. Poor soil fine.",emoji:"🟤",cat:"Vegetable",days:110,sowIn:"Apr-May",harvest:"Aug-Sep",spacing:5,sun:"Full",waterFreq:"Every 7-10 days",waterNote:"Sow in warmest sheltered spot. Marginal in UK except dry sunny summers. Polytunnel improves reliability.",color:"#8B4513",yld:0.8,
+  { name:"Lentil",pH:"6.0-8.0",fert:"NO nitrogen (fixes own). Potash/phosphate only if the soil is poor. Poor soil fine.",emoji:"🟤",cat:"Vegetable",days:110,sowIn:"Apr-May",harvest:"Aug-Sep",spacing:5,sun:"Full",waterFreq:"Every 7-10 days",waterNote:"Sow in warmest sheltered spot. Marginal in UK except dry sunny summers. Polytunnel improves reliability.",color:"#8B4513",yld:0.002,
     pests:[{n:"Ascochyta blight",t:"Ascochyta: resistant varieties, don't work wet plants"},{n:"Aphids",t:"Aphids: tolerate — lentils are tough"},{n:"Bruchid beetle (storage)",t:"Bruchid: freeze dried lentils 48hr before storage"}],
     stages:["🟤","🌱","🌿","🍃","🟤","🟤"],
     steps:[{d:0,l:"Broadcast sow",t:"3cm deep, thick. Like wheat/grain — dense planting. Poor soil fine. NO nitrogen."},{d:45,l:"Flowering",t:"Don't irrigate unless extreme drought."},{d:80,l:"Harvest",t:"When 80% of pods brown. Cut whole plant. Thresh. Winnow."}],
     storage:"Dried: 5+ YEARS sealed. Protein staple. Nitrogen-fixer — improves soil for next crop."
   },
-  { name:"Chickpea",pH:"6.0-9.0",fert:"NO nitrogen (legume). Tolerates poor, alkaline, dry soil. Minimal inputs.",emoji:"🟡",cat:"Vegetable",days:110,sowIn:"Apr-May",harvest:"Aug-Sep",spacing:10,sun:"Full",waterFreq:"Every 7-10 days",waterNote:"Polytunnel or warm sheltered spot. Marginal outdoor in UK except hot summers. Drought-tolerant once established.",color:"#d4a017",yld:0.6,
+  { name:"Chickpea",pH:"6.0-9.0",fert:"NO nitrogen (legume). Tolerates poor, alkaline, dry soil. Minimal inputs.",emoji:"🟡",cat:"Vegetable",days:110,sowIn:"Apr-May",harvest:"Aug-Sep",spacing:10,sun:"Full",waterFreq:"Every 7-10 days",waterNote:"Polytunnel or warm sheltered spot. Marginal outdoor in UK except hot summers. Drought-tolerant once established.",color:"#d4a017",yld:0.006,
     pests:[{n:"Ascochyta blight",t:"Ascochyta: resistant varieties, spacing, don't work wet foliage"},{n:"Pod borer",t:"Pod borer: Bt spray"},{n:"Fusarium wilt",t:"Fusarium: rotate 4yr, resistant varieties"}],
     stages:["🟤","🌱","🌿","🍃","🟡","🟡"],
     steps:[{d:0,l:"Direct sow",t:"5cm deep, 10cm apart. Polytunnel for reliability in UK."},{d:60,l:"Flowering",t:"No water needed. Pod formation."},{d:90,l:"Harvest",t:"When plant yellows and pods rattle. Pull whole plant. Dry. Thresh."}],
