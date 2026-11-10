@@ -35,16 +35,23 @@ export function spacingGuide(crop, pattern = "rows") {
 }
 
 /**
- * Per-plant yield multiplier for a grid. Plants spaced at or wider than the biointensive
- * guide keep the database per-plant yield. Tighter than that, each plant yields proportionally
- * less, so crowding a bed never raises the total estimate above the biointensive optimum.
+ * Per-plant yield multiplier for a grid. The database per-plant yield assumes standard rows
+ * (the crop's in-row spacing x its row spacing). Any denser grid, the biointensive offset grid
+ * included, gives each plant proportionally less, so a bed never estimates more per square
+ * metre than standard rows would (conservative on purpose).
+ * Scattered trees pass no row spacing: only the minimum distance between plants is known, so
+ * the factor compares that distance with the crop's own spacing.
  */
 export function crowdingFactor(crop, inRowCM, rowCM) {
-  const hex = HEX_SPACING[crop?.name] || Number(crop?.spacing) || 30;
-  const reference = hex * hex * HEX_ROW,
+  const inRow = Number(crop?.spacing) || 30;
+  if (rowCM === undefined || rowCM === null) {
+    const d = Number(inRowCM);
+    return d > 0 && d < inRow * 0.985 ? (d * d) / (inRow * inRow) : 1;
+  }
+  const reference = inRow * (ROW_SPACING[crop?.name] || Math.max(inRow, 20)),
     area = Number(inRowCM) * Number(rowCM);
   if (!(area > 0)) return 1;
-  // 3% tolerance so rounded grid values (e.g. 6.9 cm for an 8 cm hex) count as on-guide.
+  // 3% tolerance so hand-rounded spacings still count as on-guide.
   return area >= reference * 0.97 ? 1 : area / reference;
 }
 

@@ -50,7 +50,7 @@ test('Harvest fallback scales the per-plant yield by the plant count; a typed 0 
   const data={...fixture,garden:{plots}};
   const task={key:'plot-lettuce-harvest',type:'harvest',plotId:'lettuce'};
   const next=applyTaskCompletion(data,task,undefined);
-  assert.equal(next.pantry.items[0].qty,3); // Lettuce yld 0.3 kg/plant × 10 plants (was 0.3 for the whole bed)
+  assert.equal(next.pantry.items[0].qty,2); // Lettuce yld 0.2 kg/plant × 10 plants
   const failed=applyTaskCompletion(data,task,0,{allowZero:true});
   assert.equal((failed.pantry.items||[]).length,0);
   assert.equal(failed.garden.plots.find(p=>p.id==='lettuce').status,'harvested');
@@ -117,4 +117,42 @@ test('migration: the workshop zig-zag becomes a yard',()=>{
   const changed={...data,mapLines:[{...line,points:line.points.map((p,i)=>i===3?{...p,xM:80}:p)}]};
   assert.equal(migrateYardLine(changed).mapLines.length,1);assert.ok(!migrateYardLine(changed).zones.some(z=>z.type==='yard'),'a different line is left alone');
   assert.equal(migrateYardLine({zones:[]}).zones.length,0,'no mapLines → untouched');
+});
+
+// ── 2026-11-10: conservative yields, Pacific Northwest region, apple + pear ──
+test('Conservative yields: a denser grid never estimates more per square metre than standard rows', async () => {
+  const { CROPS } = await import('../src/data/crops.js');
+  const { spacingGuide, crowdingFactor, plantDensity } = await import('../src/data/spacing.js');
+  for (const crop of CROPS) {
+    const rows = spacingGuide(crop, 'rows'), hex = spacingGuide(crop, 'offset');
+    const perM2Rows = plantDensity(rows.inRowCM, rows.rowCM) * crop.yld * crowdingFactor(crop, rows.inRowCM, rows.rowCM);
+    const perM2Hex = plantDensity(hex.inRowCM, hex.rowCM) * crop.yld * crowdingFactor(crop, hex.inRowCM, hex.rowCM);
+    assert.equal(crowdingFactor(crop, rows.inRowCM, rows.rowCM), 1, crop.name);
+    assert(perM2Hex <= perM2Rows * 1.035, `${crop.name}: offset ${perM2Hex} > rows ${perM2Rows}`);
+  }
+});
+test('Conservative yields: a variety never swaps a regional yield for the base one', async () => {
+  const { getRegionalVarieties, getRegionalCrop } = await import('../src/lib/regional.js');
+  const { CROP_MAP } = await import('../src/data/crops.js');
+  const { VARIETIES, VAR_RO } = await import('../src/data/varieties.js');
+  // Zucchini has no northern list: the base list is borrowed, scaled to the northern crop yield
+  assert.equal(VAR_RO.northern_europe.Zucchini, undefined);
+  const base = VARIETIES.Zucchini, north = getRegionalVarieties('Zucchini', 'northern_europe');
+  const k = getRegionalCrop(CROP_MAP.get('Zucchini'), 'northern_europe').yld / CROP_MAP.get('Zucchini').yld;
+  assert(k < 1);
+  assert.deepEqual(north.map((v) => v.name), base.map((v) => v.name));
+  north.forEach((v, i) => assert(Math.abs(v.yld - base[i].yld * k) <= base[i].yld * k * 0.06, v.name));
+  assert.equal(getRegionalVarieties('Zucchini', 'northern_europe'), north); // memoised, stable reference
+  assert.equal(getRegionalVarieties('Zucchini', 'western_europe'), base);
+  // no variety promises more than about a third above the yield of the crop it belongs to (25% + rounding)
+  for (const region of ['western_europe', 'mediterranean', 'northern_europe', 'us_warm', 'us_cold']) {
+    for (const name of Object.keys(VARIETIES)) {
+      const crop = getRegionalCrop(CROP_MAP.get(name), region);
+      if (!crop) continue;
+      for (const v of getRegionalVarieties(name, region)) {
+        if (!v.yld) continue;
+        assert(v.yld <= crop.yld * 1.35, `${region} ${name} ${v.name}: ${v.yld} vs ${crop.yld}`);
+      }
+    }
+  }
 });

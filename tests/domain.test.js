@@ -158,9 +158,19 @@ test('Grid defaults follow the pattern and crowding caps yield', () => {
   const carrot = { name: 'Carrot', spacing: 4 };
   assert.deepEqual(spacingGuide(carrot, 'rows'), { inRowCM: 4, rowCM: 15, hexCM: 8 });
   assert.equal(spacingGuide(carrot, 'offset').rowCM, 6.9);
+  // standard rows are the reference; a denser grid (the biointensive one included) is scaled
+  // down so its harvest per square metre never beats standard rows
   assert.equal(crowdingFactor(carrot, 4, 15), 1);
-  assert.equal(crowdingFactor(carrot, 8, 6.9), 1);
+  assert.equal(crowdingFactor(carrot, 8, 6.9), 0.92);
   assert(crowdingFactor(carrot, 4, 3.5) < 0.3);
+  const tomato = { name: 'Tomato', spacing: 50 };
+  const tight = crowdingFactor(tomato, 45, 39);
+  assert(Math.abs((1 / (0.45 * 0.39)) * tight - 1 / (0.5 * 0.75)) < 1e-9); // same plants-worth per m²
+  assert.equal(crowdingFactor(tomato, 60, 90), 1);
+  // scattered trees: only the minimum distance is known
+  assert.equal(crowdingFactor({ name: 'Plum', spacing: 450 }, 450), 1);
+  assert.equal(crowdingFactor({ name: 'Raspberry', spacing: 45 }, 45), 1);
+  assert.equal(crowdingFactor({ name: 'Plum', spacing: 450 }, 225), 0.25);
   const bed = { id: 'bed', type: 'veg', wM: 4, hM: 2.4 };
   const input = plantingInput({ pattern: 'offset', plantCount: 10 }, carrot, bed);
   assert.equal(input.spacingCM, 8);
@@ -311,7 +321,7 @@ test('Dairy groups get a daily milking task that fills the pantry, unless switch
   const goats={...fixture,livestock:{animals:[...(fixture.livestock?.animals||[]),{id:'g1',type:'Goat',count:2}]}};
   const milk=buildTaskQueue(goats).find(t=>t.type==='milk');
   assert(milk&&milk.speciesType==='Goat');
-  assert.equal(milk.expected,5);
+  assert.equal(milk.expected,4);
   const next=applyTaskCompletion(goats,milk,4.5);
   const item=next.pantry.items.at(-1);
   assert.equal(item.qty,4.5);assert.equal(item.unit,'L');assert.equal(item.category,'Dairy');
@@ -328,7 +338,7 @@ test('Map badges group today’s jobs by the area where they happen', () => {
   assert.deepEqual(by[tomZone].map(t=>t.key),['a']);
   assert.deepEqual(by.coop.map(t=>t.key).sort(),['b','d']);
   const eggs=taskAction({type:'eggs',speciesType:'Chicken',headCount:10},fixture);
-  assert.equal(eggs.verb,'Collect');assert.equal(eggs.amount.value,7);
+  assert.equal(eggs.verb,'Collect');assert.equal(eggs.amount.value,6);
   assert.equal(rewardText({},eggs,'9'),'+9 🥚');
   assert.equal(taskAction({type:'feed'},fixture).cheer,'Fed!');
 });

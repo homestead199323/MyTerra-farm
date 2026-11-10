@@ -91,7 +91,7 @@ export function planPlanting(zone, plots, input, crop, excludeId) {
   if (!Number.isInteger(value) || value < 1)
     return fail(`Enter a whole number of ${byRows ? "rows" : "plants"} greater than zero.`, byRows ? "rowCount" : "plantCount");
   if (value > 100000 || (byRows && value > 1000)) return fail("Use a smaller planting group.", byRows ? "rowCount" : "plantCount");
-  const yieldFactor = crowdingFactor(crop, spacingCM, random ? spacingCM : rowSpacingCM);
+  const yieldFactor = random ? crowdingFactor(crop, spacingCM) : crowdingFactor(crop, spacingCM, rowSpacingCM);
   if (random) {
     if (zone.type !== "orchard") return fail("Scattered planting is available in orchards.");
     const points = scatterTrees(zone, plots, value, spacing, excludeId, crop.name + (input.seed || ""));

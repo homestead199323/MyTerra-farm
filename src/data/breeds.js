@@ -5,16 +5,16 @@
 
 export const BREEDS = {
   Chicken: [
-    {name:"Rhode Island Red",note:"Dual purpose. 250-300 eggs/yr. Hardy. Brown eggs.",eggs:0.8},
-    {name:"Leghorn",note:"Top layer. 280-320 white eggs/yr. Active forager.",eggs:0.9},
-    {name:"Sussex",note:"Dual purpose. 250 eggs/yr. Docile. Good meat bird.",eggs:0.7},
-    {name:"Plymouth Rock",note:"Friendly. 200 brown eggs/yr. Cold-hardy.",eggs:0.6},
-    {name:"Australorp",note:"Record holder 364 eggs/yr. Gentle. Heat-tolerant.",eggs:0.85},
-    {name:"Orpington",note:"Very docile. 200 eggs/yr. Great mothers. Meat bird.",eggs:0.55},
-    {name:"Marans",note:"Dark chocolate brown eggs. 150-200/yr. Hardy.",eggs:0.5},
-    {name:"Silkie",note:"Broody. Best mothers. 100 eggs/yr. Ornamental.",eggs:0.3},
-    {name:"ISA Brown",note:"Commercial hybrid. 300+ eggs/yr. First 2 years.",eggs:0.9},
-    {name:"Heritage/Mixed",note:"Local heritage breeds. Hardy. 150-200 eggs/yr.",eggs:0.5},
+    {name:"Rhode Island Red",note:"Dual purpose. 250-300 eggs/yr. Hardy. Brown eggs.",eggs:0.7},
+    {name:"Leghorn",note:"Top layer. 280-320 white eggs/yr. Active forager.",eggs:0.75},
+    {name:"Sussex",note:"Dual purpose. 250 eggs/yr. Docile. Good meat bird.",eggs:0.65},
+    {name:"Plymouth Rock",note:"Friendly. 200 brown eggs/yr. Cold-hardy.",eggs:0.55},
+    {name:"Australorp",note:"Record holder 364 eggs/yr. Gentle. Heat-tolerant.",eggs:0.7},
+    {name:"Orpington",note:"Very docile. 200 eggs/yr. Great mothers. Meat bird.",eggs:0.5},
+    {name:"Marans",note:"Dark chocolate brown eggs. 150-200/yr. Hardy.",eggs:0.4},
+    {name:"Silkie",note:"Broody. Best mothers. 100 eggs/yr. Ornamental.",eggs:0.25},
+    {name:"ISA Brown",note:"Commercial hybrid. 300+ eggs/yr. First 2 years.",eggs:0.8},
+    {name:"Heritage/Mixed",note:"Local heritage breeds. Hardy. 150-200 eggs/yr.",eggs:0.4},
   ],
   Goat: [
     {name:"Saanen",note:"Top dairy. 3-4L/day. White. Gentle."},

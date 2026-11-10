@@ -54,6 +54,11 @@ export default function PlantingControls({
   const alongMax = zone ? (vertical ? zone.hM : zone.wM) : 0;
   const density = scatter ? 0 : plantDensity(value.spacingCM, value.rowSpacingCM);
   const factor = plan?.yieldFactor ?? 1;
+  // on (or wider than) the biointensive guide the lower per-plant figure is expected, not a mistake
+  const onBioGuide =
+    value.pattern === "offset" &&
+    Number(value.spacingCM) >= guide.hexCM * 0.985 &&
+    Number(value.rowSpacingCM) >= guide.rowCM * 0.97;
   // which field fixes the problem: the first one-tap fix's field, or the field a bad number lives in
   const problem = plan?.problem || null, badField = problem ? (problem.kind === "input" ? problem.field : problem.fixes[0]?.field || null) : null;
   const hints = {
@@ -265,12 +270,19 @@ export default function PlantingControls({
         </strong>
         {yieldKg != null && <span>Estimated harvest: ~{yieldKg} kg</span>}
       </div>
-      {factor < 1 && !plan?.error && (
+      {factor < 1 && !plan?.error && (onBioGuide ? (
+        <small>
+          Biointensive spacing is closer than standard rows, so each plant is estimated at{" "}
+          {Math.round(factor * 100)}% of its row-grown yield. The estimate per square metre stays the same as
+          standard rows.
+        </small>
+      ) : (
         <p className="q-warning">
-          Closer than the biointensive guide: each plant is estimated at {Math.round(factor * 100)}% of its
-          usual yield, so extra plants won’t raise the total. Widen spacing to give each plant its full share.
+          Closer than standard row spacing: each plant is estimated at {Math.round(factor * 100)}% of its
+          usual yield, so the extra plants don’t raise the harvest estimate. Widen spacing to give each plant
+          its full share.
         </p>
-      )}
+      ))}
       {plan?.shortened && (
         <small>Rows shortened to {plan.layout.lengthM} m to fit the free space in this bed.</small>
       )}

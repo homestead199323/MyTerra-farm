@@ -104,7 +104,7 @@ export function buildTaskPlan(data, opts = {}) {
       // import) must not take the whole task plan down with a null date.
       const hDate = localDateFromKey(addDaysToLocalKey(todayKey, dLeft));
       const when = hDate ? hDate.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : `${dLeft} days`;
-      const estYld = p.expectedYieldKg || Math.round((crop.yld || 0) * (Number(p.plantCount) || 1) * 10) / 10 || 3;
+      const estYld = p.expectedYieldKg || (crop.yld ? Math.round(Math.max(0.1, crop.yld * (Number(p.plantCount) || 1)) * 10) / 10 : 3);
       tasks.push({ key: `plot-${p.id}-forecast`, pri: 4, type: "forecast", emoji: "📅", title: `${p.name || p.crop} harvest in ${dLeft}d`, desc: `Expected: ${when}. ~${estYld}kg yield.`, loc, plotId: p.id, daysOut: dLeft });
     }
   });
