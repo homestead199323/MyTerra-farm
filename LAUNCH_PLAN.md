@@ -676,6 +676,20 @@
   better surfaces and silhouettes than the toy build, well short of a sculpt. The decoration trees round the
   farm and in gardens are still toy models. Grove3D chunk 237.5 KB gzip of the 240 KB budget: the next
   addition to the 3D map has to split the chunk or remove something.
+  **Look C, slice 5 — surfaces of buildings, props and ground; garden trees, shipped 2026-11-10 (`dfe4741`):**
+  shapes unchanged, materials rebuilt in `toy.js` `texture()`: 17 surface kinds painted per pixel (clay tiles,
+  slate, wood grain along each member, boarded walls, plaster, coursed stone and flagstones, concrete, clay
+  pots, corrugated rusting sheet, hay, leafy hedges, grass, soil, gravel), most with a height that tilts the
+  light; fine detail only near the camera. Trees standing on the property are look-C species (oak, lime,
+  maple, birch, olive, citrus); backdrop trees keep round crowns in the leafy surface (fifty look-C border
+  trees were tried: a third more frame time and worse to look at). 16 area tiles and 76 tree pictures
+  re-rendered. Software rasteriser, fastest of 14 frames: balcony about +10 %, back garden +3 to +9 %, farm
+  overview no cost. Verified: 210 + 3 tests, ESLint, build (sandbox and Mac); all 17 kinds compile and draw
+  without errors in five harness scenes; production `dpl_6MHgCBQQDVVALxKcKvHuCCPXzesN` READY, live Grove3D
+  bundle carries `g3tex-c-` and `g3bump`, no `__g3harness`, CSP present; the demo balcony on production
+  draws with the new surfaces (headless Chrome screenshot). NOT verified: any real phone or GPU — the
+  shaders use screen-space derivatives, standard in WebGL2 but untested on iOS here. Grove3D chunk 240.4 KB
+  gzip; budget raised 240 → 245 KB. Not done: building and prop SHAPES are the same geometry as before.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a
