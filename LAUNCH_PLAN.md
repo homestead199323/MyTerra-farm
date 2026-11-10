@@ -645,3 +645,26 @@
   `claude/knowledge-audit-2026-11-10.md`): several vegetable yields are optimistic rather than conservative and
   the offset grid multiplies them; Pacific NW cities sit in the hot-South US region; copper is the stock answer in many crop cards although the RHS lists no fungicide
   amateurs can buy for peach leaf curl (other uses and countries not checked); no apple or pear in the crop list.
+- [x] **Conservative yields, Pacific Northwest region, apple + pear (2026-11-10, owner decisions on the audit's
+  open items: "always go for conservative… recalibrate", "fix", "fix"; commits `4f7ff79`, `d3673bd`, `dd99043`).**
+  Yields: 65 of 70 base per-plant figures lowered (tomato 3.5 → 2, potato 2.5 → 0.7, carrot 0.1 → 0.025, pea
+  0.2 → 0.03, plum 15 → 12, walnut 30 → 10), 105 regional figures rescaled, 266 variety figures re-centred on
+  the crop's own yield (−30% / +25%, none raised); a region borrowing the base variety list scales it by the
+  regional crop yield. Bed estimate: standard rows are the reference, so the biointensive grid no longer
+  estimates more per m² than rows (tomato on that grid 19.9 → 5.3 kg/m²; a note under the estimate explains
+  the per-plant figure). Animals: eggs 0.7 → 0.6/day, goat milk 2.5 → 2 L, cow 15 → 12 L, honey 15 → 11 kg, breed egg rates
+  at the low end. Harvest task no longer falls back to 3 kg for small yields. Regions: Seattle, Portland,
+  Vancouver, Victoria, OR, WA, BC → Western Europe base; MD, DE, DC, VA, KY → northern US (frost-safe side,
+  matches Baltimore); US/Canada town keeps dollars. Crops: Apple and Pear added (cards from the RHS grow
+  guides, regional notes, US pest lists, 5 varieties per region), counts 70 → 72 in landing and
+  ARCHITECTURE_PLAN. Sources: Kings Seeds yield guide, Rutgers FS129, Cornell planting guide, fruit-tree-form
+  yield ranges, RHS apple and pear guides; herb yields, animal trims, regional variety notes and US pest lists
+  are judgment, not source-checked. Verified: 189 + 3 tests, ESLint, Vite build (sandbox and Mac); built app
+  walked in headless Chrome (demo): onboarding region screen, Apple card, apple planting 1 tree ≈ 15 kg
+  (Bramley 18), 6 tomatoes ≈ 12 kg in rows and ≈ 5.6 kg on the biointensive grid with the note, no page errors;
+  production `dpl_4CtBJMkBcqhbWy34UJ9jiAyDbn8t` READY, live `index-C2uxhq0t.js` carries the new yields
+  (tomato 2, potato .7, carrot .025, apple 15), Seattle → `western_europe`, Maryland → `us_cold`, the new
+  strings, none of three removed ones; landing shows 72; CSP header present. NOT verified: a phone or a signed-in
+  account; Settings town search by hand. Known limits: plantings saved before today keep their old estimate
+  until edited; saved farms keep their region; a Seattle farm sees the "Western Europe" label and UK-flavoured
+  variety names; project instructions still say 70 crops.
