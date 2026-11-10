@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════
    MODEL SHEET (dev only) — one crop model at a time, at a chosen growth stage and level of detail,
    under the map's light. Driven by a script: window.__flora.render([{ name, stage, tier }]) returns
-   a picture and the triangle count for each. Used to review the true-to-life crop models.
+   a picture and the triangle count for each (`tree: true` for a fruit tree). Used to review the true-to-life models.
    ═══════════════════════════════════════════ */
 import * as THREE from "three";
-import { cropGeometry, cropMaterials } from "../src/features/grove/crops3d";
+import { cropGeometry, treeModel, cropMaterials } from "../src/features/grove/crops3d";
 import { PAL, rboxGeo, flat, fillLight } from "../src/features/grove/toy";
 
 const SIZE = Number(new URLSearchParams(location.search).get("size")) || 360, TIME = { value: 0 };
@@ -31,18 +31,18 @@ function shot(obj, frame, el = 26, az = -32) {
   renderer.shadowMap.needsUpdate = true; renderer.render(scene, cam);
   return renderer.domElement.toDataURL("image/png");
 }
-function plant(name, stage, tier) {
-  const geo = cropGeometry(name, stage, tier), M = cropMaterials(TIME), im = new THREE.InstancedMesh(geo, geo.groups.length ? [M.mat, M.thin] : M.mat, 1), g = new THREE.Group();
+function plant(name, stage, tier, tree) {
+  const geo = tree ? treeModel(name, stage, tier) : cropGeometry(name, stage, tier), M = cropMaterials(TIME), im = new THREE.InstancedMesh(geo, geo.groups.length ? [M.mat, M.thin] : M.mat, 1), g = new THREE.Group();
   im.setMatrixAt(0, new THREE.Matrix4().makeRotationY(.6)); im.castShadow = im.receiveShadow = true; im.frustumCulled = false;
-  const soil = new THREE.Mesh(rboxGeo(.7, .1, .7, .05, 2), flat(PAL.soil)); soil.position.y = -.05; soil.receiveShadow = soil.castShadow = true; g.add(im, soil);
+  const soil = new THREE.Mesh(rboxGeo(.7, .1, .7, .05, 2), flat(PAL.soil)); soil.position.y = -.05; soil.receiveShadow = soil.castShadow = true; g.add(im); if (!tree) g.add(soil);
   geo.computeBoundingBox(); return { g, box: geo.boundingBox, tris: geo.index ? geo.index.count / 3 : geo.attributes.position.count / 3 };
 }
 /* every stage of one crop shares the grown plant's frame, so it visibly grows */
 function render(list) {
   const frames = new Map();
-  return list.map(({ name, stage, tier = 0 }) => {
-    if (!frames.has(name)) { const b = plant(name, 5, 0).box.clone(); b.union(new THREE.Box3(new THREE.Vector3(-.4, -.1, -.4), new THREE.Vector3(.4, .2, .4))); frames.set(name, b); }
-    const p = plant(name, stage, tier); return { name, stage, tier, tris: Math.round(p.tris), url: shot(p.g, frames.get(name)) };
+  return list.map(({ name, stage, tier = 0, tree = false }) => {
+    if (!frames.has(name)) { const b = plant(name, 5, 0, tree).box.clone(); b.union(new THREE.Box3(new THREE.Vector3(-.4, -.1, -.4), new THREE.Vector3(.4, .2, .4))); frames.set(name, b); }
+    const p = plant(name, stage, tier, tree); return { name, stage, tier, tris: Math.round(p.tris), url: shot(p.g, frames.get(name)) };
   });
 }
 window.__flora = { render };

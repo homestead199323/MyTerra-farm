@@ -5,7 +5,8 @@ import { realCrop } from '../src/features/grove/crops-real.js';
 import { PlantKit, SURF } from '../src/features/grove/plantkit.js';
 import { CONTAINER_FRIENDLY } from '../src/lib/suggest.js';
 import { CROP_MAP } from '../src/data/crops.js';
-import { treeKey } from '../src/features/grove/crop-families.js';
+import { treeKey, TREE_KEYS } from '../src/features/grove/crop-families.js';
+import { treeGeometry, treeTier, TREE_SPECIES } from '../src/features/grove/trees-real.js';
 
 const CROPS = [...CROP_MAP.keys()].filter((n) => !treeKey(n));
 
@@ -70,4 +71,25 @@ test('level of detail follows how many plants share the map', () => {
   assert.equal(cropTier(8, true), 1, 'the phone farm tier is one step lighter'); assert.equal(cropTier(5000, true), 4);
   assert.notEqual(cropKey('Tomato', 5, 0), cropKey('Tomato', 5, 1)); assert.notEqual(cropKey('Tomato', 5, 0), cropKey('Carrot', 5, 0));
   assert.equal(cropKey('Tomato', 1, 0), cropKey('Lettuce', 1, 0), 'every crop shares the sprout');
+});
+
+// triangles one tree may cost at each level of detail (docs/MAP_STYLE.md §10)
+const TREE_BUDGET = [16000, 6500, 3200, 2200, 2000];
+test('every fruit and nut tree has its own true-to-life model inside the triangle budget', () => {
+  for (const key of TREE_KEYS) assert.ok(TREE_SPECIES.includes(key), `${key} has a species entry in trees-real.js`);
+  const over = [], shapes = new Set();
+  for (const key of TREE_KEYS) {
+    let last = Infinity;
+    for (let tier = 0; tier <= 4; tier++) {
+      const g = treeGeometry(key, true, tier), n = tris(g);
+      if (n > TREE_BUDGET[tier]) over.push(`${key} t${tier}: ${n} > ${TREE_BUDGET[tier]}`);
+      assert.ok(n <= last, `${key}: tier ${tier} is not heavier than tier ${tier - 1}`); last = n;
+      assert.ok(Array.from(g.attributes.position.array).every(Number.isFinite), `${key}: finite vertices`);
+      if (tier === 0) { g.computeBoundingBox(); const b = g.boundingBox; shapes.add(`${(b.max.y).toFixed(1)}x${(b.max.x - b.min.x).toFixed(1)}`); assert.ok(b.max.y > 1.4 && b.max.y < 3.6 && b.min.y > -.05, `${key}: plausible height in crown radii`); assert.equal(g.groups.length, 2); }
+    }
+    assert.ok(tris(treeGeometry(key, true, 0)) > tris(treeGeometry(key, false, 0)), `${key} carries fruit only when it is fruiting`);
+  }
+  assert.deepEqual(over, [], 'trees over their triangle budget');
+  assert.ok(shapes.size >= 8, `species differ in habit, not only in colour (${shapes.size} distinct outlines)`);
+  assert.equal(treeTier(4, false), 0); assert.equal(treeTier(5, false), 1); assert.equal(treeTier(25, false), 3); assert.equal(treeTier(3, true), 1); assert.equal(treeTier(500, true), 4);
 });

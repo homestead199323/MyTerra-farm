@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { Parts, WIND, DETAIL } from "./toy";
 import { plantMaterials, plainSurface } from "./plantkit";
 import { realCrop, realGeometry } from "./crops-real";
+import { treeGeometry, treeTier } from "./trees-real";
 
 import { cropFamily } from "./crop-families";
 export { cropFamily };
@@ -32,6 +33,12 @@ export function cropGeometry(name, stage, tier = 0) {
   if (st === 1) { const P = new Parts(); P.detail = tier >= 3 ? .5 : tier >= 1 ? .66 : 1; sprout(P); g = plainSurface(P.build()); }
   else g = realGeometry(realCrop(name), st, tier);
   g.userData.shared = true; cache.set(key, g); return g; // shared across world rebuilds
+}
+/* fruit and nut trees: one model per species, with fruit only in the harvest window; the map scales it by size and stage */
+export function treeModel(key, stage, tier = 0) {
+  const fruiting = stage >= 5, k = `tree|${key}|${fruiting ? 1 : 0}|${tier}`;
+  if (!cache.has(k)) { const g = treeGeometry(key, fruiting, tier); g.userData.shared = true; cache.set(k, g); }
+  return cache.get(k);
 }
 export function cropKey(name, stage, tier = 0) { const st = Math.max(1, Math.min(5, stage)); return st === 1 ? `sprout|${tier >= 3 ? 2 : tier >= 1 ? 1 : 0}` : `real${realCrop(name).idx}|${st}|${tier}`; }
 /* how many plants share the map decides how much each one may cost (budgets in docs/MAP_STYLE.md §9) */
@@ -70,12 +77,12 @@ export function cropMaterials(TIME) {
 /* draws every collected plant: items are { key, name, stage, x, y, z, s, ry } in world metres */
 export function buildCrops(g, items, TIME, focusBounds) {
   if (!items.length) return;
-  const { mat, thin } = cropMaterials(TIME), byKey = new Map(), tier = cropTier(items.length, DETAIL.value < 1); // the whole farm shares one level of detail; phones one step lighter
-  items.forEach((it) => { const key = cropKey(it.name, it.stage, tier); it.tier = tier; let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
+  const { mat, thin } = cropMaterials(TIME), byKey = new Map(), phone = DETAIL.value < 1, trees = items.reduce((n, it) => n + (it.tree ? 1 : 0), 0), tier = cropTier(items.length - trees, phone), tTier = treeTier(trees, phone); // crops share one level of detail, trees another; phones one step lighter
+  items.forEach((it) => { it.tier = it.tree ? tTier : tier; const key = it.tree ? `tree|${it.name}|${it.stage >= 5 ? 1 : 0}|${tTier}` : cropKey(it.name, it.stage, tier); let l = byKey.get(key); if (!l) { l = []; byKey.set(key, l); } l.push(it); });
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), E = new THREE.Euler();
   const box = focusBounds ? new THREE.Box3() : null;
   byKey.forEach((list) => {
-    const geo = cropGeometry(list[0].name, list[0].stage, list[0].tier || 0), im = new THREE.InstancedMesh(geo, geo.groups.length ? [mat, thin] : mat, list.length); // true-to-life models: solid parts + leaf blades
+    const geo = list[0].tree ? treeModel(list[0].name, list[0].stage, list[0].tier || 0) : cropGeometry(list[0].name, list[0].stage, list[0].tier || 0), im = new THREE.InstancedMesh(geo, geo.groups.length ? [mat, thin] : mat, list.length); // true-to-life models: solid parts + leaf blades
     if (focusBounds && !geo.boundingBox) geo.computeBoundingBox();
     list.forEach((it, i) => {
       P.set(it.x, it.y, it.z); E.set(0, it.ry || 0, 0); Q.setFromEuler(E); S.setScalar(it.s); M4.compose(P, Q, S); im.setMatrixAt(i, M4);

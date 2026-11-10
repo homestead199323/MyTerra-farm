@@ -205,19 +205,14 @@ const FRUIT = { apple: [0xe0453a, .085], pear: [0xd1cf5e, .08], peach: [0xf09a62
 function fruitTree(g, ctx, x, z, size, stage, name, seed, M, off) {
   const grow = [0, 0, .3, .55, .82, 1][stage] || 0, r = Math.max(.32, Math.min(1.7, size * .42)) * grow;
   const key = Object.keys(FRUIT).find((k) => name.includes(k)) || "apple", [color, fr] = FRUIT[key];
-  const leafIdx = key === "olive" ? 4 : /lemon|orange|citrus|fig|avocado|persimmon/.test(key) ? 5 : null;
-  tree(g, x, z, r, seed, M, 0, leafIdx);
+  // the tree itself is a true-to-life model (trees-real.js), drawn with the crops: one instanced mesh per species
+  ctx.plants.push({ name: key, tree: true, stage, x: off[0] + x, y: 0, z: off[1] + z, s: r, ry: srand(seed) * 6.28 });
   { const mr = Math.min(1.1, r * .8 + .2); disc(g, mr + .08, M.mulchRim, x, .013, z, { seg: 28 }); disc(g, mr, M.mulch, x, .016, z, { seg: 28 }); }
   if (stage < 4) pill(g, [x + .22, 0, z + .1], [x + .2, Math.min(1.5, r * 1.4 + .6), z + .08], .022, M.woodDark, { seg: 6 }); // stake for young trees
   if (stage < 5) return; // like the crop rows, a tree shows its harvest: fruit and a gold halo appear only in the harvest window
   ctx.growth.glows.push({ p: [off[0] + x, .012, off[1] + z], tree: true, s: [r * 2.2 + 1.2, r * 2.2 + 1.2, 1] });
-  const top = r * .55 + .3 + r * .9, n = Math.round(26 * Math.min(1, r / 1.2)), list = ctx.fruit.get(color) || []; ctx.fruit.set(color, list);
+  const top = r * .55 + .3 + r * .9;
   if (ctx.fruitDrop) { const dl = ctx.fruitDrop.get(color) || []; ctx.fruitDrop.set(color, dl); const dropY = top - r * .25, h = Math.max(.3, dropY - .05); const ds = fr * Math.min(1, .55 + r * .4); dl.push({ p: [off[0] + x + .35 * r, dropY, off[1] + z + .25 * r], s: ds, phase: Math.floor(h / ds * 100) + srand(seed * 5 + 2) }); } // the fall is written in instance-local units
-  for (let i = 0; i < n; i++) {
-    // on the surface of the main crown (an r·.92 sphere squashed to .86 in y), upper and side faces, so the fruit shows
-    const a = srand(seed * 7 + i * 3) * 6.283, b = -.35 + srand(seed * 11 + i * 5) * 1.35, fs = fr * Math.min(1, .55 + r * .4), R = r * .92 + fs * .35;
-    list.push({ p: [off[0] + x + Math.cos(a) * Math.cos(b) * R, top + Math.sin(b) * R * .86, off[1] + z + Math.sin(a) * Math.cos(b) * R], s: fs });
-  }
 }
 function buildFruit(g, ctx, M) { ctx.fruit.forEach((list, color) => instances(g, sphereGeo(10, 8), M.fruit(color), list, { cast: false })); }
 /* Fences are collected in world coordinates and drawn as a handful of instanced meshes for the whole
@@ -1572,8 +1567,8 @@ export function buildZoneIcon({ zone, data, crops, todayKey }) {
 /* One fruit tree on its own at a growth stage, for the crop icons (tree-<key>-<stage>.webp). */
 // eslint-disable-next-line react-refresh/only-export-components -- used only by the icon renderer
 export function buildTreeIcon({ name, stage }) {
-  const M = materials(), ctx = { fruit: new Map(), growth: { glows: [] } }, g = new THREE.Group();
-  fruitTree(g, ctx, 0, 0, 3.4, stage, name.toLowerCase(), 7, M, [0, 0]); buildFruit(g, ctx, M);
+  const M = materials(), ctx = { plants: [], fruit: new Map(), growth: { glows: [] } }, g = new THREE.Group();
+  fruitTree(g, ctx, 0, 0, 3.4, stage, name.toLowerCase(), 7, M, [0, 0]); buildCrops(g, ctx.plants, TIME);
   return g;
 }
 /* Merge every static mesh that shares a material into one draw call. Instanced meshes, the

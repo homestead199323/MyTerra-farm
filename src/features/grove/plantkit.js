@@ -6,6 +6,7 @@
    Colour stays in the vertices; there are still no image textures.
    ═══════════════════════════════════════════ */
 import * as THREE from "three";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Parts } from "./toy";
 
 export const SURF = { plain: 0, leaf: 1, bark: 2, fruit: 3 };
@@ -104,6 +105,18 @@ export class PlantKit extends Parts {
     const mid = Math.floor(R / 2) * seg; // face outward whichever way the profile runs
     if (g.attributes.normal.getX(mid) * g.attributes.position.getX(mid) < 0) { for (let i = 0; i < I.length; i += 3) { const t = I[i + 1]; I[i + 1] = I[i + 2]; I[i + 2] = t; } g.setIndex(I); g.computeVertexNormals(); }
     return this.add(g, color, rest);
+  }
+  /* a mass of foliage inside a tree's crown: a sphere pushed in and out by noise, darker in the hollows and underneath */
+  lump(r, color, { pos = [0, 0, 0], amp = .09, freq = 2.4, seed = 0, squash = .86 } = {}) {
+    let g = new THREE.SphereGeometry(1, this.seg(12, 7), this.seg(8, 5)); g.deleteAttribute("uv"); g.deleteAttribute("normal"); g = mergeVertices(g, 1e-4);
+    const P = g.attributes.position, n = P.count, col = new Float32Array(n * 3), S = new Float32Array(n * 4), c0 = C(color), cd = c0.clone().multiplyScalar(.6), cl = c0.clone().lerp(new THREE.Color(0xdff09a), .25);
+    for (let i = 0; i < n; i++) {
+      const x = P.getX(i), y = P.getY(i), z = P.getZ(i), a = x * freq + seed, b = y * freq + seed * 1.7, c = z * freq - seed;
+      const k = (Math.sin(a * 1.3 + b * .7) * Math.cos(c * 1.1 - a * .5) + .6 * Math.sin(b * 2.3 + c * 1.7 + 1.3) * Math.cos(a * 2.1 - .7)) / 1.6, f = 1 + amp * k;
+      P.setXYZ(i, x * f * r + pos[0], y * f * r * squash + pos[1], z * f * r + pos[2]);
+      const cc = c0.clone().lerp(cd, Math.max(0, Math.min(1, -k * .75 + Math.max(0, -y) * .4))).lerp(cl, Math.max(0, Math.min(1, y * .3))); col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b; S[i * 4 + 1] = .03;
+    }
+    g.computeVertexNormals(); g.setAttribute("color", new THREE.BufferAttribute(col, 3)); g.setAttribute("g3s", new THREE.BufferAttribute(S, 4)); this.geos.push(g); return g;
   }
   /* indexed merge of position, normal, colour and surface: solid parts first (group 0), then the leaf blades (group 1) */
   build() {
