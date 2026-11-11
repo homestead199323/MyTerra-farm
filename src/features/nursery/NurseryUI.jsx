@@ -320,7 +320,7 @@ export function StartSeedsForm({ data, setData, onClose, zoneId = "" }) {
     setData({
       ...data,
       nursery: { ...(data.nursery || {}), batches: [...(data.nursery?.batches || []), batch] },
-      log: appendLog(data.log, { text: `🌱 Planned ${batch.cells} ${batch.crop} seedlings` }),
+      log: appendLog(data.log, { text: `Planned ${batch.cells} ${batch.crop} seedlings` }),
     });
     onClose();
   }

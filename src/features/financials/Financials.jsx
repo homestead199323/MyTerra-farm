@@ -91,8 +91,8 @@ export default function Financials({data, setData}) {
       </div>
       {/* 6.6.1 — empty state replaces the body when there are zero entries */}
       {items.length === 0 ? (
-        <Card style={{textAlign:"center",padding:"64px 24px",background:C.grdWarm,marginBottom:16}}>
-          <div style={{fontSize:72,marginBottom:12,lineHeight:1}}>🧾</div>
+        <Card style={{textAlign:"center",padding:"clamp(22px, 7vw, 64px) 24px",background:C.grdWarm,marginBottom:16}}>
+          
           <div style={SX.s15Bold}>No money tracked yet</div>
           <div style={{color:C.t2,marginTop:8,fontSize:13,maxWidth:340,marginLeft:"auto",marginRight:"auto",lineHeight:1.5}}>
             Add your first seed packet to start tracking. We'll handle the math — categories, monthly trends, profit and loss.

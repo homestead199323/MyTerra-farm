@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
-  Leaf, User, UserRound, MessageSquare, Settings, ChevronRight
+  Leaf, User, UserRound, MessageSquare, MessageCircle, Settings, ChevronRight
 } from "lucide-react";
 
 import {
@@ -70,7 +70,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:C.bg,fontFamily:F.body,padding:32}}>
           <div style={{background:C.card,borderRadius:C.r,padding:32,maxWidth:480,boxShadow:C.shL,textAlign:"center"}}>
-            <div style={{fontSize:40,marginBottom:12}}>🌾</div>
+            
             <h2 style={{fontFamily:F.head,fontSize:22,marginBottom:8}}>Something went wrong</h2>
             <p style={{color:C.t2,fontSize:14,marginBottom:16}}>Your farm data is safe in your browser. Try reloading.</p>
             <p style={{color:C.t2,fontSize:12,marginBottom:20,fontFamily:F.mono,background:C.soft,padding:8,borderRadius:8,textAlign:"left",wordBreak:"break-word"}}>{String(this.state.error)}</p>
@@ -138,6 +138,12 @@ const BottomNav = React.memo(function BottomNav({page, setPage, taskCount}) {
           </button>
         );
       })}
+      {/* the assistant lives in the bar on a phone: always in reach, never on top of the page (AIAssistant listens for the event) */}
+      <button aria-label="Ask the farm assistant" onClick={function(){ window.dispatchEvent(new Event("mt-assistant")); }}
+        style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:2, border:"none", background:"transparent", cursor:"pointer", padding:"2px 4px", minHeight:44, color:C.t2}}>
+        <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:0.5}}><MessageCircle size={22} strokeWidth={1.7}/></span>
+        <span className="mt-tablabel" style={{fontSize:10,fontWeight:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>Ask</span>
+      </button>
     </nav>
   );
 });

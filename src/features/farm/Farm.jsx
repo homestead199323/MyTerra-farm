@@ -484,7 +484,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
           <div style={{position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none", padding:16}}>
             <div style={{background:C.card, borderRadius:16, padding:"22px 24px", maxWidth:340, width:"100%",
               textAlign:"center", boxShadow:C.shL, pointerEvents:"auto"}}>
-              <div style={{fontSize:32, marginBottom:8}}>🏡</div>
+              
               <div style={{fontSize:15, fontWeight:700, fontFamily:F.head, marginBottom:4}}>Start with a template</div>
               <div style={{fontSize:12, color:C.t2, marginBottom:14}}>or tap a zone type in the tray below and tap the map</div>
               <div style={{display:"flex", flexDirection:"column", gap:8}}>
@@ -518,7 +518,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
               maxWidth:360,width:"100%",maxHeight:"100%",overflowY:"auto",boxSizing:"border-box",textAlign:"center",
               boxShadow:"0 24px 64px rgba(0,0,0,.3)",
             }}>
-              <div style={{fontSize:36,marginBottom:10}}>🗺️</div>
+              
               <div style={{fontSize:18,fontWeight:800,fontFamily:F.head,marginBottom:6}}>Design your farm</div>
               <div style={{fontSize:13,color:C.t2,lineHeight:1.6,marginBottom:20}}>
                 Three steps to get started:
@@ -557,7 +557,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
       <div style={{flex:"0 0 auto", background:C.card, borderTop:`1px solid ${C.bdr}`,
         maxHeight:"43dvh",overflowY:"auto",padding:"10px 14px calc(10px + env(safe-area-inset-bottom))"}}>
         <div style={{maxWidth:720, margin:"0 auto"}}>
-          <div className="q-row q-wrap fd-tools" style={{marginBottom:10}}><button className="q-secondary" aria-label="Undo" disabled={!history.past.length} onClick={()=>travel(false)}><span aria-hidden="true">↶</span><span className="fd-wide"> Undo</span></button><button className="q-secondary" aria-label="Redo" disabled={!history.future.length} onClick={()=>travel(true)}><span aria-hidden="true">↷</span><span className="fd-wide"> Redo</span></button><div className="fd-snap" role="group" aria-label="Snapping"><div className="q-seg"><button type="button" aria-pressed={snapOn} onClick={()=>setSnap({on:true})}>🧲 Snap</button><button type="button" aria-pressed={!snapOn} onClick={()=>setSnap({on:false})}>Free</button></div>{snapOn&&<select aria-label="Grid size" value={grid} onChange={e=>setSnap({grid:+e.target.value})}>{gridOptions.map(g=><option key={g} value={g}>{g} m grid</option>)}</select>}</div></div>
+          <div className="q-row q-wrap fd-tools" style={{marginBottom:10}}><button className="q-secondary" aria-label="Undo" disabled={!history.past.length} onClick={()=>travel(false)}><span aria-hidden="true">↶</span><span className="fd-wide"> Undo</span></button><button className="q-secondary" aria-label="Redo" disabled={!history.future.length} onClick={()=>travel(true)}><span aria-hidden="true">↷</span><span className="fd-wide"> Redo</span></button><div className="fd-snap" role="group" aria-label="Snapping"><div className="q-seg"><button type="button" aria-pressed={snapOn} onClick={()=>setSnap({on:true})}>Snap</button><button type="button" aria-pressed={!snapOn} onClick={()=>setSnap({on:false})}>Free</button></div>{snapOn&&<select aria-label="Grid size" value={grid} onChange={e=>setSnap({grid:+e.target.value})}>{gridOptions.map(g=><option key={g} value={g}>{g} m grid</option>)}</select>}</div></div>
 
           {sz && (
             <div className="fd-panel" data-fd-zone-panel>
@@ -684,12 +684,12 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
                 <div className="fd-paths" data-fd-tray="paths">
                   <div className="fd-paths-row">
                     <div className="q-seg" role="group" aria-label="What to draw">
-                      {[["path","🛤️ Path"],["fence","🚧 Fence"]].map(function(k){
+                      {[["path","Path"],["fence","Fence"]].map(function(k){
                         return <button key={k[0]} type="button" aria-pressed={lineKind===k[0]} onClick={function(){ setLineKind(k[0]); }}>{k[1]}</button>;
                       })}
                     </div>
                     <button type="button" className="q-button" disabled={!!draw} onClick={function(){ startDraw(lineKind); }}>
-                      ✏️ Draw {lineKind === "path" ? "a path" : "a fence"}
+                      Draw {lineKind === "path" ? "a path" : "a fence"}
                     </button>
                   </div>
                   <label className="fd-auto-paths">
@@ -952,7 +952,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
                   {p.qty>0&&p.measureType==="area"&&<span>📐 {p.qty}m²</span>}
                   {p.expectedYieldKg>0&&<span>📦 ~{p.expectedYieldKg}kg</span>}
                   {!hasQty&&p.plantDate&&!growth.waiting&&localDateFromKey(p.plantDate)&&<span>{localDateFromKey(p.plantDate).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>}
-                  {p.status==="planned"&&p.plannedDate&&localDateFromKey(p.plannedDate)&&<span>🌱 from nursery · plant out {localDateFromKey(p.plannedDate).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span>}
+                  {p.status==="planned"&&p.plannedDate&&localDateFromKey(p.plannedDate)&&<span>from nursery · plant out {localDateFromKey(p.plannedDate).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span>}
                 </div>
               </div>
               <div style={{display:"flex",gap:4,flexDirection:"column",alignItems:"flex-end"}}>
@@ -993,7 +993,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
           {(openSec.seedlings??true)&&<NurseryList data={data} setData={setData}/>}
         </section>)}
       {_active.length===0?
-        <Card style={{textAlign:"center",padding:"48px 24px",background:C.grdLight}}><div style={SX.emptyIcon}>🌱</div><div style={SX.s15Bold}>Ready to grow?</div><div style={{color:C.t2,marginTop:6,fontSize:12.5,maxWidth:280,margin:"6px auto 14px",lineHeight:1.5}}>{_canPlant?`Pick a crop and a ${_bedWord}: MyTerra lays out the rows at the right spacing and plans every step.`:`First add a ${_bedWord} to your map. Then pick what to grow in it.`}</div>{_canPlant?<Btn onClick={()=>setShowAdd(true)}>+ Plant a crop</Btn>:setPage&&<Btn onClick={()=>setPage("map",{edit:true})}>+ Add a {_bedWord}</Btn>}</Card>:
+        <Card style={{textAlign:"center",padding:"clamp(20px, 6vw, 48px) 24px",background:C.grdLight}}><div style={SX.s15Bold}>Ready to grow?</div><div style={{color:C.t2,marginTop:6,fontSize:12.5,maxWidth:280,margin:"6px auto 14px",lineHeight:1.5}}>{_canPlant?`Pick a crop and a ${_bedWord}: MyTerra lays out the rows at the right spacing and plans every step.`:`First add a ${_bedWord} to your map. Then pick what to grow in it.`}</div>{_canPlant?<Btn onClick={()=>setShowAdd(true)}>+ Plant a crop</Btn>:setPage&&<Btn onClick={()=>setPage("map",{edit:true})}>+ Add a {_bedWord}</Btn>}</Card>:
       <>{_sections.map(function(sec){
         if(!sec.plots.length)return null;
         const open=openSec[sec.key]??true, all=showAll[sec.key]||sec.plots.length<=_PREVIEW+1;

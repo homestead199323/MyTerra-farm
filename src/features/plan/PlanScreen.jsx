@@ -118,7 +118,7 @@ export default function PlanScreen({ data, setData, setPage }) {
                             <small>{s.info.when} · {s.info.ready} · {s.info.effort}</small>
                           </span>
                         </div>
-                        <p className="mt-plan-why"><span aria-hidden="true">💡 </span>{s.info.reason}</p>
+                        <p className="mt-plan-why">{s.info.reason}</p>
                         <Btn sm v="secondary" onClick={function () { addCrop(s.crop.name); }} style={{ width: "100%" }}>
                           {canPlant ? `+ Add to my ${bedWord}` : `Add a ${bedWord} first`}
                         </Btn>

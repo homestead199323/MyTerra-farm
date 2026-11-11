@@ -328,7 +328,7 @@ export const WaterCard = React.memo(function WaterCard({waterNote, waterFreq}) {
 
 export const StorageCard = React.memo(function StorageCard({storage}) {
   if (!storage) return null;
-  return <Card style={{marginBottom:12,background:C.tYellow}}><div style={{fontSize:12,fontWeight:700,color:C.yellow}}>📦 Storage</div><div style={SX.s13mt4}>{storage}</div></Card>;
+  return <Card style={{marginBottom:12,background:C.tYellow}}><div style={{fontSize:12,fontWeight:700,color:C.yellow}}>Storage</div><div style={SX.s13mt4}>{storage}</div></Card>;
 });
 
 /* ═══════════════════════════════════════════
@@ -343,7 +343,7 @@ export const StorageCard = React.memo(function StorageCard({storage}) {
      onSwipeLeft         callback for swipe-left (e.g. delete)
      rightActionLabel    label shown in the right-reveal background (default "✓ Done")
      rightActionBg       background color of the right reveal (default sage green)
-     leftActionLabel     label shown in the left-reveal background (default "🗑 Delete")
+     leftActionLabel     label shown in the left-reveal background (default "Delete")
      leftActionBg        background color of the left reveal (default red)
      disabled            if true, behaves like a passthrough wrapper
      style               passed through to the outer container
@@ -419,7 +419,7 @@ export const SwipeableRow = React.memo(function SwipeableRow({
             pointerEvents: "none",
           }}
         >
-          {leftActionLabel || "🗑 Delete"}
+          {leftActionLabel || "Delete"}
         </div>
       )}
       <div

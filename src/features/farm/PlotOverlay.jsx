@@ -161,7 +161,7 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
         <Card style={{marginBottom:12, background: zoneStats.pct >= 0.95 ? C.dangerBg : zoneStats.pct >= 0.7 ? C.harvestBg : C.soft}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
             <div style={{fontSize:12,fontWeight:700,color:zoneFill}}>
-              {zoneStats.pct >= 0.95 ? "🔴 Zone Full" : zoneStats.pct >= 0.7 ? "🟡 Zone Getting Full" : "🟢 Zone Space"}
+              {zoneStats.pct >= 0.95 ? "Zone Full" : zoneStats.pct >= 0.7 ? "Zone Getting Full" : "Zone Space"}
             </div>
             <div style={{fontSize:11,color:C.t2,fontFamily:F.mono}}>{zone.name}</div>
           </div>
@@ -178,7 +178,7 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
 
       {showComp && (
         <Card style={{marginBottom:12,background:compBad.length > 0 ? C.dangerBg : C.soft}}>
-          <div style={SX.lblGreen}>🌱 Companions in zone</div>
+          <div style={SX.lblGreen}>Companions in zone</div>
           {compGood.length > 0 && <div style={{fontSize:12,color:C.green,marginTop:4}}>✓ Good: {compGood.join(", ")}</div>}
           {compBad.length  > 0 && <div style={{fontSize:12,color:C.red,marginTop:4}}>✕ Bad: {compBad.join(", ")}</div>}
         </Card>
@@ -186,7 +186,7 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
 
       {notStarted && plot.status !== "harvested" && (
         <Card style={{marginBottom:12,background:C.gp,border:`1px solid ${C.gm}`}}>
-          <div style={{fontSize:13,fontWeight:700,color:C.green}}>🌱 Not in the ground yet</div>
+          <div style={{fontSize:13,fontWeight:700,color:C.green}}>Not in the ground yet</div>
           <div style={{fontSize:12.5,color:C.t2,margin:"4px 0 10px",lineHeight:1.5}}>
             {verb === "Plant" ? "Plant it" : "Sow it"} when you're ready. Tap below on the day you do: the growing steps and harvest date start from then.
           </div>
@@ -199,16 +199,16 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
         <Card><div style={SX.t2_11b}>HARVEST</div><div style={{fontSize:15,fontWeight:700}}>{notStarted ? `~${Math.round((plot.growDays || crop.days || 60) / 7)} wk after ${verb === "Plant" ? "planting" : "sowing"}` : niceDate(plot.harvestDate)}</div></Card>
       </div>
 
-      <Card style={{marginBottom:12,background:C.soft,border:`1px solid ${C.gm}`}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:4}}><span style={{fontSize:13,fontWeight:700,color:C.green}}>🌱 Crop Data</span>{crop.pH && <Pill c={C.text} bg={C.warm}>pH {crop.pH}</Pill>}</div></Card>
-      {crop.fert && <Card style={{marginBottom:12,background:C.soft}}><div style={SX.lblGreen}>🧪 Fertilizer Schedule</div><div style={{fontSize:12,marginTop:4,lineHeight:1.5}}>{crop.fert}</div></Card>}
-      {crop.pests && crop.pests.length > 0 && <Card style={{marginBottom:12,background:C.harvestBg}}><div style={{fontSize:12,fontWeight:700,color:C.orange}}>🐛 Pests & Solutions</div>{crop.pests.slice(0,3).map(function(pst,i){return <div key={i} style={{marginTop:4}}><strong style={{fontSize:11}}>{pst.n}</strong>{pst.t && <div style={SX.t2_11}>→ {pst.t}</div>}</div>;})}</Card>}
+      <Card style={{marginBottom:12,background:C.soft,border:`1px solid ${C.gm}`}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:4}}><span style={{fontSize:13,fontWeight:700,color:C.green}}>Crop Data</span>{crop.pH && <Pill c={C.text} bg={C.warm}>pH {crop.pH}</Pill>}</div></Card>
+      {crop.fert && <Card style={{marginBottom:12,background:C.soft}}><div style={SX.lblGreen}>Fertilizer Schedule</div><div style={{fontSize:12,marginTop:4,lineHeight:1.5}}>{crop.fert}</div></Card>}
+      {crop.pests && crop.pests.length > 0 && <Card style={{marginBottom:12,background:C.harvestBg}}><div style={{fontSize:12,fontWeight:700,color:C.orange}}>Pests & Solutions</div>{crop.pests.slice(0,3).map(function(pst,i){return <div key={i} style={{marginTop:4}}><strong style={{fontSize:11}}>{pst.n}</strong>{pst.t && <div style={SX.t2_11}>→ {pst.t}</div>}</div>;})}</Card>}
 
       <StepChecklist steps={plot.steps} plantDate={notStarted ? null : plot.plantDate} onToggle={togStep} plotId={plot.id}/>
       <StorageCard storage={crop.storage}/>
       <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(crop.name + " growing guide complete")}`} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12,color:C.red,textDecoration:"none",fontWeight:600,padding:"8px 14px",background:C.dangerBg,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:8}}>▶ Watch: Complete {crop.name} Growing Guide</a>
       {setPage && (
         <button onClick={function(){onClose();setPage("manuals");}} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:C.green,fontWeight:600,padding:"8px 14px",background:C.gp,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:12,cursor:"pointer",width:"100%",textAlign:"left"}}>
-          📖 Need help growing {crop.name}? Read the full guide in Learn →
+          Need help growing {crop.name}? Read the full guide in Learn →
         </button>
       )}
 
@@ -216,7 +216,7 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
         {confirmDel && <span style={{fontSize:12,color:C.t2,alignSelf:"center"}}>Remove this planting and its notes?</span>}
         {confirmDel && <Btn v="secondary" sm onClick={()=>setConfirmDel(false)}>Keep</Btn>}
         <Btn v="danger" sm onClick={()=>del(plot.id)}>{confirmDel ? "Yes, remove" : "Delete"}</Btn>
-        {plot.status !== "harvested" && plot.harvestDate && localDateFromKey(plot.harvestDate) <= localDateFromKey(todayLocalKey()) && harvKg == null && <Btn v="success" onClick={()=>setHarvKg(String(harvDefault(plot)))}>🧺 Harvest</Btn>}
+        {plot.status !== "harvested" && plot.harvestDate && localDateFromKey(plot.harvestDate) <= localDateFromKey(todayLocalKey()) && harvKg == null && <Btn v="success" onClick={()=>setHarvKg(String(harvDefault(plot)))}>Harvest</Btn>}
       </div>
       {harvKg != null && (
         <div style={{marginTop:10,padding:"12px 14px",border:`1.5px solid ${C.green}`,borderRadius:12,background:C.gp}}>

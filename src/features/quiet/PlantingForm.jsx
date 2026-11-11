@@ -133,7 +133,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
       garden: { ...data.garden, plots: [...data.garden.plots, plot] },
       log: appendLog(data.log, {
         text: fromSeed
-          ? `🌱 Planned ${name} (${chosen.count} plants) from seed in the nursery`
+          ? `Planned ${name} (${chosen.count} plants) from seed in the nursery`
           : `🌱 ${form.plantDate ? "Planted" : "Planned"} ${name} (${chosen.count} plants)${force ? " — placed over other plantings" : ""}`,
       }),
     };

@@ -49,7 +49,7 @@ export default function Reminders({ rowBtn, ico, sectionLabel }) {
         ) : prefs.on ? (
           <>
             <div style={{ padding: "12px 14px", border: `1px solid ${C.bdr}`, borderRadius: 10, marginBottom: 8 }}>
-              <div style={{ fontSize: 14, color: C.text, fontWeight: 600, marginBottom: 8 }}>🔔 On for this device</div>
+              <div style={{ fontSize: 14, color: C.text, fontWeight: 600, marginBottom: 8 }}>On for this device</div>
               <label htmlFor="settings-push-hour" style={{ fontSize: 12, color: C.t2 }}>Send my jobs at</label>
               <select id="settings-push-hour" value={prefs.hour} disabled={busy}
                 onChange={(e) => { const h = Number(e.target.value); run(() => updatePushHour(h), `Reminders will come at ${hourLabel(h)}.`); }}
@@ -90,7 +90,7 @@ export function RemindersPrompt() {
   if (!support.ok && support.reason !== "ios-install") return null;
   return (
     <section className="mt-remind" aria-label="Reminders">
-      <span aria-hidden="true" className="mt-remind-bell">🔔</span>
+      
       <span className="q-grow">
         <strong>Get today's jobs each morning</strong>
         <small>{support.ok ? `A short notification at ${hourLabel(prefs.hour)} with what needs doing, plus frost and storm warnings.` : WHY["ios-install"]}</small>

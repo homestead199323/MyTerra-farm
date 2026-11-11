@@ -274,10 +274,10 @@ export function CropSeedInfo({ crop }) {
     <div className="q-seed-info">
       <FarmIcon name={crop.name} emoji={crop.emoji} size={40} />
       <div className="q-chips">
-        <span>🌱 Sprouts in ~{p.germDays} days</span>
+        <span>Sprouts in ~{p.germDays} days</span>
         <span>⏳ ~{p.weeks} weeks to plant out</span>
-        <span>{p.potOn ? "🪴 Pot on once" : "🪴 No potting on"}</span>
-        {crop.sowIn && <span>📅 Sow {crop.sowIn}</span>}
+        <span>{p.potOn ? "Pot on once" : "No potting on"}</span>
+        {crop.sowIn && <span>Sow {crop.sowIn}</span>}
         {p.method === "either" && <span>↔ Can also be sown direct</span>}
       </div>
     </div>

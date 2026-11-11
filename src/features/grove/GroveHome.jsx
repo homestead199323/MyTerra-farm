@@ -33,7 +33,7 @@ function StarterKit({data,setData}) {
   const toggle = id => setData({...data, starterKit: {...kit, items: kit.items.map(i => i.id === id ? {...i, done: !i.done} : i)}});
   return <section className="mt-kit" aria-label="Starter kit">
     <div className="mt-kit-head">
-      <span><strong>🛒 Your starter kit</strong><small>{all ? 'All set. Time to sow!' : `${done} of ${kit.items.length} ready · tick things off as you get them`}</small></span>
+      <span><strong>Your starter kit</strong><small>{all ? 'All set. Time to sow!' : `${done} of ${kit.items.length} ready · tick things off as you get them`}</small></span>
       {all && <button type="button" className="q-text-button" onClick={() => setData({...data, starterKit: {...kit, dismissed: true}})}>Hide</button>}
     </div>
     {kit.items.map(function(i) {

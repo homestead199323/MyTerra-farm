@@ -34,7 +34,7 @@ export default function FeedbackSurvey({ setPage }) {
   if (submitted) {
     return (
       <div className="page-enter" style={{maxWidth:560,margin:"0 auto",textAlign:"center",padding:"60px 20px"}}>
-        <div style={{fontSize:56,marginBottom:16}}>🎉</div>
+        
         <h2 style={{fontFamily:F.head,fontSize:24,fontWeight:800,color:C.green,marginBottom:8}}>Thank you!</h2>
         <p style={{color:C.t2,fontSize:15,lineHeight:1.6,marginBottom:24}}>Your feedback helps us build a better tool for farmers like you. We read every single response.</p>
         <Btn onClick={() => setPage("home")}>Back to Today</Btn>
@@ -45,7 +45,7 @@ export default function FeedbackSurvey({ setPage }) {
   return (
     <div className="page-enter" style={{maxWidth:600,margin:"0 auto"}}>
       <div style={{marginBottom:28}}>
-        <h1 style={{fontFamily:F.head,fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>💬 Help Us Improve</h1>
+        <h1 style={{fontFamily:F.head,fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>Help Us Improve</h1>
         <p style={{color:C.t2,fontSize:14,marginTop:4}}>4 quick questions — takes about 1 minute</p>
       </div>
 
@@ -108,7 +108,7 @@ export function FeedbackPrompt({ onOpen, onDismiss }) {
       <section ref={card} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="fb-prompt-title" onClick={(e) => e.stopPropagation()}
         style={{position:"relative",width:"min(380px,100%)",background:C.card,color:C.text,borderRadius:24,boxShadow:"0 24px 60px #1c2a1f55",padding:"22px 20px 18px",outline:"none",animation:"q-tp-pop .34s cubic-bezier(.2,1.4,.4,1)"}}>
         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-          <div style={{fontSize:32,lineHeight:1}} aria-hidden="true">💬</div>
+          
           <div style={SX.flex1}>
             <div id="fb-prompt-title" style={{fontSize:17,fontWeight:700,color:C.text,fontFamily:F.head,marginBottom:4}}>How's it going?</div>
             <p style={{fontSize:13,color:C.t2,lineHeight:1.5,margin:0}}>You've been using MyTerra for a week! We'd love your feedback — it takes just 1 minute.</p>

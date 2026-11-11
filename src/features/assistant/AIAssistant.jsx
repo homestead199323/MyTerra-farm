@@ -19,6 +19,8 @@ export default function AIAssistant({data, lift }) {
     }
     document.addEventListener("scroll", onScroll, true); return () => document.removeEventListener("scroll", onScroll, true);
   }, []);
+  // the phone tab bar's "Ask" item opens the chat
+  useEffect(() => { const openIt = () => setOpen(true); window.addEventListener("mt-assistant", openIt); return () => window.removeEventListener("mt-assistant", openIt); }, []);
   const [msgs, setMsgs] = useState([
     {role:"assistant", content:`Hi! I'm your farm assistant. I know everything about the ${rCR(data.region).length} crops and ${Object.keys(LDB).length} animals in your database — and I work offline!\n\nStart typing a crop or animal name and pick from the dropdown, or tap a quick prompt below.`}
   ]);
@@ -244,7 +246,7 @@ export default function AIAssistant({data, lift }) {
           {msgs.length <= 1 && (
             <div style={{padding:"4px 12px 2px",flexShrink:0,display:"flex",gap:4,flexWrap:"wrap"}}>
               {quickPrompts.map((p,i)=>(
-                <button key={i} onClick={()=>sendQuery(p.q)} style={{padding:"5px 10px",borderRadius:16,border:`1px solid ${C.bdr}`,background:C.bg,fontSize:11,cursor:"pointer",color:C.t2,fontFamily:F.body,transition:"all .15s"}}>{p.e} {p.q}</button>
+                <button key={i} onClick={()=>sendQuery(p.q)} style={{padding:"5px 10px",borderRadius:16,border:`1px solid ${C.bdr}`,background:C.bg,fontSize:11,cursor:"pointer",color:C.t2,fontFamily:F.body,transition:"all .15s"}}>{p.q}</button>
               ))}
             </div>
           )}

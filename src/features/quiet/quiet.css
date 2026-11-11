@@ -240,8 +240,11 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
   .lr-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
   .cal-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.cal-stats>*{padding:10px!important;min-width:0}
   /* assistant: a smaller button that slides away while you scroll down; the chat is a full-height sheet */
-  .mt-fab{width:50px!important;height:50px!important;right:14px!important}
-  .mt-fab-away{transform:translateY(140px);opacity:0;pointer-events:none}
+  .mt-fab{display:none!important} /* on a phone the assistant is the Ask item in the tab bar */
   .mt-ai-panel{left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;height:88dvh!important;max-height:none!important;border-radius:22px 22px 0 0!important;border-width:1px 0 0!important;z-index:2600!important}
-  body:has(.mt-ai-panel) .mt-fab,body:has(.overlay-backdrop) .mt-fab{display:none!important}
+  /* pantry: full-size filter chips, a smaller empty box */
+  html .q-stock-filters button{min-height:44px}html .q-stock-empty{padding:24px 18px}
+  /* morning walk: a sheet from the bottom like every other popup */
+  html .q-walk.q-walk-pop{align-items:flex-end;padding:0}
+  html .q-walk-pop .q-walk-shell{width:100%;max-height:92dvh;border-radius:22px 22px 0 0;padding:0 18px calc(8px + env(safe-area-inset-bottom));animation:sheetUp .3s cubic-bezier(.2,.9,.3,1) both}
 }

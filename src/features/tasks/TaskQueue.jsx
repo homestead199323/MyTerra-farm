@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, MapPin, Clock, Timer } from "lucide-react";
 import { C, F, SX } from "../../lib/theme";
 import { Card, SwipeableRow, TaskCheckbox } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
@@ -29,7 +29,7 @@ import TimeBudgetCard from "./TimeBudget";
      - Tap fills the checkbox green, the row fades + slides 8px down + 3% shrink
        (~280ms), then the parent removes it from its section
      - prefers-reduced-motion: instant complete, no animation
-     - Harvest tasks keep the right-side "🧺 Harvest" CTA — it's a goto action,
+     - Harvest tasks keep the right-side "Harvest" CTA — it's a goto action,
        not a completion (harvest happens in PlotOverlay)
    ═══════════════════════════════════════════ */
 const TaskRow = React.memo(function TaskRow({t, onOpen, onToggleStep, onMarkDone, onGoToFarm, onRef}) {
@@ -92,14 +92,14 @@ const TaskRow = React.memo(function TaskRow({t, onOpen, onToggleStep, onMarkDone
             <div style={{fontSize:12.5,color:C.text,lineHeight:1.5,margin:"0 0 6px",textDecoration:strikethrough}}>{t.desc}</div>
           )}
           <div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:11.5,color:C.t2,fontWeight:500}}>
-            <span>📍 {t.loc}</span>
-            {dateLabel && <span style={{color:t.daysOut === 0 ? C.text : C.t2,fontWeight:t.daysOut === 0 ? 700 : 500}}>🕑 {dateLabel}</span>}
-            {t.type !== "forecast" && <span>⏱ {minutesLabel(t)}</span>}
+            <span style={{display:"inline-flex",alignItems:"center",gap:3}}><MapPin size={12} aria-hidden="true"/>{t.loc}</span>
+            {dateLabel && <span style={{color:t.daysOut === 0 ? C.text : C.t2,fontWeight:t.daysOut === 0 ? 700 : 500,display:"inline-flex",alignItems:"center",gap:3}}><Clock size={12} aria-hidden="true"/>{dateLabel}</span>}
+            {t.type !== "forecast" && <span style={{display:"inline-flex",alignItems:"center",gap:3}}><Timer size={12} aria-hidden="true"/>{minutesLabel(t)}</span>}
           </div>
         </div>
         {t.type === "harvest" && onGoToFarm && (
           <div style={{display:"flex",gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-            <button onClick={onGoToFarm} style={{background:C.orange,color:"#fff",border:"none",borderRadius:7,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>🧺 Harvest</button>
+            <button onClick={onGoToFarm} style={{background:C.orange,color:"#fff",border:"none",borderRadius:7,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Harvest</button>
           </div>
         )}
       </div>
@@ -580,7 +580,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
               </div>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span style={{background:attentionTone,color:"#fff",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:12}}>{attentionTasks.length}</span>
-                <span style={{fontSize:12,color:C.t2,fontWeight:600,fontFamily:F.mono}}>{attentionCollapsed ? "Show ▾" : "Hide ▴"}</span>
+                <ChevronDown size={20} aria-hidden="true" style={{color:C.t2,flexShrink:0,transition:"transform .2s",transform:attentionCollapsed?"none":"rotate(180deg)"}}/>
               </div>
             </div>
             <div style={{fontSize:12,color:C.t2,marginTop:3}}>{attentionNote}</div>
@@ -611,14 +611,14 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
         >
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:18}}>☀️</span>
+              
               <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Daily Routine</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{fontSize:12,color:C.t2,fontFamily:F.mono,fontWeight:600}}>
                 {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
               </div>
-              <span style={{fontSize:12,color:C.t2,fontWeight:600,fontFamily:F.mono}}>{routineCollapsed ? "Show ▾" : "Hide ▴"}</span>
+              <ChevronDown size={20} aria-hidden="true" style={{color:C.t2,flexShrink:0,transition:"transform .2s",transform:routineCollapsed?"none":"rotate(180deg)"}}/>
             </div>
           </div>
           <div style={{fontSize:12,color:C.t2,marginTop:3}}>
@@ -655,7 +655,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
           </div>
         ) : (
           <div style={{textAlign:"center",padding:"28px 20px",color:C.t2,fontSize:13}}>
-            {doneTodayList.length > 0 ? "✨ All routine done for today" : "Nothing to water or feed today."}
+            {doneTodayList.length > 0 ? "All routine done for today" : "Nothing to water or feed today."}
           </div>
         ))}
       </Card>
@@ -668,14 +668,14 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
         >
           <div style={{textAlign:"left"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:16}}>🌱</span>
+              
               <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Farm — This Week</div>
             </div>
             <div style={{fontSize:12,color:C.t2,marginTop:3}}>
               {thisWeekFarm.length === 0 ? "Nothing this week" : `${thisWeekFarm.length} task${thisWeekFarm.length === 1 ? "" : "s"} · harvests, transplants, pinching, pruning`}
             </div>
           </div>
-          <span style={{fontSize:12,color:C.t2,fontWeight:600,fontFamily:F.mono}}>{farmWeekCollapsed ? "Show ▾" : "Hide ▴"}</span>
+          <ChevronDown size={20} aria-hidden="true" style={{color:C.t2,flexShrink:0,transition:"transform .2s",transform:farmWeekCollapsed?"none":"rotate(180deg)"}}/>
         </button>
         {!farmWeekCollapsed && (
           thisWeekFarm.length > 0 ? (
@@ -692,7 +692,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
               ))}
             </div>
           ) : (
-            <div style={{textAlign:"center",padding:"20px 16px",color:C.t2,fontSize:12}}>🌱 No growing jobs or harvests in the next 7 days</div>
+            <div style={{textAlign:"center",padding:"20px 16px",color:C.t2,fontSize:12}}>No growing jobs or harvests in the next 7 days</div>
           )
         )}
       </Card>
@@ -706,14 +706,14 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
         >
           <div style={{textAlign:"left"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:16}}>🐄</span>
+              
               <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Animals — This Week</div>
             </div>
             <div style={{fontSize:12,color:C.t2,marginTop:3}}>
               {thisWeekAnimals.length === 0 ? "Nothing this week" : `${thisWeekAnimals.length} task${thisWeekAnimals.length === 1 ? "" : "s"} · cleaning, health, bedding, paddock rotation`}
             </div>
           </div>
-          <span style={{fontSize:12,color:C.t2,fontWeight:600,fontFamily:F.mono}}>{animalsWeekCollapsed ? "Show ▾" : "Hide ▴"}</span>
+          <ChevronDown size={20} aria-hidden="true" style={{color:C.t2,flexShrink:0,transition:"transform .2s",transform:animalsWeekCollapsed?"none":"rotate(180deg)"}}/>
         </button>
         {!animalsWeekCollapsed && (
           thisWeekAnimals.length > 0 ? (
@@ -730,7 +730,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
               ))}
             </div>
           ) : (
-            <div style={{textAlign:"center",padding:"20px 16px",color:C.t2,fontSize:12}}>🐄 No scheduled animal care this week</div>
+            <div style={{textAlign:"center",padding:"20px 16px",color:C.t2,fontSize:12}}>No scheduled animal care this week</div>
           )
         )}
       </Card>
@@ -745,7 +745,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
             style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 18px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,color:C.green,letterSpacing:"0.02em"}}
           >
             <span>✓ Done today · {doneTodayList.length}</span>
-            <span style={{fontSize:11,color:C.t2,fontWeight:500,fontFamily:F.mono}}>{doneCollapsed ? "Show ▾" : "Hide ▴"}</span>
+            <ChevronDown size={20} aria-hidden="true" style={{color:C.t2,flexShrink:0,transition:"transform .2s",transform:doneCollapsed?"none":"rotate(180deg)"}}/>
           </button>
           {!doneCollapsed && (
             <div style={{padding:"0 14px 14px"}}>
@@ -762,7 +762,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
                   <span style={{flexShrink:0,display:"flex"}}><FarmIcon name={d.cropName || d.speciesType} emoji={d.emoji} size={20}/></span>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:600,color:C.t2,textDecoration:"line-through"}}>{d.title}</div>
-                    <div style={{fontSize:11,color:C.t2,marginTop:2}}>📍 {d.loc}</div>
+                    <div style={{fontSize:11,color:C.t2,marginTop:2,display:"flex",alignItems:"center",gap:3}}><MapPin size={12} aria-hidden="true"/>{d.loc}</div>
                   </div>
                   <button onClick={()=>undoDone(d.key)} style={{background:"none",border:`1px solid ${C.bdr}`,color:C.t2,borderRadius:6,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Undo</button>
                 </div>
@@ -775,7 +775,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
       {/* ── Your own jobs (lib/own-tasks.js) ── */}
       <Card style={{marginBottom:16,padding:"14px 16px"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-          <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text}}>📝 Your own jobs</div>
+          <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text}}>Your own jobs</div>
           <button type="button" onClick={()=>setOwnForm({})} style={{background:"none",border:"none",color:C.green,fontSize:13,fontWeight:700,cursor:"pointer",minHeight:40}}>+ Add</button>
         </div>
         <OwnTaskList data={data} setData={setData} onEdit={t=>setOwnForm(t)}/>
@@ -869,7 +869,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                 <div>
                   <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,color:C.text}}>
-                    {isSelToday ? "📌 Today" : "📅"} {dayLabel}
+                    {isSelToday ? "Today" : "📅"} {dayLabel}
                   </div>
                   <div style={SX.t2_11mt2}>
                     {selEvts.length === 0 ? "No tasks scheduled" : `${selEvts.length} task${selEvts.length>1?"s":""} scheduled`}
@@ -878,7 +878,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
                 <button onClick={()=>setSelectedDate(null)} style={{background:"none",border:`1px solid ${C.bdr}`,borderRadius:8,padding:"4px 10px",fontSize:11,color:C.t2,cursor:"pointer",fontWeight:600}}>✕ Close</button>
               </div>
               {selEvts.length === 0
-                ? <div style={{textAlign:"center",padding:"20px 0",color:C.t2,fontSize:12}}>🌱 Nothing to do — enjoy the day!</div>
+                ? <div style={{textAlign:"center",padding:"20px 0",color:C.t2,fontSize:12}}>Nothing to do — enjoy the day!</div>
                 : <div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {selEvts.map((evt,idx) => {
                       // Synthesize a task-shape object so we can reuse TaskRow

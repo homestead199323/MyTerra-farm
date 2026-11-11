@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { C, F } from "../../lib/theme";
 import { budgetCheck, hm, BUDGET_MIN, BUDGET_LABEL } from "../../lib/time-budget";
@@ -35,12 +36,12 @@ export default function TimeBudgetCard({ data, setData, forecast }) {
     <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 14, border: `1px solid ${warn ? C.orange : C.bdr}`, background: warn ? C.harvestBg : C.card }}>
       <button type="button" onClick={function () { setOpen(!expanded); }} aria-expanded={expanded}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left", color: C.text, fontFamily: F.body }}>
-        <span style={{ fontSize: 20 }} aria-hidden="true">⏱️</span>
+        
         <span style={{ flex: 1, minWidth: 0 }}>
           <strong style={{ display: "block", fontSize: 14 }}>{headline}</strong>
           {budget && <small style={{ display: "block", fontSize: 12, color: C.t2, marginTop: 2 }}>Your time: about {hm(budget)} a week</small>}
         </span>
-        <span style={{ fontSize: 12, color: C.t2, fontWeight: 600 }}>{expanded ? "Hide ▴" : "Details ▾"}</span>
+        <ChevronDown size={20} aria-hidden="true" style={{ color: C.t2, flexShrink: 0, transition: "transform .2s", transform: expanded ? "rotate(180deg)" : "none" }} />
       </button>
       {expanded && (
         <div style={{ marginTop: 12 }}>

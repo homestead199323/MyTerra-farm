@@ -46,7 +46,7 @@ function AnimalOverlay({animal, data, setData, onClose}) {
       )}
       {breedInfo && (
         <Card style={{marginBottom:8,background:C.tBlue}}>
-          <div style={{fontSize:12,fontWeight:700,color:C.blue}}>🧬 Breed: {breedInfo.name}</div>
+          <div style={{fontSize:12,fontWeight:700,color:C.blue}}>Breed: {breedInfo.name}</div>
           <div style={SX.s13mt4}>{breedInfo.note}</div>
           {breedInfo.eggs && <div style={{fontSize:12,color:C.green,marginTop:2}}>Egg production: ~{breedInfo.eggs} eggs/day per hen</div>}
         </Card>
@@ -63,7 +63,7 @@ function AnimalOverlay({animal, data, setData, onClose}) {
         </Card>
       ))}
       <Card style={{background:C.tPink,marginBottom:8}}>
-        <div style={{fontSize:12,fontWeight:700,color:C.red}}>🩹 Injuries & Treatment</div>
+        <div style={{fontSize:12,fontWeight:700,color:C.red}}>Injuries & Treatment</div>
         {db.inj.map((j,i) => (
           <div key={i} style={{marginTop:8}}>
             <strong style={SX.s13}>{j.n}</strong>
@@ -72,7 +72,7 @@ function AnimalOverlay({animal, data, setData, onClose}) {
         ))}
       </Card>
       <Card style={{marginBottom:8,background:C.tGreen}}>
-        <div style={SX.lblGreen}>📦 Produce & Storage</div>
+        <div style={SX.lblGreen}>Produce & Storage</div>
         {Object.entries(db.out).map(([k,v]) => (
           <div key={k} style={{marginTop:6}}>
             <strong style={{fontSize:12}}>{k}</strong>: ~{v.p} {v.u}

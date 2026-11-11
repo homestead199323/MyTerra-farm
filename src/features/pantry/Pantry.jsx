@@ -81,10 +81,10 @@ export default function Pantry({ data, setData }) {
   const moves = [...(data.pantry?.moves || [])].reverse().slice(0, 25);
 
   const icon = (name, category, size = 26) => {
-    if (category === "Eggs" || /\beggs?\b/i.test(name)) return <span className="q-stock-emoji">🥚</span>;
-    if (/\bmilk\b/i.test(name)) return <span className="q-stock-emoji">🥛</span>;
-    if (/\bhoney\b/i.test(name)) return <span className="q-stock-emoji">🍯</span>;
-    if (/\bwool\b/i.test(name)) return <span className="q-stock-emoji">🧶</span>;
+    if (category === "Eggs" || /\beggs?\b/i.test(name)) return ;
+    if (/\bmilk\b/i.test(name)) return ;
+    if (/\bhoney\b/i.test(name)) return ;
+    if (/\bwool\b/i.test(name)) return ;
     const crop = cropMap.get(name);
     if (crop) return <FarmIcon name={crop.name} emoji={crop.emoji} size={size} harvest />;
     const e = { Meat: "🥩", Dairy: "🧀", Preserved: "🫙", Grain: "🌾", "Fresh Produce": "🥬" }[category] || "📦";
@@ -158,7 +158,7 @@ export default function Pantry({ data, setData }) {
 
       {shown.length === 0 ? (
         <div className="q-stock-empty">
-          <span>🫙</span>
+          
           <strong>{lines.length === 0 ? "Nothing in stock yet" : `No ${cat.toLowerCase()} in stock`}</strong>
           <p>Harvests, eggs and milk you log land here automatically. Add bought-in or other stock with “Add stock”.</p>
         </div>

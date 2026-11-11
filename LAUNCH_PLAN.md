@@ -722,6 +722,16 @@
   was not moved into a bar (no room beside four tabs). Corrections to the audit: swipe-to-complete already
   existed on task rows (`SwipeableRow`); the "12.7-screen guide page" was the crop list, crop guides are
   about two screens. Checked at 390 × 844 in headless Chrome; not on a phone; dark mode not re-checked.
+- **Phone pass 7 — the rest of the audit, 2026-11-11.** One icon style: emoji are now only pictures of
+  things (a crop, an animal, a job the user chose), never interface icons — 84 label emoji and 23
+  icon-only elements removed across `src/features` (not Onboarding, not the job-icon picker); task rows
+  use line icons for place, day and minutes; this applies on every screen size. "Show / Hide" text toggles
+  are chevrons that turn. Assistant: on a phone it is the sixth tab-bar item "Ask" (`mt-assistant` event),
+  the floating button is desktop and tablet only. Morning walk opens as a bottom sheet on phones. Pantry
+  filter chips 44 px; empty states shrink with the screen. Checked at 390 × 844 light and dark, and at
+  1280 × 800, in headless Chrome, all pages walked with no page errors. NOT checked on a real phone.
+  Left as they are on purpose: emoji in Onboarding choices, in the designer's build tray and first-run
+  guide, and in crop, animal and job pictures.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

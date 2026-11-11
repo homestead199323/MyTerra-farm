@@ -30,7 +30,7 @@ function Livestock({data, setData}) {
   const addErr=!Number.isInteger(countN)||countN<1?"Enter a whole number of animals, 1 or more.":countN>MAX_HEAD?`That's more than ${MAX_HEAD.toLocaleString()} animals — check the count.`:!Number.isFinite(costN)||costN<0?"Cost can't be negative.":costN>MAX_COST?"That cost looks too high — check the number.":"";
   const add=()=>{
     if(addErr)return;
-    const nd={...data,livestock:{...data.livestock,animals:[...data.livestock.animals,{...form,id:uid(),count:countN,cost:costN>0?String(Math.round(costN*100)/100):""}]},log:appendLog(data.log,{text:`🐄 Added ${form.count} ${form.type}${form.breed?` (${form.breed})`:""}`})};
+    const nd={...data,livestock:{...data.livestock,animals:[...data.livestock.animals,{...form,id:uid(),count:countN,cost:costN>0?String(Math.round(costN*100)/100):""}]},log:appendLog(data.log,{text:`Added ${form.count} ${form.type}${form.breed?` (${form.breed})`:""}`})};
     if(costN>0)nd.costs={...(data.costs||{}),items:[...(data.costs?.items||[]),{id:uid(),type:"expense",amount:Math.round(costN*100)/100,label:`${form.type}${form.breed?` ${form.breed}`:""}`,date:todayLocalKey(),cat:"Animals",for:`species:${form.type}`,capital:true}]};
     setData(nd);setForm({name:"",type:"Chicken",breed:"",count:"1",cost:"",zone:""});setShowAdd(false);
   };
@@ -68,17 +68,17 @@ function Livestock({data, setData}) {
   return (
     <div className="page-enter" style={SX.mw800}>
       <div className="pg-head" style={SX.pageHead}><div><h2 className="pg-h2" style={SX.headerH2}>Your animals</h2><p className="pg-sub" style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div><Btn onClick={()=>setShowAdd(true)}>+ Add</Btn></div>
-      <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.emptyIcon}>🐄</div><div style={SX.s15Bold}>No animals yet</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Add chickens, goats, or any livestock to track them</div></Card>:data.livestock.animals.map(a=>{const db=LDB[a.type];return (
+      <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.s15Bold}>No animals yet</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Add chickens, goats, or any livestock to track them</div></Card>:data.livestock.animals.map(a=>{const db=LDB[a.type];return (
         <Card key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <button className="q-animal-open" onClick={()=>setSel(a.id)}>
             <AnimalArt species={a.type} size={72}/><div><strong style={{fontSize:15}}>{a.name||a.type}</strong>{a.breed?<span style={SX.t2_12}> ({a.breed})</span>:null}<div style={SX.t2_12}>×{a.count} · Guide & details</div></div>
           </button>
           <div className="q-animal-actions">
             <select aria-label={`Area for ${a.name||a.type}`} value={a.zone||""} onChange={e=>setData({...data,livestock:{...data.livestock,animals:data.livestock.animals.map(x=>x.id===a.id?{...x,zone:e.target.value}:x)}})}><option value="">Automatic area</option>{data.zones.filter(z=>['pasture','barn','coop','beehive'].includes(z.type)).map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select>
-            {db?.prod.includes("Eggs")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Eggs"});setCollectQty(String(Math.round(a.count*(db.out?.Eggs?.p||0.7))))}}>🥚 Collect Eggs</Btn>}
-            {db?.prod.includes("Milk")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Milk"});setCollectQty(String(Math.round(a.count*(db.out?.Milk?.p||2.5)*10)/10))}}>🥛 Milk</Btn>}
-            {db?.prod.includes("Honey")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Honey"});setCollectQty(String(Math.round(a.count*0.5*10)/10))}}>🍯 Honey</Btn>}
-            {db?.prod.includes("Wool")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Wool"});setCollectQty(String(a.count*3))}}>🧶 Wool</Btn>}
+            {db?.prod.includes("Eggs")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Eggs"});setCollectQty(String(Math.round(a.count*(db.out?.Eggs?.p||0.7))))}}>Collect Eggs</Btn>}
+            {db?.prod.includes("Milk")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Milk"});setCollectQty(String(Math.round(a.count*(db.out?.Milk?.p||2.5)*10)/10))}}>Milk</Btn>}
+            {db?.prod.includes("Honey")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Honey"});setCollectQty(String(Math.round(a.count*0.5*10)/10))}}>Honey</Btn>}
+            {db?.prod.includes("Wool")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Wool"});setCollectQty(String(a.count*3))}}>Wool</Btn>}
             {db?.prod.includes("Meat")&&<button type="button" className="q-animal-meat" aria-label={`Process ${a.name||a.type} for meat`} title="Process for meat" onClick={()=>{setShowK(a);setKQ("1")}}>Meat</button>}
           </div>
         </div></Card>
