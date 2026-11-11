@@ -107,7 +107,7 @@ function materials() {
     // structure
     // look C (docs/MAP_STYLE.md §11): every structural material carries its own surface
     cream: texture(flat(PAL.cream), "plaster"), white: flat(PAL.white), trim: flat(PAL.trim, { rough: .8 }), panel: texture(flat(PAL.panel), "planks"), stone: texture(flat(PAL.stone), "stone"), stoneDark: texture(flat(PAL.stoneDark), "stone"), rock: texture(nightTint(flat(PAL.rock), .6, [.12, .15, .24]), "concrete"), concreteSolid: texture(flat(PAL.concrete), "concrete"),
-    wood: texture(flat(PAL.wood), "wood"), woodMid: texture(flat(PAL.woodMid), "wood"), woodDark: texture(flat(PAL.woodDark), "wood"), woodPale: texture(flat(PAL.woodPale), "wood"), bark: flat(0x8a5a36),
+    wood: texture(flat(PAL.wood), "wood"), woodMid: texture(flat(PAL.woodMid), "wood"), woodDark: texture(flat(PAL.woodDark), "wood"), woodPale: texture(flat(PAL.woodPale), "wood"), bark: texture(flat(0x7c583c), "wood"),
     roofClay: texture(flat(PAL.terracotta, { variant: "roof" }), "roof"), roofSlate: texture(flat(PAL.slate, { variant: "roof" }), "slate"), // tiled roofs
     terracotta: texture(flat(PAL.terracotta), "clay"), sheet: texture(flat(PAL.slate, { variant: "sheet" }), "zinc"), slate: flat(PAL.slate), slateDark: flat(PAL.slateDark), zinc: texture(flat(PAL.zinc, { rough: .6, metal: .15 }), "zinc"), metal: texture(flat(PAL.metal, { rough: .5, metal: .3 }), "metal"), dark: flat(PAL.dark), ink: flat(0x4a3f36),
     barn: texture(flat(PAL.barn), "planks"), barnDark: texture(flat(PAL.barnDark), "planks"), green: flat(PAL.green), greenLight: flat(PAL.greenLight), greenDeep: flat(PAL.greenDeep), brass: flat(0xd9b35c, { rough: .4, metal: .5 }), red: flat(0xd9574a),
@@ -728,10 +728,13 @@ function tuftsIn(ctx, count, seed, area, { y = 0, off = [0, 0] } = {}) { // area
   for (let i = 0; i < count; i++) { const [x, z] = area(i); if (x == null) continue; const s = .7 + srand(seed + i) * .7, ry = srand(seed + i + 5) * 3; ctx.tufts.push({ p: [off[0] + x, y, off[1] + z], ry, s }); }
 }
 const tuftGeos = new Map();
-function tuftGeo() { // a clump of five soft blades, merged: grass tufts and wild flowers are instanced from it
+function tuftGeo() { // a clump of seven thin bent blades of different heights, merged: grass tufts and wild flowers are instanced from it
   if (tuftGeos.has("t")) return tuftGeos.get("t");
   const parts = [];
-  for (let i = 0; i < 5; i++) { const a = (i / 5) * 6.28, c = new THREE.ConeGeometry(.035, .26 + (i % 2) * .08, 5); c.translate(0, .13 + (i % 2) * .04, 0); c.rotateX(.45); c.rotateY(a); c.translate(Math.sin(a) * .04, 0, Math.cos(a) * .04); parts.push(c); }
+  for (let i = 0; i < 7; i++) { // two upright blades in the middle, five leaning out round them; each bends over toward its tip
+    const mid = i < 2, a = (i / 7) * 6.28 + srand(i + 61) * .8, h = (mid ? .34 : .2) + srand(i + 71) * .12, lean = mid ? .08 + i * .1 : .38 + srand(i + 81) * .3, c = new THREE.ConeGeometry(.02, h, 3, 2, true), q = c.attributes.position;
+    c.translate(0, h / 2, 0); for (let k = 0; k < q.count; k++) { const y = q.getY(k) / h; q.setZ(k, q.getZ(k) + y * y * h * .32); } c.rotateX(lean); c.rotateY(a); c.translate(Math.sin(a) * .035, 0, Math.cos(a) * .035); c.computeVertexNormals(); parts.push(c);
+  }
   const g = mergeGeometries(parts, false); parts.forEach((p) => p.dispose()); g.userData.shared = true; tuftGeos.set("t", g); return g;
 }
 function buildLife(g, ctx, M) { // flower heads and festoon bulbs collected by balconyLife / gardenLife / windowBoxes
@@ -1280,7 +1283,7 @@ function gardenEdge(world, ctx, fW, fH, M) {
 const flowerHeads = (ctx) => (ctx.lifeHeads ||= PAL.flower.map(() => []));
 function headsAt(ctx, x, y, z, n, spread, seed) { const H = flowerHeads(ctx); for (let k = 0; k < n; k++) H[(seed + k) % H.length].push({ p: [x + (srand(seed * 3 + k) - .5) * spread, y + srand(seed * 5 + k) * .06, z + (srand(seed * 7 + k) - .5) * spread * .6], s: .035 + srand(seed * 11 + k) * .02 }); }
 function windowBoxes(g, sills, M) { // a terracotta box with greenery and flowers on a sill
-  sills.forEach(([x, y], i) => { rbox(g, .95, .2, .22, M.terracotta, x, y, .2, { r: .04, cast: false }); ball(g, [.42, .13, .1], M.leaf[i % 4], x, y + .14, .2, { seg: 10, rings: 6, cast: false });
+  sills.forEach(([x, y], i) => { rbox(g, .95, .2, .22, M.terracotta, x, y, .2, { r: .04, cast: false }); clump(g, "shrub", i % 3, M.leaf[i % 4], x, y + .12, .2, [.44, .17, .12], 0, false);
     const H = PAL.flower; for (let k = 0; k < 5; k++) ball(g, .045, M.flower[(i + k) % H.length], x - .36 + k * .18, y + .24 + srand(i * 5 + k) * .05, .26, { seg: 6, rings: 4, cast: false }); });
 }
 // a festoon of round bulbs along a sagging wire from a to b (glows after dark through nightGlow on M.bulb)
@@ -1308,7 +1311,7 @@ function trellis(g, x, M, ctx, seed) { // a wooden trellis on the wall with a cl
     ball(g, [r * 1.3, r, r * .7], M.leaf[(k + seed) % 4], lx, ly, z + .08, { seg: 9, rings: 6 }); if (k % 2 === 0) headsAt(ctx, lx, ly + .08, z + .16, 2, .2, seed * 17 + k); }
 }
 function railBox(g, x, z, len, M, ctx, seed) { // a planter hooked over the outside of the railing, flowers spilling over
-  rbox(g, len, .2, .2, M.terracotta, x, .86, z, { r: .04 }); ball(g, [len * .48, .12, .1], M.leaf[seed % 4], x, .99, z, { seg: 10, rings: 6, cast: false });
+  rbox(g, len, .2, .2, M.terracotta, x, .86, z, { r: .04 }); clump(g, "shrub", seed % 3, M.leaf[seed % 4], x, .97, z, [len * .5, .16, .12], 0, false);
   headsAt(ctx, x, 1.05, z, Math.round(len * 7), len * .9, seed);
 }
 function compostBin(g, x, z, M) { rbox(g, .72, .82, .72, M.bin, x, .41, z, { r: .05 }); rbox(g, .78, .07, .78, M.bin, x, .86, z, { r: .03 }); rbox(g, .24, .04, .05, M.dark, x, .9, z + .38, { r: .01, cast: false }); }

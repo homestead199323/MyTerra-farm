@@ -166,4 +166,4 @@ Buildings, ground and props keep the toy SHAPES below; their surfaces follow §1
 - **Small pictures:** only `zone-house.webp` contains a hedge; it was re-rendered. Zone tiles and tree pictures use the look-C trees, so nothing else changed.
 - **Bundle:** Grove3D chunk 242.6 KB gzip of the 245 KB budget. Most of the 2 KB is three's icosphere, which nothing used before.
 - **Faces must point out.** A hedge run with its triangles wound the wrong way still draws — you see the far wall from inside, as a flat dark band — so the test checks that the top faces up and the side faces out.
-
+- **Small things, same day (third slice).** Grass tufts are seven thin bent blades of different heights (two upright, five leaning out) instead of five cones: 63 triangles a tuft against 50. Backdrop trunks and limbs carry the `wood` surface in a browner bark `#7c583c` (they were a flat orange-brown). The greenery in window boxes and rail planters is a stretched `shrub` crown instead of an ellipsoid. All-zones desktop 618,406 → 627,016 triangles, draw calls unchanged. Barn, coop, orchard and pasture tiles re-rendered (tufts).
