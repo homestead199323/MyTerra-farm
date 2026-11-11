@@ -707,6 +707,19 @@
   GPU; the new shapes on production itself (seen in the harnesses only). Grove3D chunk 242.6 KB gzip of the
   245 KB budget. Not done: a second pass on animal anatomy; thin crops on a zoomed-out farm; building and prop
   shapes (judged good enough in the audit, left alone).
+- **3D map — animals, second pass, shipped 2026-11-11 (`7bc041d`)** — same request. `quadruped()` in
+  `animals3d.js`: the trunk rises over the withers, widens at the hips and tucks up at the flank; a shoulder and
+  a haunch mass where each leg leaves the trunk (not under a fleece, not at the lightest level); the skull is
+  one wedge from poll to muzzle; leg stations are laid out on the part of the leg below the belly, so knees and
+  hocks show on every species and the forearm and gaskin thicken above them (before, a cow's joints were hidden
+  in its belly and its legs were posts). Birds and rabbits unchanged. Triangle budgets unchanged and enforced;
+  zoo harness 363,178 → 364,510 triangles, draw calls unchanged. Seven animal pictures and the barn and pasture
+  tiles changed on re-render. Verified: 216 + 3 tests, ESLint, build (sandbox and Mac); zoo harness, no page
+  errors; production `dpl_3NgdHKRnruMZwUgKQtiqv54CUNWe` READY, live `Grove3D-B4_1pTOZ.js` carries `fleece`,
+  no `__g3harness`, CSP present. NOT verified: any real phone or GPU; the walk animation with the thicker upper
+  legs was looked at in stills only. Honest limit: still no muscle or face modelling; the gain is clear on cow,
+  donkey, goat, horse and sheep, small on pig and alpaca. Grove3D chunk 243.0 KB gzip of 245 KB.
+  Still open: thin crops on a zoomed-out farm; a check on Dervis's iPhone.
 - **Phone pass 1, shipped 2026-11-11 (`bf74918`)** — from the mobile audit (project doc
   `claude/mobile-audit-2026-11-11.md`, 16 findings, six slices planned). Farm Designer on a phone: short
   header, undo/redo and snapping in one row, first-run guide covers the whole screen so its button is no
