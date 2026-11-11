@@ -67,7 +67,7 @@ function Livestock({data, setData}) {
 
   return (
     <div className="page-enter" style={SX.mw800}>
-      <div style={SX.pageHead}><div><h2 style={SX.headerH2}>Your animals</h2><p style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div><Btn onClick={()=>setShowAdd(true)}>+ Add</Btn></div>
+      <div className="pg-head" style={SX.pageHead}><div><h2 className="pg-h2" style={SX.headerH2}>Your animals</h2><p className="pg-sub" style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div><Btn onClick={()=>setShowAdd(true)}>+ Add</Btn></div>
       <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.emptyIcon}>🐄</div><div style={SX.s15Bold}>No animals yet</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Add chickens, goats, or any livestock to track them</div></Card>:data.livestock.animals.map(a=>{const db=LDB[a.type];return (
         <Card key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <button className="q-animal-open" onClick={()=>setSel(a.id)}>
@@ -79,7 +79,7 @@ function Livestock({data, setData}) {
             {db?.prod.includes("Milk")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Milk"});setCollectQty(String(Math.round(a.count*(db.out?.Milk?.p||2.5)*10)/10))}}>🥛 Milk</Btn>}
             {db?.prod.includes("Honey")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Honey"});setCollectQty(String(Math.round(a.count*0.5*10)/10))}}>🍯 Honey</Btn>}
             {db?.prod.includes("Wool")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Wool"});setCollectQty(String(a.count*3))}}>🧶 Wool</Btn>}
-            {db?.prod.includes("Meat")&&<button type="button" className="q-animal-meat" aria-label={`Process ${a.name||a.type} for meat`} title="Process for meat" onClick={()=>{setShowK(a);setKQ("1")}}>🔪</button>}
+            {db?.prod.includes("Meat")&&<button type="button" className="q-animal-meat" aria-label={`Process ${a.name||a.type} for meat`} title="Process for meat" onClick={()=>{setShowK(a);setKQ("1")}}>Meat</button>}
           </div>
         </div></Card>
       );})}</div>
@@ -102,7 +102,7 @@ function Livestock({data, setData}) {
       {sa && <AnimalOverlay animal={sa} data={data} setData={setData} onClose={()=>setSel(null)}/>}
 
       {/* Process/Kill Modal */}
-      {showK&&<Overlay title={`🔪 Process ${showK.name||showK.type}`} onClose={()=>setShowK(null)}>
+      {showK&&<Overlay title={`Process ${showK.name||showK.type} for meat`} onClose={()=>setShowK(null)}>
         <Inp label={`Qty (max ${showK.count})`} type="number" min="1" max={showK.count} value={kQ} onChange={e=>setKQ(e.target.value)}/>
         {!killQ(showK)&&<p role="alert" style={{fontSize:12,color:C.red,margin:"-6px 0 10px"}}>Enter a whole number from 1 to {showK.count}.</p>}
         {LDB[showK.type]?.out.Meat&&killQ(showK)>0&&<div style={{fontSize:13,marginBottom:12}}>Estimated: <strong>{Math.round(LDB[showK.type].out.Meat.p*killQ(showK)*10)/10}kg</strong> meat</div>}
@@ -110,7 +110,7 @@ function Livestock({data, setData}) {
       </Overlay>}
 
       {/* Add Animal Modal — with breed dropdown */}
-      {showAdd&&<Overlay title="🐄 Add Animal" onClose={()=>setShowAdd(false)}>
+      {showAdd&&<Overlay title="Add animal" onClose={()=>setShowAdd(false)}>
         <Sel label="Animal Type" value={form.type} onChange={e=>setForm({...form,type:e.target.value,breed:""})} options={Object.entries(LDB).map(([k,v])=>({value:k,label:`${v.e} ${k} — ${v.prod.join(", ")}`}))}/>
         {breedOptions.length > 0 && (
           <Sel label="Breed" value={form.breed} onChange={e=>setForm({...form,breed:e.target.value})} options={[{value:"",label:"— Select breed —"},...breedOptions.map(b=>({value:b.name,label:b.name}))]}/>

@@ -968,8 +968,8 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
   }
   return (
     <div className="page-enter" style={SX.mw800}>
-      <div style={SX.pageHead}>
-        <div><h2 style={SX.headerH2}>Your crops</h2><p style={SX.pageSubHead}>Track your crops from seed to harvest</p></div>
+      <div className="pg-head" style={SX.pageHead}>
+        <div><h2 className="pg-h2" style={SX.headerH2}>Your crops</h2><p className="pg-sub" style={SX.pageSubHead}>Track your crops from seed to harvest</p></div>
         {_canPlant&&<Btn onClick={()=>setShowAdd(true)}>+ Plant Crop</Btn>}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:20}}>

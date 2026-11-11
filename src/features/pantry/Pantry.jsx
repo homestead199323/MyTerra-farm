@@ -123,7 +123,7 @@ export default function Pantry({ data, setData }) {
       <header className="q-stock-head">
         <div>
           <h2>Pantry &amp; stock</h2>
-          <p>Everything your farm produces. Use it, sell it, and see what it’s worth.</p>
+          <p className="pg-sub">Everything your farm produces. Use it, sell it, and see what it’s worth.</p>
         </div>
         <button className="q-secondary" onClick={() => setAdd({ name: "", category: "Fresh Produce", qty: "", unit: "kg", cost: "" })}>
           <PackagePlus size={17} /> Add stock

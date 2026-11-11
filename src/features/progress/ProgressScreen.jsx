@@ -55,10 +55,10 @@ export default function ProgressScreen({ data, setPage }) {
 
   return (
     <div className="page-enter mt-progress" style={SX.mw800}>
-      <div style={SX.pageHead}>
+      <div className="pg-head" style={SX.pageHead}>
         <div>
-          <h2 style={SX.headerH2}>Progress</h2>
-          <p style={SX.pageSubHead}>What your space has given you so far</p>
+          <h2 className="pg-h2" style={SX.headerH2}>Progress</h2>
+          <p className="pg-sub" style={SX.pageSubHead}>What your space has given you so far</p>
         </div>
       </div>
 

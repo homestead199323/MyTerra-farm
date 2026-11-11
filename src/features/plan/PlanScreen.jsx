@@ -62,10 +62,10 @@ export default function PlanScreen({ data, setData, setPage }) {
 
   return (
     <div className="page-enter mt-plan" style={SX.mw800}>
-      <div style={SX.pageHead}>
+      <div className="pg-head" style={SX.pageHead}>
         <div>
-          <h2 style={SX.headerH2}>Plan</h2>
-          <p style={SX.pageSubHead}>What to grow next, and when</p>
+          <h2 className="pg-h2" style={SX.headerH2}>Plan</h2>
+          <p className="pg-sub" style={SX.pageSubHead}>What to grow next, and when</p>
         </div>
       </div>
       <div className="mt-seg" role="tablist" aria-label="Plan views">

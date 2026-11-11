@@ -1,5 +1,22 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { C, F, SX } from "../../lib/theme";
+
+/* Jump links for a long guide: one chip per section found on the page after it renders (built straight in the
+   DOM, the sections are not known up front). Fewer than four sections: no bar. */
+function JumpBar({ k }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const bar = ref.current; if (!bar) return;
+    let root = bar.parentElement, secs = [...root.querySelectorAll("[data-jump]")];
+    if (secs.length < 4 && root.parentElement) { root = root.parentElement; secs = [...root.querySelectorAll("[data-jump]")]; }
+    bar.replaceChildren(...(secs.length < 4 ? [] : secs.map((el) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = (el.getAttribute("data-jump") || "").replace(/^[^\p{L}\p{N}]+/u, "");
+      b.onclick = () => el.scrollIntoView({ behavior: "smooth", block: "start" }); return b;
+    })));
+    bar.hidden = secs.length < 4;
+  }, [k]);
+  return <div ref={ref} className="lr-jump" role="navigation" aria-label="Jump to a section" hidden />;
+}
 import { rCR, rCM, getRegionalCalendar } from "../../lib/regional";
 import { todayLocalKey, daysBetweenLocalKeys } from "../../lib/utils";
 import { parseSowMonths, parseHarvestMonths, getCropDifficulty, MN_ABR, MN_FULL } from "../../lib/calendar";
@@ -26,8 +43,8 @@ function Manuals({data}) {
   const TABS=[{id:"crops",l:"🌱 Crops"},{id:"animals",l:"🐄 Animals"},{id:"preserving",l:"🫙 Preserving"},{id:"projects",l:"🔨 Projects"}];
   return (
     <div className="page-enter" style={{maxWidth:960}}>
-      <h2 style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>📖 Learn</h2>
-      <p style={{color:C.t2,fontSize:13,margin:"0 0 16px",fontWeight:500}}>Everything you need to know — crops, animals, preservation, and DIY builds</p>
+      <h2 className="pg-h2" style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>Learn</h2>
+      <p className="pg-sub" style={{color:C.t2,fontSize:13,margin:"0 0 16px",fontWeight:500}}>Everything you need to know — crops, animals, preservation, and DIY builds</p>
       <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>{TABS.map(t=><button key={t.id} onClick={()=>{setTab(t.id);setSel(null);setS("");}} style={{padding:"8px 20px",borderRadius:20,border:"none",background:tab===t.id?C.green:C.card,color:tab===t.id?"#fff":C.t2,fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:tab===t.id?"none":C.sh}}>{t.l}</button>)}</div>
 
       {tab==="crops"&&<>
@@ -36,7 +53,7 @@ function Manuals({data}) {
           <Inp placeholder="Search crops..." value={s} onChange={e=>setS(e.target.value)}/>
         </div>
         {/* 6.7.1 — visual card grid (replaces admin-style rows) */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))",gap:10,marginTop:8}}>{fil.map(c=>(
+        <div className="lr-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))",gap:10,marginTop:8}}>{fil.map(c=>(
           <div key={c.name} onClick={()=>setSel(c)} style={{background:C.card,borderRadius:C.r,boxShadow:C.sh,cursor:"pointer",padding:"14px 12px 12px",borderTop:`4px solid ${c.color}`,display:"flex",flexDirection:"column",gap:6}}>
             <div style={{display:"flex",justifyContent:"center"}}><FarmIcon name={c.name} emoji={c.emoji} size={38}/></div>
             <div style={{fontSize:13,fontWeight:700,textAlign:"center",letterSpacing:"-0.01em"}}>{c.name}</div>
@@ -121,7 +138,7 @@ function Preserving({embedded}) {
   const DIFF_COLOR = { Easy: C.green, Intermediate: C.orange, Advanced: C.red, "Easy (once set up)": C.green, "Easy (with hive access)": C.green, "Intermediate–Advanced": C.orange, "Easy–Intermediate": "#27ae60" };
 
   const InfoBlock = ({ label, color, bg, children }) => (
-    <div style={{ background: bg || C.soft, borderRadius: C.rs, padding: "12px 14px", marginBottom: 10 }}>
+    <div data-jump={label} style={{ background: bg || C.soft, borderRadius: C.rs, padding: "12px 14px", marginBottom: 10 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: color || C.green, marginBottom: 6, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div>
       <div style={SX.bodyText}>{children}</div>
     </div>
@@ -222,6 +239,7 @@ function Preserving({embedded}) {
             )}
 
             {/* Overview */}
+            <JumpBar k={sel && sel.name}/>
             <InfoBlock label="📖 Overview" color={cc.accent} bg={cc.accent + "1a"}>
               {sel.overview}
             </InfoBlock>
@@ -480,7 +498,7 @@ export function SeasonalCalendar({data, setPage, embedded}) {
       </div>
 
       {/* Summary stats */}
-      <div className="g3" style={{gap:10,marginBottom:16}}>
+      <div className="g3 cal-stats" style={{gap:10,marginBottom:16}}>
         <Stat label="Sow This Month" value={results.sow.length} sub={`${results.sow.filter(c=>!c.planted).length} new options`} color={C.green}/>
         <Stat label="Harvest" value={results.harvest.length} sub="crops in season" color={C.orange}/>
         <Stat label="Maintain" value={results.maintain.length} sub="steps due" color={C.blue}/>
@@ -586,7 +604,7 @@ function Projects({embedded}) {
   const DIFF_COLOR = { Easy: C.green, Intermediate: C.orange, Advanced: C.red };
 
   const InfoBlock = ({ label, color, bg, children }) => (
-    <div style={{ background: bg || C.soft, borderRadius: C.rs, padding: "12px 14px", marginBottom: 10 }}>
+    <div data-jump={label} style={{ background: bg || C.soft, borderRadius: C.rs, padding: "12px 14px", marginBottom: 10 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: color || C.green, marginBottom: 6, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div>
       <div style={SX.bodyText}>{children}</div>
     </div>
@@ -659,6 +677,7 @@ function Projects({embedded}) {
               {sel.ref && <div style={{ fontSize: 11, color: cc.accent, marginTop: 10, fontStyle: "italic", opacity: 0.7 }}>📚 {sel.ref}</div>}
             </div>
 
+            <JumpBar k={sel && sel.name}/>
             <InfoBlock label="📖 Overview" color={cc.accent} bg={cc.accent + "1a"}>{sel.overview}</InfoBlock>
             <Blueprint type={selKey}/>
             <InfoBlock label="🛠 Materials & Tools" color={C.t2} bg={C.soft}>{sel.materials}</InfoBlock>

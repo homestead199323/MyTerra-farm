@@ -708,6 +708,20 @@
   Not changed: the morning-walk card and the assistant are their own components, still floating cards.
   Correction to the audit: dates and currency were NOT wrong — the date field follows the phone's own
   format and currency follows Settings (automatic by locale); the test browser was American.
+- **Phone pass 3–6, 2026-11-11** — the rest of the mobile audit, phones only unless noted (`quiet.css`
+  block "Phone pass 3–6"). Reading: nothing under 12 px on a phone except the tab-bar labels (11 px) and
+  the map's own labels — inline sizes by attribute selector, 62 class rules by a generated override;
+  page headers lose their sentence, titles 26 px, header buttons on one line (`pg-head`, `pg-h2`, `pg-sub`).
+  Scrolling: Learn is two compact columns (12.7 → 6.6 screens); calendar numbers in one row; All tasks
+  (was "Task Calendar") shows today's routine before the week — on every screen size; long guides get
+  jump links (`JumpBar`, four sections or more — in practice the Preserving guides). Assistant: the button
+  is smaller and slides away while you scroll down, the chat opens as a full-height sheet. Polish: the
+  meat button says "Meat" instead of a knife emoji, emoji removed from three titles.
+  NOT done from the audit: one icon style across the app (emoji remain in tabs, chips and lists);
+  "Show / Hide" text toggles; large empty states; Pantry filter chips are still under 44 px; the assistant
+  was not moved into a bar (no room beside four tabs). Corrections to the audit: swipe-to-complete already
+  existed on task rows (`SwipeableRow`); the "12.7-screen guide page" was the crop list, crop guides are
+  about two screens. Checked at 390 × 844 in headless Chrome; not on a phone; dark mode not re-checked.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

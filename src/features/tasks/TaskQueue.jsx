@@ -557,9 +557,9 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
 
   return (
     <div className="page-enter" style={{maxWidth:1100}}>
-      <h2 style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>📋 Task Calendar</h2>
+      <h2 className="pg-h2" style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>All tasks</h2>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",margin:"0 0 16px"}}>
-        <p style={{color:C.t2,fontSize:13,margin:0,fontWeight:500}}>Today's work first, then the week, then the month</p>
+        <p className="pg-sub" style={{color:C.t2,fontSize:13,margin:0,fontWeight:500}}>Today's work first, then the week, then the month</p>
         <button type="button" onClick={()=>setOwnForm({})} style={{border:`1px solid ${C.bdr}`,background:C.card,color:C.green,borderRadius:10,padding:"8px 12px",fontSize:13,fontWeight:700,cursor:"pointer",minHeight:40}}>+ Add your own job</button>
       </div>
 
@@ -602,6 +602,63 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
           )}
         </Card>
       )}
+
+      {/* ── Section 3: DAILY ROUTINE — grouped by location, same every day ── */}
+      <Card p={false} style={{overflow:"hidden",marginBottom:16}}>
+        <button
+          onClick={()=>setRoutineCollapsed(v=>!v)}
+          style={{width:"100%",display:"block",textAlign:"left",padding:"14px 18px 10px",borderBottom: routineCollapsed ? "none" : `1px solid ${C.bdr}`,background:C.soft,border:"none",cursor:"pointer"}}
+        >
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:18}}>☀️</span>
+              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Daily Routine</div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{fontSize:12,color:C.t2,fontFamily:F.mono,fontWeight:600}}>
+                {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+              </div>
+              <span style={{fontSize:12,color:C.t2,fontWeight:600,fontFamily:F.mono}}>{routineCollapsed ? "Show ▾" : "Hide ▴"}</span>
+            </div>
+          </div>
+          <div style={{fontSize:12,color:C.t2,marginTop:3}}>
+            {routineTasks.length === 0
+              ? "Watering and animal care show up here"
+              : `${routineTasks.length} task${routineTasks.length === 1 ? "" : "s"} · your daily walk`}
+          </div>
+        </button>
+
+        {!routineCollapsed && (routineLocations.length > 0 ? (
+          <div style={{padding:"14px"}}>
+            {routineLocations.map(loc => (
+              <div key={loc} style={{marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,paddingLeft:2}}>
+                  <span style={{fontSize:16}}>{locIcon(loc)}</span>
+                  <div style={{fontSize:12,fontWeight:700,color:C.text,textTransform:"uppercase",letterSpacing:"0.04em"}}>At the {loc}</div>
+                  <div style={{marginLeft:"auto",fontSize:11,color:C.t2,fontWeight:600,fontFamily:F.mono}}>
+                    {routineByLoc[loc].length}
+                  </div>
+                </div>
+                {routineByLoc[loc].map((t,i) => (
+                  <TaskRow
+                    key={t.key || `${loc}-${i}`}
+                    t={t}
+                    onOpen={()=>openTask(t)}
+                    onToggleStep={togStep}
+                    onMarkDone={markDone}
+                    onGoToFarm={goToFarm}
+                    onRef={t.key ? (el => { if (el) rowRefs.current[t.key] = el; else delete rowRefs.current[t.key]; }) : undefined}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{textAlign:"center",padding:"28px 20px",color:C.t2,fontSize:13}}>
+            {doneTodayList.length > 0 ? "✨ All routine done for today" : "Nothing to water or feed today."}
+          </div>
+        ))}
+      </Card>
 
       {/* ── Section 2a: COMING UP — FARM (plot harvests + growing steps, next 7 days) ── */}
       <Card p={false} style={{overflow:"hidden",marginBottom:12}}>
@@ -679,62 +736,6 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
       </Card>
       )}
 
-      {/* ── Section 3: DAILY ROUTINE — grouped by location, same every day ── */}
-      <Card p={false} style={{overflow:"hidden",marginBottom:16}}>
-        <button
-          onClick={()=>setRoutineCollapsed(v=>!v)}
-          style={{width:"100%",display:"block",textAlign:"left",padding:"14px 18px 10px",borderBottom: routineCollapsed ? "none" : `1px solid ${C.bdr}`,background:C.soft,border:"none",cursor:"pointer"}}
-        >
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:18}}>☀️</span>
-              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Daily Routine</div>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{fontSize:12,color:C.t2,fontFamily:F.mono,fontWeight:600}}>
-                {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
-              </div>
-              <span style={{fontSize:12,color:C.t2,fontWeight:600,fontFamily:F.mono}}>{routineCollapsed ? "Show ▾" : "Hide ▴"}</span>
-            </div>
-          </div>
-          <div style={{fontSize:12,color:C.t2,marginTop:3}}>
-            {routineTasks.length === 0
-              ? "Watering and animal care show up here"
-              : `${routineTasks.length} task${routineTasks.length === 1 ? "" : "s"} · your daily walk`}
-          </div>
-        </button>
-
-        {!routineCollapsed && (routineLocations.length > 0 ? (
-          <div style={{padding:"14px"}}>
-            {routineLocations.map(loc => (
-              <div key={loc} style={{marginBottom:14}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,paddingLeft:2}}>
-                  <span style={{fontSize:16}}>{locIcon(loc)}</span>
-                  <div style={{fontSize:12,fontWeight:700,color:C.text,textTransform:"uppercase",letterSpacing:"0.04em"}}>At the {loc}</div>
-                  <div style={{marginLeft:"auto",fontSize:11,color:C.t2,fontWeight:600,fontFamily:F.mono}}>
-                    {routineByLoc[loc].length}
-                  </div>
-                </div>
-                {routineByLoc[loc].map((t,i) => (
-                  <TaskRow
-                    key={t.key || `${loc}-${i}`}
-                    t={t}
-                    onOpen={()=>openTask(t)}
-                    onToggleStep={togStep}
-                    onMarkDone={markDone}
-                    onGoToFarm={goToFarm}
-                    onRef={t.key ? (el => { if (el) rowRefs.current[t.key] = el; else delete rowRefs.current[t.key]; }) : undefined}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{textAlign:"center",padding:"28px 20px",color:C.t2,fontSize:13}}>
-            {doneTodayList.length > 0 ? "✨ All routine done for today" : "Nothing to water or feed today."}
-          </div>
-        ))}
-      </Card>
 
       {/* ── Done today — collapsible, stands on its own ── */}
       {doneTodayList.length > 0 && (

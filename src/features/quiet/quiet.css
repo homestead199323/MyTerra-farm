@@ -70,7 +70,7 @@ body{font-family:var(--font-body);letter-spacing:-.015em}button,input,select,tex
 .q-tray-reason{display:block;font-size:11.5px;color:var(--color-text-2);margin:2px 0 4px}.q-tray-reason strong{color:var(--color-green-dark)}
 .q-animal-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
 .q-animal-actions>select{min-height:40px;min-width:150px}
-.q-animal-meat{width:40px;height:40px;min-height:40px;border-radius:12px;border:1px solid var(--color-border);background:var(--color-card);font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.q-animal-meat{min-width:44px;height:44px;min-height:44px;padding:0 14px;font-weight:600;color:var(--color-text);border-radius:12px;border:1px solid var(--color-border);background:var(--color-card);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .q-animal-meat:hover{border-color:#a34f45}
 @media(max-width:600px){.q-animal-actions{width:100%;justify-content:flex-start}.q-animal-actions>select{flex:1}}
 /* Farm designer — drawing paths & fences */
@@ -222,4 +222,26 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
   /* sub-page tabs and the account button: full-size touch targets, and four tabs fit beside the account button */
   .mt-secbar-tabs button{min-height:44px;padding:0 10px}.mt-secbar-me{width:44px;height:44px;border-radius:22px}
   .fd-preview-toggle{min-height:44px;min-width:44px;font-size:13px!important;padding:6px 12px!important}
+}
+/* ── Phone pass 3–6, 2026-11-11 (claude/mobile-audit-2026-11-11.md) ── */
+.lr-jump{display:flex;gap:6px;overflow-x:auto;position:sticky;top:0;z-index:4;background:var(--color-bg);padding:8px 0;margin:0 0 8px;scrollbar-width:none}.lr-jump::-webkit-scrollbar{display:none}
+.lr-jump button{flex:0 0 auto;min-height:38px;padding:0 13px;border-radius:19px;border:1px solid var(--color-border);background:var(--color-card);color:var(--color-text);font:600 13px/1 Inter,-apple-system,sans-serif;cursor:pointer;white-space:nowrap}
+[data-jump]{scroll-margin-top:60px}
+.mt-fab{transition:transform .25s ease,opacity .25s ease}
+@media (max-width:560px){
+  /* reading: nothing under 12 px (the tab bar keeps the iOS size, the map keeps its own labels) */
+  [style*="font-size: 9px"]:not(.mt-tablabel),[style*="font-size: 9.5px"],[style*="font-size: 10px"]:not(.mt-tablabel),[style*="font-size: 10.5px"],[style*="font-size: 11px"],[style*="font-size: 11.5px"]{font-size:12px!important}
+  .mt-tablabel{font-size:11px!important}
+  .q-eyebrow,.q-auto-tag,.q-auto-note,.quiet-map-bottom,.q-lane-number,.q-stage-key small,.q-stage-select,.q-companions>small,.q-companion small,.q-journal small,.q-walk-route span,.q-streak,.q-home-section .q-eyebrow,.q-lane-empty,.q-bed-detail>.q-row .q-pill,.q-bed-detail>.q-row .q-eyebrow,.q-bed-detail>p,.q-bed-detail .q-stage-select,.q-stage-key-crop,.q-walk-shell>.q-row .q-pill,.q-walk-route [aria-current=true],.q-walk-intro,.q-just-checked,.q-walk-task-list label,.q-greeting p,.q-walk-resumed,.q-bed-plan-tools small,.q-pattern-picker small,.q-pattern-picker p,.q-walk-tasks p,.q-walk-status button small,.q-walk-saves-to,.q-planting-preview>small,.q-stage-track li span,.q-stage-track li small,.q-tray-options small,.q-tray-options em,.q-tray-use,.q-seed-timeline small,.q-chips span,.q-seed-progress small,.q-step-no,.q-frost-note,.q-step-why,.q-tray-reason,.mt-wx-day small,.q-growth-steps small{font-size:12px}
+  html .mt-tl-name small,html .mt-tl-head .mt-tl-name,html .mt-tl-head .mt-tl-track span,html .mt-tl-bar span,html .mt-tl-wait,html .mt-bar-col small,html .mt-badge small,html .mt-ins-year>small,html .q-tp-head .q-eyebrow,html .q-tp-body small.q-tp-final,html .q-walk-stage,html .q-stock-stats small,html .q-stock-cat,html .q-move-kind,html .q-stock-stats span{font-size:12px}
+  /* page headers: the title and the button, no sentence underneath */
+  .pg-sub{display:none!important}.pg-h2{font-size:26px!important}.pg-head{align-items:center!important}.pg-head button{white-space:nowrap}
+  /* browsing guides: two compact columns; calendar numbers in one row */
+  .lr-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .cal-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.cal-stats>*{padding:10px!important;min-width:0}
+  /* assistant: a smaller button that slides away while you scroll down; the chat is a full-height sheet */
+  .mt-fab{width:50px!important;height:50px!important;right:14px!important}
+  .mt-fab-away{transform:translateY(140px);opacity:0;pointer-events:none}
+  .mt-ai-panel{left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;height:88dvh!important;max-height:none!important;border-radius:22px 22px 0 0!important;border-width:1px 0 0!important;z-index:2600!important}
+  body:has(.mt-ai-panel) .mt-fab,body:has(.overlay-backdrop) .mt-fab{display:none!important}
 }

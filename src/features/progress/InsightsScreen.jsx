@@ -72,10 +72,10 @@ export default function InsightsScreen({ data, setPage, locked, onUpgrade }) {
 
   return (
     <div className="page-enter mt-progress" style={SX.mw800}>
-      <div style={SX.pageHead}>
+      <div className="pg-head" style={SX.pageHead}>
         <div>
-          <h2 style={SX.headerH2}>Insights</h2>
-          <p style={SX.pageSubHead}>What your space really gives, and what it costs</p>
+          <h2 className="pg-h2" style={SX.headerH2}>Insights</h2>
+          <p className="pg-sub" style={SX.pageSubHead}>What your space really gives, and what it costs</p>
         </div>
       </div>
 

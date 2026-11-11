@@ -9,6 +9,16 @@ import { daysBetweenLocalKeys, todayLocalKey } from "../../lib/utils";
 
 export default function AIAssistant({data, lift }) {
   const [open, setOpen] = useState(false);
+  // On a phone the button slides away while you scroll down a page and comes back when you scroll up, so it never sits on what you are reading.
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    let last = 0;
+    function onScroll(e) {
+      const t = e.target === document ? document.scrollingElement : e.target; if (!t || t.scrollTop == null || t.clientHeight < 300) return;
+      const y = t.scrollTop; if (Math.abs(y - last) < 12) return; setAway(y > last && y > 40); last = y;
+    }
+    document.addEventListener("scroll", onScroll, true); return () => document.removeEventListener("scroll", onScroll, true);
+  }, []);
   const [msgs, setMsgs] = useState([
     {role:"assistant", content:`Hi! I'm your farm assistant. I know everything about the ${rCR(data.region).length} crops and ${Object.keys(LDB).length} animals in your database — and I work offline!\n\nStart typing a crop or animal name and pick from the dropdown, or tap a quick prompt below.`}
   ]);
@@ -140,7 +150,7 @@ export default function AIAssistant({data, lift }) {
     <>
       {/* 6.8.1 / 6.8.2 / 6.8.3 — Lucide icon, pulse on urgent, repositioned above mobile tab bar */}
       <button
-        className="mt-fab"
+        className={"mt-fab" + (away && !open ? " mt-fab-away" : "")}
         onClick={() => setOpen(o => !o)}
         aria-label={open ? "Close farm assistant" : urgentCount > 0 ? `Open farm assistant — ${urgentCount} ${urgentCount === 1 ? "plot" : "plots"} need attention` : "Open farm assistant"}
         style={{
@@ -186,7 +196,7 @@ export default function AIAssistant({data, lift }) {
 
       {/* Chat panel */}
       {open && (
-        <div style={{
+        <div className="mt-ai-panel" style={{
           position:"fixed",
           // 6.8.3 — anchor above the repositioned FAB on mobile (FAB bottom + 56 height + 12 gap)
           bottom: isMobile ? "calc(140px + env(safe-area-inset-bottom))" : 92,

@@ -131,7 +131,7 @@ const BottomNav = React.memo(function BottomNav({page, setPage, taskCount}) {
             }}
           >
             <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:isActive?1:0.5,transition:"opacity .15s"}}><sec.E size={22} strokeWidth={isActive?2.2:1.7}/></span>
-            <span style={{fontSize:10,fontWeight:isActive?700:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>{sec.l}</span>
+            <span className="mt-tablabel" style={{fontSize:10,fontWeight:isActive?700:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>{sec.l}</span>
             {sec.id==="today"&&taskCount>0&&(
               <span style={{position:"absolute",top:0,right:"calc(50% - 20px)",background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:8,minWidth:16,textAlign:"center"}}>{taskCount>9?"9+":taskCount}</span>
             )}
