@@ -67,14 +67,17 @@ const byEase = (a, b) => Number(a.mine) - Number(b.mine) || RANK[a.diff.l] - RAN
 export function monthPlan(data, month, todayKey) {
   const year = planYear(month, todayKey),
     frost = frostDates(data);
-  const growing = new Set((data?.garden?.plots || []).filter((p) => p.status !== "harvested").map((p) => p.crop));
-  (activeBatches(data || {}) || []).forEach((b) => growing.add(b.crop));
+  const active = (data?.garden?.plots || []).filter((p) => p.status !== "harvested");
+  const growing = new Set(active.map((p) => p.crop));
+  // in the ground (or in a seed tray): a plan that still waits to be sown is "Planned", not "Growing"
+  const started = new Set(active.filter((p) => p.plantDate && !p.sowPending).map((p) => p.crop));
+  (activeBatches(data || {}) || []).forEach((b) => { growing.add(b.crop); started.add(b.crop); });
   const plan = { year, indoors: [], outside: [], plantOut: [], plant: [], harvest: [] };
   for (const crop of rCR(data?.region)) {
     const start = startOf(crop),
       p = propagationOf(crop),
       mine = growing.has(crop.name),
-      base = { name: crop.name, crop, diff: getCropDifficulty(crop.name), mine },
+      base = { name: crop.name, crop, diff: getCropDifficulty(crop.name), mine, waiting: mine && !started.has(crop.name) },
       season = `Harvest ${seasonText(crop.harvest)}`;
     if (monthsOf(crop.sowIn).includes(month)) {
       if (start === "indoors") {

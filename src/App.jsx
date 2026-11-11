@@ -25,9 +25,10 @@ import { migrateZones, migratePlotSchema, migrateGamify, migrateCompletions, mig
 import { migratePerennials } from "./lib/perennial";
 import { migratePantry } from "./lib/inventory";
 import { migrateMemory } from "./lib/memory";
+import { migratePlanned } from "./lib/planned";
 import { CROP_MAP } from "./data/crops";
 // migrateMemory last: it reads the pantry log that migratePantry normalises.
-const migrateProfile = (d) => migrateMemory(migratePantry(migratePerennials(migrateProfileBase(d), CROP_MAP, todayLocalKey())), todayLocalKey());
+const migrateProfile = (d) => migrateMemory(migratePantry(migratePlanned(migratePerennials(migrateProfileBase(d), CROP_MAP, todayLocalKey()), todayLocalKey())), todayLocalKey());
 // Same chain as the local/cloud load paths, for a backup file's raw object.
 const migrateBackup = (d) => migrateYardLine(migrateProfile(migrateCompletions(migrateGamify(migratePlotSchema(migrateZones({...DEF, ...d, log: d.log||[], costs: d.costs||{items:[]}}))))));
 import Pantry from "./features/pantry/Pantry";

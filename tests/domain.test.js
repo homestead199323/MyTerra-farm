@@ -17,6 +17,7 @@ import './surfaces.test.js';
 import './toy.test.js';
 import './planting-flow.test.js';
 import './crowns.test.js';
+import './planned.test.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {companionsFor,relation,growthOf,validatePlantingLayout,bedLength,bedRows,animalZone,freePlantingRows} from '../src/features/quiet/farm-model.js';

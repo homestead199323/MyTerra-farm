@@ -137,7 +137,7 @@ export default function MonthCalendar({ data, onAdd }) {
                       <span className="cal-row-text">
                         <strong>
                           {it.name}
-                          {it.mine && s.job !== "harvest" ? <em className="cal-tag mine">Growing</em> : it.diff.l === "Easy" && s.job !== "harvest" ? <em className="cal-tag">Easy</em> : null}
+                          {it.mine && s.job !== "harvest" ? <em className="cal-tag mine">{it.waiting ? "Planned" : "Growing"}</em> : it.diff.l === "Easy" && s.job !== "harvest" ? <em className="cal-tag">Easy</em> : null}
                         </strong>
                         <small>{it.note}</small>
                       </span>

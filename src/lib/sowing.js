@@ -51,6 +51,21 @@ export function isAwaitingSowing(plot) {
   return i >= 0 && !plot.steps[i].done;
 }
 
+/**
+ * A planting saved without a plant date is a plan: say when it can go in.
+ * Window open (lib/suggest.js sowTiming "now"/"soon") → `sowPending`: its first job sits on Today
+ * until it is ticked. Window later → `sowFrom: "YYYY-MM"`: the job appears when that month comes.
+ * Returns the fields to merge into the plot.
+ */
+export function waitingFields(timing, todayKey) {
+  const t = timing || {};
+  if (t.status === "later" && t.month != null) {
+    const y = Number(String(todayKey).slice(0, 4)), m = Number(String(todayKey).slice(5, 7)) - 1;
+    return { sowFrom: (y + (t.month < m ? 1 : 0)) + "-" + String(t.month + 1).padStart(2, "0") };
+  }
+  return { sowPending: true };
+}
+
 /** A planting planned for a later month can be sown once that month has come. */
 export function sowWindowOpen(plot, todayKey) {
   return !plot || !plot.sowFrom || String(todayKey || "").slice(0, 7) >= plot.sowFrom;

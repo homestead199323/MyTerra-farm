@@ -23,6 +23,7 @@ import { applySeedlingStage } from "../../lib/seedling-stage";
 import { usesSeedling } from "./planting-mode";
 import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
+import { plannedFields } from "../../lib/planned";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
 const empty = {
   crop: "",
@@ -128,6 +129,8 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
         steps: crop.steps.map((s) => ({ ...s, done: false })),
       };
     if (fromSeed) plot.plannedDate = plantOutDate;
+    // A plan with no date waits for its window: a job on Today now, or when its month comes (lib/sowing.js).
+    else if (!form.plantDate) Object.assign(plot, plannedFields(crop.name, data.region, todayLocalKey()));
     let next = {
       ...data,
       garden: { ...data.garden, plots: [...data.garden.plots, plot] },
