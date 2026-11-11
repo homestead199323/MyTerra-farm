@@ -15,6 +15,7 @@ import {tasksByZone,taskGlyph} from './zone-tasks';
 import {RemindersPrompt} from '../settings/Reminders';
 import {budgetCheck,hm} from '../../lib/time-budget';
 import {isPlantZone} from '../farm/living/visuals';
+import {openIssues} from '../../lib/diary';
 
 // What the row says under a job: where, how long, and — only when it matters — why now.
 function rowNote(t) {
@@ -52,7 +53,7 @@ export default function GroveHome({data,setData,setPage,tasks,forecast,forecastS
   const due=tasks.filter(t=>t.daysOut===0&&!['forecast','upcoming'].includes(t.type));
   const markers=tasksByZone(tasks,data);
   const zoneOf=t=>Object.keys(markers).find(id=>markers[id].some(x=>x.key===t.key));
-  const issues=(data.observations||[]).filter(e=>e.status==='issue').filter(e=>!(data.observations||[]).some(n=>n.zoneId===e.zoneId&&n.at>e.at)).length;
+  const issues=new Set(openIssues(data.observations).map(e=>e.zoneId)).size;
   const title=spaceTitle(data);
   const week=useMemo(()=>budgetCheck(data,forecast,todayLocalKey()),[data,forecast]);
   const empty=!(data.zones||[]).length;

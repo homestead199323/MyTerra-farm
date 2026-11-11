@@ -288,3 +288,25 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
 /* crop picker groups (2026-11-11): Plant now / Later / Needs open ground */
 .q-crop-group{margin:0;padding:12px 14px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-2);background:var(--color-bg)}
 .q-crop-options button>.q-crop-name{flex:1;min-width:0}.q-crop-options button>small{flex:0 0 auto;font-size:13px;color:var(--color-text-2)}
+/* ── Plant diary on the crop card (2026-11-11) ── */
+.pd{margin:0 0 14px}
+.pd-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.pd-actions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:60px;padding:6px 2px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-card);color:var(--color-text);font:600 12.5px/1.1 Inter,-apple-system,sans-serif;cursor:pointer;transition:transform .12s,border-color .12s}
+.pd-actions button:hover,.pd-actions button[aria-expanded=true]{border-color:var(--color-green)}.pd-actions button:active{transform:scale(.96)}.pd-actions button:disabled{opacity:.5}
+.pd-actions svg{color:var(--color-green)}.pd-actions .warn svg,.pd-list .issue>svg{color:#c98a2b}
+.pd-write{display:flex;gap:8px;margin-top:8px}
+.pd-write input{flex:1;min-width:0;height:48px;box-sizing:border-box;padding:0 14px;font:inherit;font-size:16px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-card);color:var(--color-text)}
+.pd-write .q-button{min-height:48px;flex:0 0 auto}
+.pd-error{margin:8px 0 0;font-size:13px;color:var(--color-red,#c0392b)}
+.pd-photos{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding-bottom:2px;scrollbar-width:none}.pd-photos::-webkit-scrollbar{display:none}
+.pd-photos button{flex:0 0 auto;width:104px;padding:0;border:0;background:none;color:var(--color-text-2);font:inherit;cursor:pointer}
+.pd-photos img{display:block;width:104px;height:104px;object-fit:cover;border-radius:12px;border:2px solid transparent}.pd-photos .on img{border-color:var(--color-green)}
+.pd-photos small{display:block;margin-top:4px;font-size:12px;text-align:center}
+.pd-big{display:block;width:100%;max-height:60vh;object-fit:contain;border-radius:14px;margin-top:8px;background:var(--color-bg)}
+.pd-list{list-style:none;margin:10px 0 0;padding:0}
+.pd-list li{display:flex;align-items:center;gap:10px;min-height:46px;padding:4px 0;border-bottom:1px solid var(--color-border);font-size:14px}.pd-list li:last-child{border-bottom:0}
+.pd-list li>svg{flex:0 0 auto;color:var(--color-text-2)}
+.pd-what{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.pd-what strong{font-weight:600}.pd-what span{font-size:13px;color:var(--color-text-2);overflow-wrap:anywhere}
+.pd-list small{flex:0 0 auto;font-size:12.5px;color:var(--color-text-2)}
+.pd-sorted{flex:0 0 auto;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--color-green);background:transparent;color:var(--color-green);font:600 13px/1 Inter,-apple-system,sans-serif;cursor:pointer}
+.pd-x{flex:0 0 auto;width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:var(--color-text-2);cursor:pointer;border-radius:18px}.pd-x:hover{background:var(--color-bg)}

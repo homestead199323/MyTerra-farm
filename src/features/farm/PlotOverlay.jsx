@@ -8,6 +8,7 @@ import { rCM } from "../../lib/regional";
 import { plotAreaM2, buildZoneSpaceMap } from "../../lib/farm-calc";
 import FarmIcon from "../../components/FarmIcon";
 import Journal from "../quiet/Journal";
+import PlantDiary from "./PlantDiary";
 import {relation, growthOf, STAGES} from "../quiet/farm-model";
 import PlantArt from "../quiet/PlantArt";
 import PlantingLayoutEditor from "../quiet/PlantingLayoutEditor";
@@ -146,6 +147,7 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
         </Card>
       )}
       {editLayout && editable && <PlantingLayoutEditor data={data} setData={setData} zone={editable.zone} plot={editable.plot} onDone={() => setEditLayout(false)}/>}
+      <PlantDiary data={data} setData={setData} plot={plot}/>
 
       {(plot.plantCount > 0 || plot.qty > 0 || plot.expectedYieldKg > 0) && (
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8,marginBottom:14}}>
@@ -230,7 +232,7 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
           <div style={{fontSize:11.5,color:C.t2,marginTop:6}}>Prefilled with MyTerra's estimate. Weigh it if you can — Insights compare real harvests with the estimate.</div>
         </div>
       )}
-    <Journal data={data} setData={setData} plotId={plot.id}/></Overlay>
+    </Overlay>
   );
 }
 

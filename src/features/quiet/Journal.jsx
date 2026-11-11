@@ -1,3 +1,4 @@
+import { entryLabel } from "../../lib/diary";
 export default function Journal({ data, setData, zoneId, plotId }) {
   const entries = (data.observations || [])
     // A walk note belongs to its crop. Older area-level notes (no plotId) still show on each crop they covered.
@@ -16,11 +17,7 @@ export default function Journal({ data, setData, zoneId, plotId }) {
           <article key={e.id}>
             <div className="q-row q-between">
               <strong>
-                {e.status === "issue"
-                  ? "Needs a closer look"
-                  : e.status === "healthy"
-                    ? "Looking good"
-                    : "Checked"}
+                {entryLabel(e)}
               </strong>
               <small>{new Date(e.at).toLocaleDateString()}</small>
             </div>
