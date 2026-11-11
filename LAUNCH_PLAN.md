@@ -892,3 +892,25 @@
   (project doc `claude/qa-pass-10-2026-11-11.md`): plant diary from the crop card, "good to plant now" in the crop
   picker and a pots filter on the calendar, a windowsill track for winter starts, two columns on desktop Today,
   phone text and target sizes for 561 to 767 px.
+- [x] **Pass 11: the six features from QA pass 10, owner said "implement all of them in one go" (2026-11-11,
+  commits `c8da568`, `c09f644`, `8b59058`, `2d507d9`, `b419476`).** (1) Phone reading sizes and touch targets
+  now cover everything with the tab bar (up to 767 px); sheets and layouts still change at 560 px. (2) Today is
+  two columns from 1280 px: map left, jobs, weather and kit right, map capped to the window height. (3) Crop
+  picker grouped as Plant now / Later (with month) / Needs open ground; Calendar has a Pots chip, on by default
+  for a balcony or a containers-only map (`growsInPots`, `potGrower` in lib/suggest.js). (4) Plant diary on the
+  crop card: Watered, Fed, Problem, Note, Photo; photos oldest to newest; entries are observations with a `kind`
+  (lib/diary.js); a Problem flags the area on Today until Sorted or walked. (5) Cress, Pea Shoots, Microgreens
+  (`tray: true`, sown indoors all year; RHS, Gardeners' World, Garden Organic): easy, pot-friendly, part shade,
+  offered by onboarding when little is in season, under Start indoors in the Calendar, own seedling models;
+  counts 72 -> 75. Verified: 230 + 3 tests (7 new), ESLint, Vite build (sandbox and Mac), Grove3D 242.96 KB gzip;
+  every page of the build at 7 widths, no overflow or page errors, Learn text under 12 px at 600-700 px 43% -> 6%;
+  production `dpl_2mxqBPRuprEbYaG1gPz5BZvtvRYP` READY, live `index-CLvdGiY0.js` and CSS carry the new strings and
+  both breakpoints, landing says 75; on production a new shady-balcony visitor is matched Cress, Microgreens,
+  Pea Shoots (Sow now) then Lettuce, Spinach, Mint (from Mar), the picker shows the three groups, cress was
+  planted, Watered + Note + Photo saved and survived a reload, Calendar opens on Pots, 1280 px shows two columns,
+  700 px has no text under 12 px. NOT verified: a real phone (camera/photo picker, keyboard), a signed-in
+  account, photos through cloud sync. Known limits: photos live inside the saved farm (about 20 before "storage
+  is full"; they need file storage to scale); windowsill crops sit in a planter on the map (no indoor area type)
+  and are counted in seeds, not trays; their list pictures are the plain greens artwork (icons not re-rendered);
+  in demo mode at 800 px height the banner pushes the morning-walk button just under the first screen;
+  a quick-log "Watered" does not tick the day's watering job.
