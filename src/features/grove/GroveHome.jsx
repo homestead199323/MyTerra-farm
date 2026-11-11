@@ -73,6 +73,7 @@ export default function GroveHome({data,setData,setPage,tasks,forecast,forecastS
         {due.length>0&&<button className="q-button" onClick={()=>setWalk(true)}><Leaf size={17}/>{data.walkSession?.status==='active'?'Resume morning walk':'Start morning walk'}<ArrowRight size={16}/></button>}
       </section>}
     </section>
+    <div className="q-home-side">
     {!empty&&<WeatherWeek data={data} setData={setData} forecast={forecast} forecastState={forecastState} alerts={alerts} onOpenTasks={()=>setPage('tasks')}/>}
     {!empty&&<RemindersPrompt/>}
     <StarterKit data={data} setData={setData}/>
@@ -83,6 +84,7 @@ export default function GroveHome({data,setData,setPage,tasks,forecast,forecastS
         <span className="q-grow"><strong>{t.title}</strong><small>{rowNote(t)}</small></span><span className="q-task-go" aria-hidden="true">{taskGlyph(t)}<ChevronRight size={17}/></span>
       </button>)}{due.length>5&&<p className="q-empty" style={{padding:'8px 0 0',fontSize:12}}>+{due.length-5} more on the Tasks screen</p>}<button className="q-text-button" onClick={()=>setPage('tasks')}>View all tasks →</button>
     </section>}
+    </div>
     {walk&&createPortal(<WalkOverlay tasks={tasks} data={data} setData={setData} onClose={()=>setWalk(false)}/>,document.body)}
   </div>;
 }

@@ -273,3 +273,15 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
 .quiet-map-bottom>span:empty{display:none}
 @media (max-width:560px){.q-planting-preview svg{max-height:190px}}
 .q-bed-plan-more>summary{list-style:none;justify-content:space-between}.q-bed-plan-more>summary::-webkit-details-marker{display:none}.q-bed-plan-more>summary::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-right:6px;transition:transform .18s}.q-bed-plan-more[open]>summary::after{transform:rotate(-135deg)}
+
+/* ── Today on a wide screen (2026-11-11): the map on the left, today's jobs, weather and kit beside it, so the
+   jobs are on the first screen. Below 1280 px the side column dissolves and the page is one column as before.
+   The map is capped so the whole left card fits the height of the window and can stay put while the side scrolls. ── */
+.q-home-side{display:contents}
+@media (min-width:1280px){
+  .q-home{max-width:none;display:grid;grid-template-columns:minmax(0,calc((100dvh - 290px)/.8)) clamp(340px,34%,460px);gap:24px;align-items:start;justify-content:center}
+  .q-home>.q-garden-hero{margin:0;position:sticky;top:12px}
+  .q-home-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+  .q-home-side>*{margin:0!important}
+  .q-home-side>.q-home-section{order:-1}
+}
