@@ -248,3 +248,15 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
   html .q-walk.q-walk-pop{align-items:flex-end;padding:0}
   html .q-walk-pop .q-walk-shell{width:100%;max-height:92dvh;border-radius:22px 22px 0 0;padding:0 18px calc(8px + env(safe-area-inset-bottom));animation:sheetUp .3s cubic-bezier(.2,.9,.3,1) both}
 }
+/* ── Phone pass 8, 2026-11-11: More sheet, tap-outside for the assistant, one-line task details ── */
+.mt-more{display:flex;flex-direction:column}
+.mt-more button{display:flex;align-items:center;gap:14px;width:100%;min-height:62px;padding:8px 2px;border:0;border-bottom:1px solid var(--color-border);background:transparent;color:var(--color-text);font:inherit;text-align:left;cursor:pointer}
+.mt-more button:last-child{border-bottom:0}.mt-more button>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mt-more strong{font-size:16px;font-weight:650}.mt-more small{font-size:13px;color:var(--color-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-more svg{flex-shrink:0;color:var(--color-text-2)}.mt-more button[aria-current=page] strong{color:var(--color-green)}
+.mt-ai-backdrop{display:none}
+@media (max-width:560px){
+  .mt-ai-backdrop{display:block;position:fixed;inset:0;background:rgba(18,26,20,.3);z-index:2590}
+  .tq-meta{flex-wrap:nowrap!important;gap:8px!important;white-space:nowrap;min-width:0}
+  .tq-meta>span{flex:0 0 auto}.tq-meta>span:first-child{flex:0 1 auto;display:block!important;min-width:0;overflow:hidden;text-overflow:ellipsis}.tq-meta>span:first-child svg{vertical-align:-2px;margin-right:3px}
+}

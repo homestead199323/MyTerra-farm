@@ -732,6 +732,19 @@
   1280 × 800, in headless Chrome, all pages walked with no page errors. NOT checked on a real phone.
   Left as they are on purpose: emoji in Onboarding choices, in the designer's build tray and first-run
   guide, and in crop, animal and job pictures.
+- **Phone pass 8 — after Dervis's first test on his iPhone, 2026-11-11.**
+  Tab bar on a phone is now Today · Tasks · Map · Calendar · More (his call: a phone is for the daily check,
+  tasks, calendar and map). More is a sheet with Learn, Progress, Pantry, Money, Insights and the
+  assistant. Calendar is the Plan page opening on its calendar. The Today/All-tasks tabs at the top are
+  hidden on phones (they are bottom tabs now). Desktop navigation is unchanged.
+  Bug: "Ask" did nothing — the assistant is only mounted for accounts with the AI feature, so the event had
+  no listener; the entry now opens the upgrade screen for other accounts and says "Part of Pro".
+  Bug: "Plant Crop" on a real phone — not reproduced in headless Chrome. Two likely causes removed: the
+  sheet no longer starts fully off screen and takes focus without scrolling (iOS pans the page otherwise),
+  and the crop list opens on tap or typing, not on focus (returning focus reopened the list and hid the
+  form). UNVERIFIED until Dervis retests.
+  Gestures: tap outside any popup closes it (all Overlays, morning walk, assistant); drag the top of a
+  sheet down to close. Text: task details on one line, shorter calendar and time-budget wording.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

@@ -32,7 +32,7 @@ function niceDate(key) {
 }
 
 export default function PlanScreen({ data, setData, setPage }) {
-  const [view, setView] = useState("foryou");
+  const [view, setView] = useState(() => (typeof window !== "undefined" && window.innerWidth <= 560 ? "calendar" : "foryou")); // the phone tab is called Calendar
   const today = todayLocalKey();
   const now = useMemo(function () { return localDateFromKey(today) || new Date(); }, [today]);
   const waiting = useMemo(function () { return waitingPlantings(data, today); }, [data, today]);

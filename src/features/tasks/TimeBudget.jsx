@@ -27,10 +27,10 @@ export default function TimeBudgetCard({ data, setData, forecast }) {
   }
 
   const headline = status === "none"
-    ? `This week: about ${hm(load.total)} of jobs`
+    ? `This week · ${hm(load.total)}`
     : status === "ok"
-    ? `This week: about ${hm(load.total)} of jobs — fits your ${BUDGET_LABEL[tb].toLowerCase()}`
-    : `This week: about ${hm(load.total)} of jobs — ${hm(check.over)} more than your ${BUDGET_LABEL[tb].toLowerCase()}`;
+    ? `This week · ${hm(load.total)} — fits your ${BUDGET_LABEL[tb].toLowerCase()}`
+    : `This week · ${hm(load.total)} — ${hm(check.over)} more than your ${BUDGET_LABEL[tb].toLowerCase()}`;
 
   return (
     <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 14, border: `1px solid ${warn ? C.orange : C.bdr}`, background: warn ? C.harvestBg : C.card }}>

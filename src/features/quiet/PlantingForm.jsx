@@ -194,7 +194,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
           id="crop-choice"
           value={browse ? query : form.crop}
           placeholder="Find a crop…"
-          onFocus={() => {
+          onClick={() => {
             setBrowse(true);
             setQuery("");
           }}

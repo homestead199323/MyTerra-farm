@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
-  Leaf, User, UserRound, MessageSquare, MessageCircle, Settings, ChevronRight
+  Leaf, User, UserRound, MessageSquare, MessageCircle, Settings, ChevronRight,
+  Sun, ListChecks, Map as MapIcon, CalendarDays, Menu, BookOpen, TrendingUp, Package, Wallet, Lightbulb
 } from "lucide-react";
+import { Overlay } from "./components/ui";
 
 import {
   loadFarm, saveFarm, flushFarm, exportFarm,
@@ -107,9 +109,29 @@ class ErrorBoundary extends React.Component {
    An area opens its first page; the pages inside an area are the tabs
    at the top of the screen (SectionBar).
    ═══════════════════════════════════════════ */
-const BottomNav = React.memo(function BottomNav({page, setPage, taskCount}) {
-  const current = sectionOf(page);
+/* Phone tab bar (2026-11-11, Dervis): a phone is for today, the tasks, the map and the calendar, so those are the tabs.
+   What to read or review at a desk (guides, progress, pantry, money, insights) and the assistant sit behind More. */
+const PHONE_TABS = [
+  { id: "today", l: "Today", E: Sun, page: "home", pages: ["home"] },
+  { id: "tasks", l: "Tasks", E: ListChecks, page: "tasks", pages: ["tasks"] },
+  { id: "map", l: "Map", E: MapIcon, page: "map", pages: ["map", "crops", "live"] },
+  { id: "cal", l: "Calendar", E: CalendarDays, page: "plan", pages: ["plan"] },
+];
+const MORE_ROWS = [
+  { page: "manuals", l: "Learn", s: "Guides for crops, animals, preserving", E: BookOpen },
+  { page: "progress", l: "Progress", s: "What your space has given you", E: TrendingUp },
+  { page: "pantry", l: "Pantry", s: "What is in stock", E: Package },
+  { page: "fin", l: "Money", s: "Costs and income", E: Wallet },
+  { page: "insights", l: "Insights", s: "Yields and cost per kilo", E: Lightbulb },
+];
+const BottomNav = React.memo(function BottomNav({page, setPage, taskCount, onAsk, aiLocked}) {
+  const [more, setMore] = useState(false);
+  const inMore = !PHONE_TABS.some(function(t){ return t.pages.includes(page); });
+  const moreOn = more || inMore;
+  const tabStyle = function(active){ return {flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:2, border:"none", background:"transparent", cursor:"pointer", padding:"2px 4px", minHeight:44, color: active ? C.green : C.t2, position:"relative"}; };
+  const tabLabel = function(text, active){ return <span className="mt-tablabel" style={{fontSize:10,fontWeight:active?700:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>{text}</span>; };
   return (
+    <>
     <nav aria-label="Main navigation" style={{
       position:"fixed", bottom:0, left:0, right:0,
       height:"calc(56px + env(safe-area-inset-bottom))",
@@ -118,33 +140,34 @@ const BottomNav = React.memo(function BottomNav({page, setPage, taskCount}) {
       paddingBottom:"env(safe-area-inset-bottom)",
       zIndex:400, boxShadow:"0 -1px 12px rgba(0,0,0,.06)",
     }}>
-      {SECTIONS.map(function(sec) {
-        const isActive = !!current && current.id === sec.id;
+      {PHONE_TABS.map(function(t) {
+        const isActive = !more && t.pages.includes(page);
         return (
-          <button key={sec.id} aria-label={sec.l} aria-current={isActive?"page":undefined}
-            onClick={function(){ setPage(sec.pages[0].id); }}
-            style={{
-              flex:1, display:"flex", flexDirection:"column", alignItems:"center",
-              justifyContent:"flex-start", gap:2, border:"none", background:"transparent",
-              cursor:"pointer", padding:"2px 4px", minHeight:44,
-              color: isActive ? C.green : C.t2, position:"relative",
-            }}
-          >
-            <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:isActive?1:0.5,transition:"opacity .15s"}}><sec.E size={22} strokeWidth={isActive?2.2:1.7}/></span>
-            <span className="mt-tablabel" style={{fontSize:10,fontWeight:isActive?700:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>{sec.l}</span>
-            {sec.id==="today"&&taskCount>0&&(
-              <span style={{position:"absolute",top:0,right:"calc(50% - 20px)",background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:8,minWidth:16,textAlign:"center"}}>{taskCount>9?"9+":taskCount}</span>
+          <button key={t.id} aria-label={t.l} aria-current={isActive?"page":undefined} onClick={function(){ setMore(false); setPage(t.page); }} style={tabStyle(isActive)}>
+            <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:isActive?1:0.5,transition:"opacity .15s"}}><t.E size={22} strokeWidth={isActive?2.2:1.7}/></span>
+            {tabLabel(t.l, isActive)}
+            {t.id==="tasks"&&taskCount>0&&(
+              <span style={{position:"absolute",top:0,right:"calc(50% - 20px)",background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:8,minWidth:16,textAlign:"center",lineHeight:"14px"}}>{taskCount}</span>
             )}
           </button>
         );
       })}
-      {/* the assistant lives in the bar on a phone: always in reach, never on top of the page (AIAssistant listens for the event) */}
-      <button aria-label="Ask the farm assistant" onClick={function(){ window.dispatchEvent(new Event("mt-assistant")); }}
-        style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:2, border:"none", background:"transparent", cursor:"pointer", padding:"2px 4px", minHeight:44, color:C.t2}}>
-        <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:0.5}}><MessageCircle size={22} strokeWidth={1.7}/></span>
-        <span className="mt-tablabel" style={{fontSize:10,fontWeight:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>Ask</span>
+      <button aria-label="More" aria-expanded={more} onClick={function(){ setMore(!more); }} style={tabStyle(moreOn)}>
+        <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:moreOn?1:0.5,transition:"opacity .15s"}}><Menu size={22} strokeWidth={moreOn?2.2:1.7}/></span>
+        {tabLabel("More", moreOn)}
       </button>
     </nav>
+    {more && (
+      <Overlay title="More" onClose={function(){ setMore(false); }}>
+        <div className="mt-more">
+          {MORE_ROWS.map(function(r) {
+            return <button key={r.page} type="button" aria-current={page===r.page?"page":undefined} onClick={function(){ setMore(false); setPage(r.page); }}><r.E size={22} strokeWidth={1.8}/><span><strong>{r.l}</strong><small>{r.s}</small></span><ChevronRight size={18}/></button>;
+          })}
+          <button type="button" onClick={function(){ setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.8}/><span><strong>Ask the assistant</strong><small>{aiLocked ? "Part of Pro" : "Answers about your crops and animals"}</small></span><ChevronRight size={18}/></button>
+        </div>
+      </Overlay>
+    )}
+    </>
   );
 });
 
@@ -155,7 +178,7 @@ const SectionBar = React.memo(function SectionBar({page, setPage, onAccount}) {
   const pages = sec ? sec.pages : [];
   return (
     <div className="mt-secbar">
-      {pages.length > 1
+      {pages.length > 1 && !(onAccount && sec.id === "today") /* on a phone Today and Tasks are tabs at the bottom */
         ? <div className="mt-secbar-tabs" role="tablist" aria-label={sec.l}>
             {pages.map(function(p) {
               return <button key={p.id} type="button" role="tab" aria-selected={page===p.id} onClick={function(){ setPage(p.id); }}>{p.l}</button>;
@@ -683,7 +706,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
           {!showOnboarding && pg()}
         </main>
       </div>
-      {isMobile&&!showOnboarding&&<BottomNav page={page} setPage={setPage} taskCount={taskCount}/>}
+      {isMobile&&!showOnboarding&&<BottomNav page={page} setPage={setPage} taskCount={taskCount} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade}/>}
       {isMobile&&accountOpen&&<AccountSheet page={page} setPage={setPage} isAdmin={isAdmin} title={spaceTitle(data)} plan={planText} onUpgrade={openUpgrade} onClose={()=>setAccountOpen(false)} onOpenSettings={()=>{setAccountOpen(false);setSettingsOpen(true);}}/>}
       {showFeedbackPrompt && <FeedbackPrompt onOpen={() => { setShowFeedbackPrompt(false); setPage("feedback"); }} onDismiss={() => { setShowFeedbackPrompt(false); try { markFeedbackDismissed(); } catch(e) { console.warn("Could not save feedback dismissal state:", e); } }}/>}
       <BadgeCelebration queue={badgeQueue} onDismiss={dismissBadge}/>

@@ -58,7 +58,7 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
   const dialogRef=useRef(null);
   const closeRef=useRef(onClose);
   useEffect(()=>{closeRef.current=onClose;},[onClose]);
-  useEffect(()=>{const previous=document.activeElement;dialogRef.current?.focus();function key(e){if(dialogRef.current&&!dialogRef.current.contains(document.activeElement))return;if(e.key==='Escape'){e.stopPropagation();closeRef.current();}if(e.key==='Tab'){const items=dialogRef.current?.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]');if(!items?.length)return;const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}}document.addEventListener('keydown',key);return()=>{document.removeEventListener('keydown',key);previous?.focus?.();};},[]);
+  useEffect(()=>{const previous=document.activeElement;dialogRef.current?.focus({preventScroll:true});function key(e){if(dialogRef.current&&!dialogRef.current.contains(document.activeElement))return;if(e.key==='Escape'){e.stopPropagation();closeRef.current();}if(e.key==='Tab'){const items=dialogRef.current?.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]');if(!items?.length)return;const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}}document.addEventListener('keydown',key);return()=>{document.removeEventListener('keydown',key);previous?.focus?.();};},[]);
   // Touch drag-to-dismiss for sheet variant
   const [dragY, setDragY] = React.useState(0);
   const [startY, setStartY] = React.useState(null);
@@ -97,12 +97,12 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
 
   if (!isSheet) {
     return createPortal(
-      <div className="overlay-backdrop" style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(18,26,20,.3)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:16,boxSizing:"border-box",overflowX:"hidden"}}>
+      <div className="overlay-backdrop" onClick={onClose} style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(18,26,20,.3)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:16,boxSizing:"border-box",overflowX:"hidden"}}>
         <div
           onClick={function(e){e.stopPropagation();}}
           className="overlay-sheet overlay-pop" ref={dialogRef} role="dialog" aria-modal="true" aria-label={typeof title === "string" ? title : (ariaLabel || "Dialog")} tabIndex={-1}
-          style={{background:C.card,borderRadius:C.r+4,maxWidth:wide?720:520,width:"100%",maxHeight:"calc(100% - 32px)",overflowY:"scroll",overflowX:"hidden",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",boxSizing:"border-box",boxShadow:"0 20px 60px rgba(0,0,0,.2), 0 8px 20px rgba(0,0,0,.1)"}}>
-          <div className="overlay-handle-row" style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 24px 0",position:"sticky",top:0,background:C.card,zIndex:1,borderRadius:`${C.r+4}px ${C.r+4}px 0 0`}}>
+          style={{transform:dragY?`translateY(${dragY}px)`:undefined,transition:startY===null?"transform .22s ease":"none",background:C.card,borderRadius:C.r+4,maxWidth:wide?720:520,width:"100%",maxHeight:"calc(100% - 32px)",overflowY:"scroll",overflowX:"hidden",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",boxSizing:"border-box",boxShadow:"0 20px 60px rgba(0,0,0,.2), 0 8px 20px rgba(0,0,0,.1)"}}>
+          <div className="overlay-handle-row" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 24px 0",position:"sticky",top:0,touchAction:"none",background:C.card,zIndex:1,borderRadius:`${C.r+4}px ${C.r+4}px 0 0`}}>
             <h3 style={{margin:0,fontSize:20,fontFamily:F.head,fontWeight:700}}>{title}</h3>
             <button aria-label="Close dialog" onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.t2,width:44,height:44,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center"}}><X size={18} strokeWidth={2}/></button>
           </div>
@@ -115,7 +115,7 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
 
   // Sheet variant — spring drag-to-dismiss
   return createPortal(
-    <div className="overlay-backdrop" style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,boxSizing:"border-box",overflowX:"hidden"}}>
+    <div className="overlay-backdrop" onClick={onClose} style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,boxSizing:"border-box",overflowX:"hidden"}}>
       {/* Backdrop fades as sheet is dragged down */}
       <div style={{position:"absolute",inset:0,background:"rgba(18,26,20,.3)",opacity}}/>
       <div

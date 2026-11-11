@@ -91,7 +91,7 @@ const TaskRow = React.memo(function TaskRow({t, onOpen, onToggleStep, onMarkDone
           {(t.type === "weather" || t.held || t.frostPick) && t.desc && (
             <div style={{fontSize:12.5,color:C.text,lineHeight:1.5,margin:"0 0 6px",textDecoration:strikethrough}}>{t.desc}</div>
           )}
-          <div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:11.5,color:C.t2,fontWeight:500}}>
+          <div className="tq-meta" style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:11.5,color:C.t2,fontWeight:500}}>
             <span style={{display:"inline-flex",alignItems:"center",gap:3}}><MapPin size={12} aria-hidden="true"/>{t.loc}</span>
             {dateLabel && <span style={{color:t.daysOut === 0 ? C.text : C.t2,fontWeight:t.daysOut === 0 ? 700 : 500,display:"inline-flex",alignItems:"center",gap:3}}><Clock size={12} aria-hidden="true"/>{dateLabel}</span>}
             {t.type !== "forecast" && <span style={{display:"inline-flex",alignItems:"center",gap:3}}><Timer size={12} aria-hidden="true"/>{minutesLabel(t)}</span>}

@@ -499,9 +499,9 @@ export function SeasonalCalendar({data, setPage, embedded}) {
 
       {/* Summary stats */}
       <div className="g3 cal-stats" style={{gap:10,marginBottom:16}}>
-        <Stat label="Sow This Month" value={results.sow.length} sub={`${results.sow.filter(c=>!c.planted).length} new options`} color={C.green}/>
-        <Stat label="Harvest" value={results.harvest.length} sub="crops in season" color={C.orange}/>
-        <Stat label="Maintain" value={results.maintain.length} sub="steps due" color={C.blue}/>
+        <Stat label="To sow" value={results.sow.length} sub={`${results.sow.filter(c=>!c.planted).length} new`} color={C.green}/>
+        <Stat label="Harvest" value={results.harvest.length} sub="in season" color={C.orange}/>
+        <Stat label="Maintain" value={results.maintain.length} sub="due" color={C.blue}/>
       </div>
 
       {/* Filter tabs */}

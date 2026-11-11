@@ -197,6 +197,7 @@ export default function AIAssistant({data, lift }) {
       </button>
 
       {/* Chat panel */}
+      {open && <div className="mt-ai-backdrop" onClick={() => setOpen(false)} />}
       {open && (
         <div className="mt-ai-panel" style={{
           position:"fixed",
