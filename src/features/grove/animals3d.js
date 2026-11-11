@@ -96,8 +96,10 @@ function quadruped(S, r, vi) {
   // body: a capsule along z, wider than tall for cattle and pigs
   // the trunk is one lofted form: level back, deeper chest, a belly where the species carries one, narrowing to rump and breast
   const w0 = br * bw, hz = bl / 2;
-  R.loft([[-hz - br * .98, .02, by + br * .5, by + br * .2], [-hz - br * .62, w0 * .62, by + br * .84, by - br * .42], [-hz, w0, by + br * .98, by - br * .88], [-bl * .15, w0 * 1.06, by + br * .95, by - br * (S.belly ? 1.08 : .98)], [bl * .2, w0 * 1.02, by + br * .94, by - br],
-    [hz, w0 * .92, by + br, by - br * (S.chest ? 1.02 : .92)], [hz + br * .55, w0 * .6, by + br * .9, by - br * .55], [hz + br * .95, .02, by + br * .45, by + br * .05]], C.body, { field: paint, rings: 30, seg: 32 });
+  const tuck = S.tuck ?? (S.belly ? .02 : .12), wither = S.withers ?? .06; // how far the flank is drawn up behind the ribs, and the rise over the shoulders
+  R.loft([[-hz - br * .98, .02, by + br * .5, by + br * .2], [-hz - br * .62, w0 * .64, by + br * .86, by - br * .42], [-hz, w0 * 1.04, by + br * 1.0, by - br * .86], [-bl * .27, w0 * .97, by + br * .93, by - br * (.98 - tuck)],
+    [-bl * .02, w0 * 1.07, by + br * .94, by - br * (S.belly ? 1.1 : .98)], [bl * .24, w0 * 1.03, by + br * .95, by - br * (S.chest ? 1.06 : 1)],
+    [hz, w0 * .96, by + br * (1 + wither), by - br * (S.chest ? 1.02 : .92)], [hz + br * .55, w0 * .64, by + br * .92, by - br * .6], [hz + br * .95, .02, by + br * .45, by + br * .05]], C.body, { field: paint, rings: 30, seg: 32 });
   // neck + head pivot at the withers
   const n0 = [0, by + br * .35, bl / 2 + br * .1], up = S.neck.up, nl = S.neck.len;
   const n1 = [0, n0[1] + Math.sin(up) * nl, n0[2] + Math.cos(up) * nl];
@@ -105,9 +107,12 @@ function quadruped(S, r, vi) {
   R.loft([[-S.neck.r0 * .5, S.neck.r0 * .9, S.neck.r0 * 1.05, -S.neck.r0 * 1.15], [nl * .5, (S.neck.r0 + S.neck.r1) * .46, (S.neck.r0 + S.neck.r1) * .52, -(S.neck.r0 + S.neck.r1) * .56], [nl * 1.05, S.neck.r1 * .92, S.neck.r1, -S.neck.r1]], C.body, { part: PART.head, pivot: n0, pos: n0, rot: [-up, 0, 0], field: paint, rings: 8, seg: 18, pow: 2.1 });
   if (S.mane) for (let k = 0, nm = hairs(9, 4); k < nm; k++) { const t = .08 + k * .8 / (nm - 1), m = [0, n0[1] + (n1[1] - n0[1]) * t + S.neck.r0 * (1.02 - t * .3), n0[2] + (n1[2] - n0[2]) * t - S.neck.r0 * .25 * Math.sin(up)]; R.blade(S.mane * 2.6, S.mane * 1.1 * Math.sqrt(9 / nm), C.mane || C.tuft, { part: PART.head, pivot: n0, pos: m, rot: [1.2 - up * .3, (k % 2 ? 1 : -1) * 1.35, 0], droop: .5, fold: .2 }); }
   const hl = S.head.l * 1.05, hw = S.head.w * 1.1, hh = S.head.h * 1.1, pitch = S.head.pitch || 0, hc = [0, n1[1] + Math.sin(-pitch) * hl * .3, n1[2] + hl * .3];
-  head(sph(16, 12), { pos: hc, scale: [hw, hh, hl * .66], rot: [pitch, 0, 0], field: paint });
   // snout / muzzle
-  const sn = S.snout, sc = [0, hc[1] - sn.drop, hc[2] + hl * .5];
+  const sn = S.snout, sc = [0, hc[1] - sn.drop, hc[2] + hl * .5], mx = (a, b2, t) => a + (b2 - a) * t;
+  // the skull is one wedge from the poll to the muzzle: brow and jaw at their widest behind the eye, tapering into the snout
+  R.loft([[hc[2] - hl * .66, .02, hc[1] + hh * .3, hc[1] - hh * .05], [hc[2] - hl * .46, hw * .84, hc[1] + hh * .92, hc[1] - hh * .74], [hc[2] - hl * .06, hw * 1.03, hc[1] + hh * 1.03, hc[1] - hh * .98],
+    [hc[2] + hl * .3, mx(hw, sn.w * 1.15, .55), mx(hc[1] + hh, sc[1] + sn.h * 1.1, .55), mx(hc[1] - hh * .95, sc[1] - sn.h * 1.05, .55)], [sc[2] + sn.l * .1, sn.w * 1.13, sc[1] + sn.h * 1.08, sc[1] - sn.h * 1.05], [sc[2] + sn.l * .55, sn.w * .9, sc[1] + sn.h * .8, sc[1] - sn.h * .8]],
+    C.head, { part: PART.head, pivot: n0, field: paint, rings: 12, seg: 16, minRings: 6, minSeg: 8, pow: 2.2 });
   head(sph(14, 10), { pos: sc, scale: [sn.w * 1.15, sn.h * 1.1, sn.l], color: C.muzzle || C.head, field: C.muzzle ? null : paint });
   if (S.noseDisc) head(new THREE.CylinderGeometry(sn.w * .8, sn.w * .8, .03, 10), { pos: [0, sc[1], sc[2] + sn.l * .95], rot: [HPI, 0, 0], color: C.nose || 0x6d4a44 });
   else head(sph(7, 5), { pos: [0, sc[1] + sn.h * .25, sc[2] + sn.l * .82], scale: [sn.w * .5, sn.h * .35, sn.l * .3], color: C.nose || 0x33302d });
@@ -126,13 +131,19 @@ function quadruped(S, r, vi) {
   if (S.topknot) head(sph(7, 5), { pos: [0, hc[1] + hh * .9, hc[2] - hl * .05], scale: [hw * .9, hh * .45, hl * .45], color: C.tuft || C.head });
   // legs: FL FR BL BR, pivot at the hip, hoof at the ground
   const lr = S.legR * .88, lx = br * bw * .62, lzF = bl / 2 - br * .15, lzB = -bl / 2 + br * .2, hipY = by - br * .35;
-  // legs are lofted from pastern to elbow or stifle, with a knee in front and a hock behind; stations are [height, half width, back, front] in leg radii
-  const FRONT = [[.07, .9, .9, -1], [.17, 1.05, 1.2, -1.1], [.24, .8, .85, -.85], [.42, .82, .9, -.9], [.5, 1.15, 1.2, -1.35], [.58, 1.05, 1.15, -1.15], [.75, 1.5, 1.8, -1.7], [.92, 1.8, 2.5, -2.1], [1, 1.3, 2, -1.7]];
-  const HIND = [[.07, .9, .9, -1], [.17, 1.05, 1.3, -1.05], [.25, .8, 1.05, -.72], [.44, .85, 1.6, -.3], [.53, 1.05, 2.6, -.15], [.62, 1.1, 2, -.6], [.76, 1.6, 1.9, -2], [.92, 2.1, 2.1, -3.2], [1, 1.6, 1.7, -2.8]];
-  const legTop = hipY + br * .3, lr0 = lr * 1.25;
+  // legs are lofted from pastern to shoulder or hip; stations are [u, half width, back, front] in leg radii. u runs 0-1 up the part of the leg
+  // that shows below the belly and 1-2 up the part inside the trunk, so on every species the knee and the hock sit half-way up the leg you can
+  // see and the forearm and gaskin thicken above them (before, the joints of a deep-bodied animal were hidden in its belly and the legs were posts)
+  const FRONT = [[.07, .9, .9, -1], [.17, 1.05, 1.2, -1.1], [.25, .8, .85, -.85], [.44, .84, .92, -.92], [.52, 1.2, 1.25, -1.4], [.6, 1.1, 1.2, -1.2], [.8, 1.55, 1.9, -1.65], [1, 1.9, 2.5, -2], [1.5, 2, 2.6, -2.2], [2, 1.3, 2, -1.7]];
+  const HIND = [[.07, .9, .9, -1], [.17, 1.05, 1.3, -1.05], [.25, .8, 1.05, -.72], [.46, .86, 1.5, -.4], [.56, 1.08, 2.5, -.2], [.66, 1.15, 2, -.75], [.84, 1.7, 2, -2], [1, 2.2, 2.3, -3], [1.5, 2.3, 2.4, -3.2], [2, 1.6, 1.7, -2.8]];
+  const legTop = hipY + br * .3, lr0 = lr * 1.25, shown = Math.min(.8, Math.max(.3, (by - br * .92) / legTop)); // the share of the leg below the belly
+  if (QUAL >= .5 && !S.fleece) [-1, 1].forEach((sd2) => { // the shoulder and the haunch: the mass a leg hangs from (dropped at the lightest level, and under a fleece)
+    R.ell(w0 * .44, br * .82, br * .62, C.body, { pos: [sd2 * w0 * .68, by - br * .1, lzF - br * .02], rot: [.3, 0, 0], field: paint, seg: 10, rings: 7 });
+    R.ell(w0 * .5, br * .88, br * .8, C.body, { pos: [sd2 * w0 * .66, by - br * .08, lzB + br * .1], rot: [-.25, 0, 0], field: paint, seg: 10, rings: 7 });
+  });
   [[-lx, lzF, PART.FL, FRONT], [lx, lzF, PART.FR, FRONT], [-lx, lzB, PART.BL, HIND], [lx, lzB, PART.BR, HIND]].forEach(([x, z, part, st]) => {
     const piv = [x, hipY, z];
-    R.loft(st.map(([t, w, back, front]) => [t * legTop, w * lr0, back * lr0, front * lr0]), C.legs || C.body, { part, pivot: piv, pos: [x, 0, z], rot: [-HPI, 0, 0], field: C.legs ? null : paint, rings: 16, seg: 12, minRings: 7, minSeg: 8, pow: 2.2 });
+    R.loft(st.map(([u, w, back, front]) => [(u <= 1 ? u * shown : shown + (u - 1) * (1 - shown)) * legTop, w * lr0, back * lr0, front * lr0]), C.legs || C.body, { part, pivot: piv, pos: [x, 0, z], rot: [-HPI, 0, 0], field: C.legs ? null : paint, rings: 16, seg: 12, minRings: 7, minSeg: 8, pow: 2.2 });
     if (S.mane || QUAL < .5) R.ell(lr * 1.35, lr * 1.0, lr * 1.5, C.hoof || 0x3a302a, { part, pivot: piv, pos: [x, lr * .8, z + lr * .15], seg: 10, rings: 7, surf: [0, .45] }); // a single hoof
     else [-1, 1].forEach((sd2) => R.ell(lr * .72, lr * .95, lr * 1.3, C.hoof || 0x3a302a, { part, pivot: piv, pos: [x + sd2 * lr * .62, lr * .8, z + lr * .35], rot: [0, sd2 * .14, 0], seg: 8, rings: 6, surf: [0, .45] })); // cloven
   });
@@ -211,7 +222,7 @@ const SPECIES = {
     neck: { len: .55, up: 42 * DEG, r0: .2, r1: .15 }, head: { l: .5, w: .15, h: .19, pitch: .5 }, snout: { w: .13, h: .11, l: .16, drop: .14 },
     ears: { type: "long", len: .34, w: .07 }, tail: { len: .7, down: .62, back: .1, r: .03, tuft: .16 },
     colors: (r, vi) => { const v = pick(vi, [0x8d8781, 0x6e665e, 0xa39a90]); return { body: col(v), head: col(v), muzzle: col(0xe5ded3), hoof: col(0x2a2220), tuft: col(0x3a332e), mane: col(0x3a332e), ears: col(v) }; } },
-  Alpaca: { graze: 2.0, kind: KIND.grazer, L: 1.6, H: 1.0, br: .34, bw: .95, bodyFrac: .55, belly: true, legR: .045, walk: .4, seed: 4, topknot: true,
+  Alpaca: { graze: 2.0, kind: KIND.grazer, fleece: true, L: 1.6, H: 1.0, br: .34, bw: .95, bodyFrac: .55, belly: true, legR: .045, walk: .4, seed: 4, topknot: true,
     neck: { len: .75, up: 78 * DEG, r0: .17, r1: .12 }, head: { l: .32, w: .12, h: .15, pitch: .3 }, snout: { w: .09, h: .08, l: .1, drop: .06 },
     ears: { type: "up", len: .14, w: .045 }, tail: { len: .2, down: .05, back: .18, r: .05, up: false },
     colors: (r, vi) => { const v = pick(vi, [0xf1e8d6, 0xd9b98f, 0x6d4a33, 0xc7c0b6]); return { body: col(v), head: col(v), muzzle: col(v).multiplyScalar(.85), hoof: col(0x3a302a), tuft: col(v) }; },
@@ -224,7 +235,7 @@ const SPECIES = {
     neck: { len: .36, up: 42 * DEG, r0: .11, r1: .085 }, head: { l: .3, w: .1, h: .13, pitch: .35 }, snout: { w: .07, h: .07, l: .1, drop: .06 },
     ears: { type: "side", len: .16, w: .06 }, horns: { spread: .04, up: .14, back: .14, r: .022 }, tail: { len: .14, r: .02, up: true },
     colors: (r, vi) => { const v = pick(vi, [[0xf3efe6, 0xa86b3c], [0xefe6d4, 0x3a2f28], [0x8a5a3a, 0x3a2a20], [0x5a4638, null]]); return { body: col(v[0]), patch: v[1] == null ? null : col(v[1]), head: col(v[0]), hoof: col(0x3a302a), tuft: col(v[1] == null ? 0x8a7a6a : v[1]), horn: col(0x9a8c76) }; }, patchCut: .5 },
-  Sheep: { graze: .85, kind: KIND.grazer, L: 1.25, H: .78, br: .28, bw: 1.05, bodyFrac: .55, legR: .03, walk: .32, seed: 7,
+  Sheep: { graze: .85, kind: KIND.grazer, fleece: true, L: 1.25, H: .78, br: .28, bw: 1.05, bodyFrac: .55, legR: .03, walk: .32, seed: 7,
     neck: { len: .22, up: 20 * DEG, r0: .12, r1: .09 }, head: { l: .3, w: .1, h: .13, pitch: .3 }, snout: { w: .07, h: .07, l: .1, drop: .05 },
     ears: { type: "side", len: .12, w: .06 }, tail: { len: .12, down: .12, back: .03, r: .03 },
     colors: (r, vi) => { const v = pick(vi, [[0xf4efe3, 0x2b2622], [0xf4efe3, 0xf0e8da], [0xe9e2d3, 0x5a4a3c], [0xd8d0c0, 0x2b2622]]); return { body: col(v[0]), head: col(v[1]), legs: col(v[1]), ears: col(v[1]), hoof: col(0x2a2220) }; },
