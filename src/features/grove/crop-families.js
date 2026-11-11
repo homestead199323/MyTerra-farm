@@ -55,8 +55,10 @@ export const FAMILIES = [
   [/rhubarb/, "rhubarb", {}],
   [/artichoke/, "artichoke", {}],
 ];
+/* windowsill tray crops are a carpet of seedlings: the plain leafy model, whatever word is in the name ("Pea Shoots" is not a pea plant) */
+export const TRAY_RE = /shoots|microgreens|^cress$/;
 export function cropFamily(name = "") {
-  const n = name.toLowerCase(), i = FAMILIES.findIndex(([re]) => re.test(n));
+  const n = name.toLowerCase(), i = TRAY_RE.test(n) ? -1 : FAMILIES.findIndex(([re]) => re.test(n));
   return i < 0 ? { idx: FAMILIES.length, family: "leafy", o: { leaf: 0x7cc47c, tip: 0xa8dd98, n: 9, up: .6 } } : { idx: i, family: FAMILIES[i][1], o: FAMILIES[i][2] };
 }
 /* a stable, readable name per family entry, used for the crop icon files (crop-<slug>-<stage>.webp) */

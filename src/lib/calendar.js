@@ -50,7 +50,7 @@ export const CROP_DIFFICULTY = {
   easy: [
     "Radish","Lettuce","Spinach","Zucchini","Bean (Dry)","Pea","Broad Bean",
     "Mint","Basil","Kale","Swiss Chard","Strawberry","Turnip","Sunflower",
-    "Blackberry","Rhubarb",
+    "Blackberry","Rhubarb","Cress","Pea Shoots","Microgreens",
   ],
   medium: [
     "Tomato","Pepper (Sweet)","Cucumber","Carrot","Onion","Beetroot","Cabbage",

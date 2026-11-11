@@ -79,6 +79,10 @@ export function monthPlan(data, month, todayKey) {
       mine = growing.has(crop.name),
       base = { name: crop.name, crop, diff: getCropDifficulty(crop.name), mine, waiting: mine && !started.has(crop.name) },
       season = `Harvest ${seasonText(crop.harvest)}`;
+    if (crop.tray) { // a windowsill tray: started indoors in any month, never planted out, cut within weeks
+      plan.indoors.push({ ...base, note: `Windowsill · cut in ${crop.days} days` });
+      continue;
+    }
     if (monthsOf(crop.sowIn).includes(month)) {
       if (start === "indoors") {
         const sowOn = `${year}-${pad(month + 1)}-15`,

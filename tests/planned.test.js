@@ -86,3 +86,29 @@ test('Pots: the picker and calendar know what crops in a pot, and who grows only
   assert(!potGrower({ zones: [{ type: 'container' }, { type: 'raised' }] }));
   assert(!potGrower({ zones: [] }));
 });
+
+import { suggestCrops, sowTiming } from '../src/lib/suggest.js';
+import { cropFamily } from '../src/features/grove/crop-families.js';
+import { getCropDifficulty } from '../src/lib/calendar.js';
+test('Windowsill crops: sowable in every month, offered to a shady balcony beginner in November, spring crops still follow', () => {
+  const trays = ['Cress', 'Pea Shoots', 'Microgreens'];
+  for (const name of trays) {
+    const crop = CROP_MAP.get(name);
+    assert(crop && crop.tray, name);
+    for (let m = 0; m < 12; m++) assert.equal(sowTiming(crop, 'western_europe', new Date(2026, m, 10)).status, 'now', name + ' ' + m);
+    assert(growsInPots(name));
+    assert.equal(getCropDifficulty(name).l, 'Easy');
+    assert.equal(cropFamily(name).family, 'leafy', name + ' is drawn as a carpet of leaves, not as a pea plant');
+    assert.deepEqual(plannedFields(name, 'western_europe', NOV), { sowPending: true });
+  }
+  const nov = new Date(2026, 10, 11);
+  const shady = suggestCrops({ environment: 'balcony', sunlight: 'lt3', experience: 'beginner' }, 'western_europe', { date: nov }).map((c) => c.name);
+  trays.forEach((n) => assert(shady.includes(n), n + ' offered: ' + shady.join(', ')));
+  assert(shady.length > 3, 'outdoor crops for the coming months still follow: ' + shady.join(', '));
+  // in season the outdoor crops come first
+  const june = suggestCrops({ environment: 'balcony', sunlight: 'gt7', experience: 'beginner' }, 'western_europe', { date: new Date(2026, 5, 10) }).map((c) => c.name);
+  assert(!trays.includes(june[0]), 'June starts with an outdoor crop: ' + june.join(', '));
+  // the calendar lists them under "Start indoors", in January too, and never under "Sow outside"
+  const jan = monthPlan(farm([]), 0, '2026-01-10');
+  trays.forEach((n) => { assert(jan.indoors.some((i) => i.name === n), n); assert(!jan.outside.some((i) => i.name === n), n); });
+});

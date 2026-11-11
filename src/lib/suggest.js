@@ -33,6 +33,7 @@ export const CONTAINER_FRIENDLY = [
 const POT_ALSO = [
   "Pepper (Hot)","Eggplant","Cucumber","Zucchini","Potato","Carrot","Beetroot","Turnip","Garlic","Onion","Pea",
   "Sage","Lavender","Chamomile","Dill","Fig","Lemon","Orange","Olive",
+  "Cress","Pea Shoots","Microgreens", // windowsill trays (crops.js `tray`)
 ];
 const POT_SET = new Set(CONTAINER_FRIENDLY.concat(POT_ALSO));
 export function growsInPots(name) { return POT_SET.has(name); }
@@ -123,7 +124,7 @@ export function suggestCrops(profile, region, opts) {
       var rcs = getRegionalCrop(c, region) || c;
       if ((Number(rcs.spacing) || Number(c.spacing) || 0) > maxSpacing) return false;
     }
-    if (containersOnly && !CONTAINER_FRIENDLY.includes(c.name)) return false;
+    if (containersOnly && !CONTAINER_FRIENDLY.includes(c.name) && !c.tray) return false; // a windowsill tray suits any home
     var dr = difficultyRank(c.name);
     if (dr === 0 && !allowedDifficulty.includes("easy")) return false;
     if (dr === 1 && !allowedDifficulty.includes("medium")) return false;
@@ -144,7 +145,10 @@ export function suggestCrops(profile, region, opts) {
   var soonish = function(c){ var t = timing.get(c.name); return t.status === "now" || t.status === "soon"; };
 
   var strictList = CROPS.filter(function(c){ return passes(c) && sunOk(c, p.sunlight) && soonish(c); }).sort(rank);
-  if (strictList.length >= 3 || o.relaxIfEmpty === false) return strictList.slice(0, limit);
+  // Windowsill tray crops are in season every month. They are offered, but they do not count as "enough to
+  // plant now": out of season the grower still gets the outdoor crops whose window opens in the coming months.
+  var outdoorNow = strictList.filter(function(c){ return !c.tray; });
+  if (outdoorNow.length >= 3 || o.relaxIfEmpty === false) return strictList.slice(0, limit);
 
   // Off-season: plan ahead with crops whose window opens in the next few months.
   var later = CROPS.filter(function(c) {

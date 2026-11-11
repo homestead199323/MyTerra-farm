@@ -183,7 +183,7 @@ test('Apple and pear are full crops in every region', async () => {
   const { isTreeCrop, cropFitsZone } = await import('../src/features/quiet/planting-plan.js');
   const { getCropDifficulty } = await import('../src/lib/calendar.js');
   const { BLOSSOM } = await import('../src/data/frost.js');
-  assert.equal(CROPS.length, 72);
+  assert.equal(CROPS.length, 75);
   const keys = Object.keys(CROP_MAP.get('Plum')).sort();
   for (const name of ['Apple', 'Pear']) {
     const crop = CROP_MAP.get(name);

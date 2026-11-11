@@ -6,6 +6,7 @@
 //   from each neighbour. Approximate values from the Jeavons biointensive master charts
 //   ("How to Grow More Vegetables"). Crops without a value fall back to the in-row spacing.
 export const ROW_SPACING = {
+  Cress: 2, "Pea Shoots": 2, Microgreens: 2, // tray crops: sown as a carpet, rows as close as the seeds
   Tomato: 75, "Pepper (Sweet)": 60, "Pepper (Hot)": 60, Potato: 70, Onion: 25, Garlic: 30,
   Cabbage: 60, "Bean (Dry)": 45, Zucchini: 90, Carrot: 15, Spinach: 30, Cucumber: 90,
   Lettuce: 30, Pumpkin: 180, Beetroot: 30, "Broad Bean": 45, Leek: 30, Grape: 250,

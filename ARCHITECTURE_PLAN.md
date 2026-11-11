@@ -96,7 +96,7 @@ src/
                              WaterCard, StorageCard (13 components)
 
   data/                    ← pure data constants, no logic
-    crops.js               ← CROPS, CROP_MAP, CROP_COLORS (72 crops)
+    crops.js               ← CROPS, CROP_MAP, CROP_COLORS (75 crops)
     zones.js               ← ZT, ZT_MAP
     regions.js             ← REGIONS, REGION_MAP
     regional-overrides.js  ← RO (crop overrides), LDB_RO (livestock overrides)

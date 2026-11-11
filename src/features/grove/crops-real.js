@@ -331,6 +331,10 @@ const NS = { leaf: 0x2e7a3a, stem: 0x4a7f3e }, HERB = { mode: "pairs", stem: 0x6
 const ROOTTOP = { n: 8, L: .4, w: .46, wide: .62, blunt: .5, wave: .16, waveN: 4, fold: .1, cupc: .12, droop: .28, rows: 8, out: .7, in: 1.25, shrink: .3, gloss: .2, pet: .3, petR: .007 };
 const VINE = { stem: 0x5f8f48, leaf: 0x3a8038, L: .34, w: 1.0, wave: .25 };
 const REAL = [
+  // windowsill tray crops: a few small round seed leaves on pale stems, sown as a carpet (first, so "pea shoots" is not a pea plant)
+  [/^cress$/, rosette, { n: 6, L: .2, w: .8, wide: .5, blunt: .7, wave: .05, fold: .05, cupc: .1, droop: .12, out: .9, in: 1.3, shrink: .1, leaf: 0x5fae48, tip: 0x8fd070, gloss: .2, pet: .6, petR: .005, petC: 0xdfeecb }, [.2, .25]],
+  [/pea shoots/, rosette, { n: 8, L: .3, w: .75, wide: .5, blunt: .65, wave: .08, fold: .08, cupc: .12, droop: .18, out: .8, in: 1.3, shrink: .15, leaf: 0x58a84a, tip: 0x9ad67a, gloss: .25, pet: .5, petR: .007, petC: 0xa8d58a }, [.22, .35]],
+  [/microgreens/, rosette, { n: 7, L: .22, w: .7, wide: .5, blunt: .6, wave: .1, fold: .06, cupc: .1, droop: .15, out: .85, in: 1.3, shrink: .12, leaf: 0x4f9a46, tip: 0x7fc468, gloss: .22, pet: .55, petR: .005, petC: 0xd9a6c0 }, [.2, .25]],
   [/tomato/, tomato, { ...NS, leaf: 0x357f3c, fruit: 0xd3261f }, [.4, 1.9]],
   [/pepper \(hot\)|chilli|chili/, pepper, { ...NS, fruit: [0xc92118, 0xc92118, 0xd9601c], hot: true }, [.42, 1.1]],
   [/pepper|capsicum/, pepper, { ...NS, fruit: [0xc42a23, 0xd9a521, 0xc42a23, 0xcf5b1f] }, [.42, 1.1]],

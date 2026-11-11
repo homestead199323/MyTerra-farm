@@ -451,6 +451,28 @@ export const CROPS = [
     steps:[{d:0,l:"Direct sow",t:"5cm deep, 10cm apart. Polytunnel for reliability in UK."},{d:60,l:"Flowering",t:"No water needed. Pod formation."},{d:90,l:"Harvest",t:"When plant yellows and pods rattle. Pull whole plant. Dry. Thresh."}],
     storage:"Dried: 5+ YEARS sealed. Hummus, falafel, roasted. Nitrogen-fixer. Globally important staple legume."
   },
+  // ── Windowsill tray crops (2026-11-11): sown indoors in any month and cut as seedlings, so there is always
+  //    something to grow. `tray: true`; spacing is the sowing density, yield is per seedling. Sources: RHS (peas:
+  //    "sow indoors at any time of year for a quick crop of young pea shoots"; cress: sow all year, cut in a week
+  //    to 10 days), BBC Gardeners' World (cress), Garden Organic (microgreens in 7-10 days).
+  { name:"Cress",tray:true,pH:"6.0-7.0",fert:"None. The seed carries all a week-old seedling needs.",emoji:"🌱",cat:"Vegetable",days:10,sowIn:"Jan-Dec",harvest:"Jan-Dec",spacing:2,sun:"Partial",waterFreq:"Every 1-2 days",waterNote:"The fastest crop there is, indoors on a bright windowsill in any month. Keep the paper or compost damp at all times: if it dries out once, the seedlings die. Sow a new batch every week for a steady supply.",color:"#6aa84f",yld:0.0005,
+    pests:[{n:"Mould",t:"Mould: grey fuzz when sown too thick or kept wet and stuffy. Sow thinner, give it air, water from below"},{n:"Damping off",t:"Damping off: seedlings collapse at the base. Start again with a clean tray and fresh paper or compost, and water less"}],
+    stages:["🟤","🌱","🌱","🌿","🌿","🌿"],
+    steps:[{d:0,l:"Sow",t:"Indoors on a bright windowsill, any month. Scatter seed thickly on damp kitchen paper or 2cm of compost in a shallow tray. Do not cover it."},{d:3,l:"Keep damp",t:"Mist or water every day so it never dries out. Turn the tray so it grows straight."},{d:8,l:"Harvest",t:"Cut with scissors just above the base at 3-5cm tall, a week to 10 days after sowing. Sow the next batch now."}],
+    storage:"Cut and eat at once. A day or two in the fridge. One cut per sowing."
+  },
+  { name:"Pea Shoots",tray:true,pH:"6.0-7.0",fert:"None. The pea carries what the shoot needs.",emoji:"🌱",cat:"Vegetable",days:18,sowIn:"Jan-Dec",harvest:"Jan-Dec",spacing:2,sun:"Partial",waterFreq:"Every 1-2 days",waterNote:"Indoors on a sunny windowsill at any time of year. Dried marrowfat peas from the supermarket work and cost far less than seed packets. Keep the compost moist, never soggy.",color:"#7cb85a",yld:0.001,
+    pests:[{n:"Mould",t:"Mould: grey fuzz when sown too thick or kept wet and stuffy. Sow a little thinner, give it air, water from below"},{n:"Leggy pale shoots",t:"Leggy, pale shoots: not enough light. Move the tray to the brightest windowsill you have"}],
+    stages:["🟤","🌱","🌱","🌿","🌿","🌿"],
+    steps:[{d:0,l:"Sow",t:"Soak dried peas overnight. Fill a tray with 3-5cm of compost, scatter the peas almost touching, cover with 1cm of compost and water. Bright windowsill indoors, any month."},{d:5,l:"Keep moist",t:"Water every day or two. Shoots show within a week."},{d:16,l:"Harvest",t:"Cut at 8-12cm, just above the lowest pair of leaves, 2-3 weeks after sowing. Leave the stumps: they often give a second, smaller cut."}],
+    storage:"Best the day they are cut, raw or wilted into a stir-fry. A few days in a bag in the fridge."
+  },
+  { name:"Microgreens",tray:true,pH:"6.0-7.0",fert:"None. Seedlings are cut before they need feeding.",emoji:"🌱",cat:"Vegetable",days:14,sowIn:"Jan-Dec",harvest:"Jan-Dec",spacing:2,sun:"Partial",waterFreq:"Every 1-2 days",waterNote:"Any quick salad or brassica seed, cut as a seedling: radish, broccoli, mustard, rocket, red cabbage. Indoors on a bright windowsill all year. Radish, broccoli and mustard are the quickest; herbs take up to three weeks.",color:"#5fa35a",yld:0.0005,
+    pests:[{n:"Mould",t:"Mould: grey fuzz when sown too thick or kept wet and stuffy. Sow thinner, give it air, water from below"},{n:"Damping off",t:"Damping off: seedlings collapse at the base. Start again with a clean tray and fresh compost, and water less"}],
+    stages:["🟤","🌱","🌱","🌿","🌿","🌿"],
+    steps:[{d:0,l:"Sow",t:"Fill a shallow tray with 2-3cm of compost, firm it and water. Scatter seed thickly and evenly, press it down, cover very lightly or not at all. Bright windowsill indoors, any month."},{d:4,l:"Keep moist",t:"Water from below or mist daily: damp, not wet. Turn the tray so the seedlings grow straight."},{d:12,l:"Harvest",t:"Cut just above the compost at 4-7cm tall, when the first true leaves show, 1-3 weeks after sowing. One cut per sowing: start the next tray a week before you run out."}],
+    storage:"Cut as you need it. A few days in the fridge, unwashed, in a box lined with paper."
+  },
 ];
 
 export const CROP_MAP = new Map(CROPS.map(c => [c.name, c]));
