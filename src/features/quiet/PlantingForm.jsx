@@ -341,9 +341,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
               </div>
               {seedPlan && (
                 <small>
-                  Sow {seedPlan.batch.cells} cells on {seedPlan.batch.sowDate} ({prop.weeks} weeks in the
-                  nursery, {seedPlan.batch.cells - seedPlan.batch.plants} spare). The bed space is reserved
-                  until you plant out.
+                  Sow {seedPlan.batch.cells} cells on {seedPlan.batch.sowDate} · {prop.weeks} weeks in the nursery
                 </small>
               )}
               <TrayPicker
@@ -381,7 +379,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
       )}
       {!fromSeed && (
         <Inp
-          label="Plant date (leave blank to plan)"
+          label="Plant date"
           type="date"
           max={todayLocalKey()}
           value={form.plantDate}
@@ -405,11 +403,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
           >
             Start as seedling
           </button>
-          <small>
-            {nurseries.length
-              ? "Raise it from seed in your nursery first, then plant it out. Shows the sowing plan, trays and dates."
-              : "Add a Seedling Nursery area on your farm map to raise seedlings before planting out."}
-          </small>
+          {!nurseries.length && <small>Needs a Seedling Nursery area on the map.</small>}
         </section>
       )}
       {error && (

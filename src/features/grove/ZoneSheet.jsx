@@ -37,7 +37,15 @@ export default function ZoneSheet({ title, subtitle, onClose, children }) {
     const previous = document.activeElement; card.current?.focus({ preventScroll: true });
     function key(e) { if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector(".overlay-sheet")) { e.stopPropagation(); closeRef.current(); } }
     window.addEventListener("keydown", key, true);
-    return function () { window.removeEventListener("keydown", key, true); if (previous instanceof HTMLElement && document.contains(previous)) previous.focus({ preventScroll: true }); };
+    // A tap on the map outside the card closes it. Taps on buttons and area labels are left alone, and if the tap opened another area the card has already changed.
+    const t0 = performance.now(); let gone = false;
+    function outside(e) {
+      if (e.timeStamp < t0 + 120 || !card.current || card.current.contains(e.target) || document.querySelector(".overlay-sheet")) return;
+      if (e.target.closest && e.target.closest("button, a, .g3-pill")) return;
+      const before = card.current.getAttribute("aria-label"); setTimeout(function () { if (!gone && card.current && card.current.getAttribute("aria-label") === before) closeRef.current(); }, 80);
+    }
+    document.addEventListener("click", outside);
+    return function () { gone = true; document.removeEventListener("click", outside); window.removeEventListener("keydown", key, true); if (previous instanceof HTMLElement && document.contains(previous)) previous.focus({ preventScroll: true }); };
   }, []);
 
   // a phone sheet locks the page behind it; a desktop panel leaves the page scrolling

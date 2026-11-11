@@ -959,7 +959,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
                 {isR&&!growth.waiting&&<Pill c={C.orange} bg={C.harvestBg}>Harvest window</Pill>}
                 {growth.waiting
                   ? <Pill c={C.green} bg={C.gp}>{growth.label}</Pill>
-                  : <>{dL>0&&<Pill>{dL<=14?`${dL} days to harvest`:`~${Math.round(dL/7)} wk to harvest`}</Pill>}<small style={{fontSize:11,color:C.t2}}>{growth.label}</small></>}
+                  : <>{dL>0&&<Pill>{dL<=14?`${dL} days to harvest`:`~${Math.round(dL/7)} wk to harvest`}</Pill>}{!isR&&<small style={{fontSize:11,color:C.t2}}>{growth.label}</small>}</>}
               </div>
             </div>
           </Card>
@@ -971,14 +971,6 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
       <div className="pg-head" style={SX.pageHead}>
         <div><h2 className="pg-h2" style={SX.headerH2}>Your crops</h2><p className="pg-sub" style={SX.pageSubHead}>Track your crops from seed to harvest</p></div>
         {_canPlant&&<Btn onClick={()=>setShowAdd(true)}>+ Plant Crop</Btn>}
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:20}}>
-        <Stat label="Active Crops" value={_active.length}/>
-        {_sections[0].count+_sections[1].count>0&&<Stat label="Plants" value={_sections[0].count+_sections[1].count} sub="veg and herbs"/>}
-        {_sections[2].count>0&&<Stat label="Trees" value={_sections[2].count} sub="fruit and nut"/>}
-        {_totalArea>0&&<Stat label="Total Area" value={`${_totalArea.toFixed(0)}m²`} sub="under cultivation"/>}
-        {_totalYield>0&&<Stat label="Est. Yield" value={`${_totalYield.toFixed(0)}kg`} sub="at harvest" color={C.green}/>}
-        <Stat label="Ready" value={_ready} sub="to harvest" color={C.orange}/>
       </div>
       {(_seedlings.length>0||data.zones.some(function(z){return z.type==="nursery";}))&&(
         <section style={{marginBottom:18}}>

@@ -154,7 +154,7 @@ export default function ZoneTaskPopup({ zone, tasks, data, setData, onClose, onO
   const animal = (data.livestock?.animals || []).find((a) => animalZone(a, data.zones || [])?.id === zone.id);
   const crop = (data.garden?.plots || []).find((p) => p.zone === zone.id && p.status !== "harvested")?.crop;
   return createPortal(
-    <div className="q-tp-backdrop">
+    <div className="q-tp-backdrop" onClick={function (e) { if (e.target === e.currentTarget) closeRef.current(); }}>
       <section
         ref={sheet}
         tabIndex={-1}

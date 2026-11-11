@@ -18,8 +18,6 @@ export default function BedDetail({ zone: rawZone, data, onPlot, highlightId }) 
       <h3 className="q-plant-list-title">
         {plots.length ? `${plots.length} ${plots.length === 1 ? "planting" : "plantings"}` : "Nothing planted here yet"}
       </h3>
-      {/* an empty bed gets no plan: a blank brown rectangle only pushed everything else off the screen */}
-      {plots.length > 0 && <BedPlan zone={zone} plots={data.garden?.plots || []} crops={crops} onPlot={onPlot} highlightId={highlightId} />}
       {plots.length > 0 && (
         <ul className="q-plant-list">
           {plots.map((p) => {
@@ -52,6 +50,13 @@ export default function BedDetail({ zone: rawZone, data, onPlot, highlightId }) 
             );
           })}
         </ul>
+      )}
+      {/* the drawing is one tap away: on a big bed it is mostly bare soil and it pushed the plantings off the screen */}
+      {plots.length > 0 && (
+        <details className="q-bed-plan-more">
+          <summary>Bed plan</summary>
+          <BedPlan zone={zone} plots={data.garden?.plots || []} crops={crops} onPlot={onPlot} highlightId={highlightId} />
+        </details>
       )}
     </section>
   );

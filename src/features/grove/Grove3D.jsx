@@ -1857,7 +1857,7 @@ class FarmControls {
     if (ms) this.animateTo(to, ms); else { this.target.copy(to.target); this.dist = to.dist; this.clampView(); this.update(); this.changed(); }
   }
   zoomBy(factor, ms = 300) { this.zoomAt(this.size.w / 2, this.size.h / 2, factor, ms); }
-  focusZone(zone) {
+  focusZone(zone, ms = 550, wide = 1) { // wide > 1 steps back from the area, to show where on the farm it is
     const bounds = this.hooks.focusBounds?.(zone) || new THREE.Box3(
       new THREE.Vector3(zone.xM, 0, zone.yM),
       new THREE.Vector3(zone.xM + zone.wM, .6, zone.yM + zone.hM));
@@ -1872,12 +1872,12 @@ class FarmControls {
     if (inset) {
       const pts = []; for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) pts.push([x, y, z]);
       const v = fitView(pts, { theta: this.theta, phi, fov: this.camera.fov, aspect, fill: .8, inset });
-      this.animateTo({ target: new THREE.Vector3(v.target.x, 0, v.target.z), phi, dist: clamp(v.dist, this.lim.minDist, this.lim.maxDist) }, 550);
+      this.animateTo({ target: new THREE.Vector3(v.target.x, 0, v.target.z), phi, dist: clamp(v.dist * wide, this.lim.minDist, this.lim.maxDist) }, ms);
       return;
     }
     const dist = focusDistance(bounds, { target, theta: this.theta, phi,
       fov: this.camera.fov, aspect, near: this.camera.near });
-    this.animateTo({ target, phi, dist: clamp(dist, this.lim.minDist, this.lim.maxDist) }, 550);
+    this.animateTo({ target, phi, dist: clamp(dist * wide, this.lim.minDist, this.lim.maxDist) }, ms);
   }
   onWheel(e) {
     if (!this.enabled) return;
@@ -1920,7 +1920,7 @@ class FarmControls {
 
 /* ---------- component ---------- */
 export default function Grove3D(props) {
-  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null } = props;
+  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, guideZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null } = props;
   const liveSky = data.mapStyle?.liveSky !== "off", lat = typeof data.cityGeo?.lat === "number" ? data.cityGeo.lat : null, lng = typeof data.cityGeo?.lng === "number" ? data.cityGeo.lng : null; // "Live sky" setting; the town's geocode drives the sun
   const host = useRef(null), labels = useRef(null), tipRef = useRef(null), state = useRef(null), latest = useRef(props), fullRef = useRef(false);
   const [full, setFull] = useState(() => HARNESS?.full === true);
@@ -2165,7 +2165,7 @@ export default function Grove3D(props) {
       const d = st.dims || { fW: 3, fH: 2, margin: 1 }, ratio = clamp((d.fH + 2 * d.margin) / (d.fW + 2 * d.margin), latest.current.preview ? .72 : .62, .8); // the preview tile is at least 4:3 so the farm fills it
       S.W = el.clientWidth || 600; S.H = fullRef.current ? (el.clientHeight || Math.round(S.W * ratio)) : Math.round(Math.min(S.W * ratio, Math.max(220, (window.innerHeight || 800) * .78)));
       renderer.setSize(S.W, S.H); camera.aspect = S.W / S.H; camera.updateProjectionMatrix(); controls.size = { w: S.W, h: S.H };
-      if ((!st.fitted || latest.current.preview) && st.dims) { st.reset(false); st.fitted = true; }
+      if ((!st.fitted || (latest.current.preview && !latest.current.guideZoneId)) && st.dims) { st.reset(false); st.fitted = true; }
       else {
         const focused = latest.current.zones.find((z) => String(z.id) === latest.current.focusId);
         if (focused && (previousW !== S.W || previousH !== S.H)) controls.focusZone(focused);
@@ -2344,6 +2344,13 @@ export default function Grove3D(props) {
     return () => clearTimeout(t);
   }, [sceneKey, motionReduced]);
   useEffect(() => { state.current?.select(selectedId || focusId); }, [selectedId, focusId]);
+  // Morning walk guide: the camera glides to the stop you are on, slowly enough to follow where the next one is.
+  const guided = useRef(false);
+  useEffect(() => {
+    const st = state.current; if (guideZoneId == null || busy || !st?.controls) return;
+    const zone = zones.find((z) => String(z.id) === String(guideZoneId)); if (!zone) return;
+    setFocusId(String(zone.id)); st.controls.focusZone(zone, guided.current ? 2200 : 1, 1.9); guided.current = true; st.requestRender();
+  }, [guideZoneId, busy]); // eslint-disable-line react-hooks/exhaustive-deps
   // an area card opened, changed height or closed (cover.js): frame its area in the part of the map still in view
   useEffect(() => onCover((rect) => {
     const st = state.current, canvas = host.current?.querySelector("canvas"); if (!st?.controls || !canvas) return;
@@ -2441,7 +2448,7 @@ export default function Grove3D(props) {
         })}
       </div>
       {!preview && <div ref={tipRef} className="g3-tip" style={{ display: "none" }} role="tooltip" />}
-      {preview && (
+      {preview && guideZoneId == null && (
         <div className="g3-open-wrap">
           {jobs > 0 && <button type="button" className="g3-open-badge" onClick={() => setFull(true)}>{jobs} job{jobs === 1 ? "" : "s"}</button>}
           <button type="button" className="g3-open" aria-label="Open the farm map" onClick={() => setFull(true)}><Maximize2 size={16} /><span>Open map</span></button>

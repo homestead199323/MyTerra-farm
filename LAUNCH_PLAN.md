@@ -745,6 +745,19 @@
   form). UNVERIFIED until Dervis retests.
   Gestures: tap outside any popup closes it (all Overlays, morning walk, assistant); drag the top of a
   sheet down to close. Text: task details on one line, shorter calendar and time-budget wording.
+- **Phone pass 9 — after Dervis's second test on his iPhone, 2026-11-11.**
+  Crops page: the four statistics cards are gone (they live under Progress/Insights); a ready crop says
+  "Harvest window" once. Forms: explanatory sentences removed from the planting sheet, companions, bed
+  direction and the area card (labels and numbers stay); an untouched "Number of plants" box is no longer
+  an error; an empty bed shows no preview. Every box in a sheet is 48 px high, and date/time boxes drop
+  the native iOS control (appearance none, full width, left aligned) — NOT verified on iOS.
+  Area card on the map: plantings first, the bed drawing behind "Bed plan"; fits one screen on a planted
+  bed; a tap on the map outside the card closes it. The zone job popup closes on an outside tap too.
+  Morning walk rebuilt: no start screen, opening it starts today's jobs (or every area when nothing is
+  due). List view is every stop in walking order with the current one open; tap another stop to go there
+  now. Map view shows the stop on the 3D farm and the camera glides (2.2 s) to the next stop after each
+  one (`guideZoneId` on GroveScene/Grove3D, `focusZone(zone, ms, wide)`). Per stop: jobs, Note, Photo,
+  Problem, Skip, Done. Removed: round chooser, start-from, "How does it look?", tips, save-status line.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

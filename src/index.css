@@ -430,6 +430,9 @@ button:active:not(:disabled) {
    reach (decided 2026-11-11, replaces "small centred cards on every screen size" for phones only).
    The last row of a form, when it is a row of up to four buttons, stays pinned to the bottom of the sheet;
    a form can also mark its row with .ov-actions. ── */
+/* Date and time boxes look like every other box: iOS draws its own taller, centred control otherwise. */
+input[type="date"], input[type="time"], input[type="month"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; box-sizing: border-box; text-align: left; }
+input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; }
 @keyframes sheetUp { from { transform: translateY(56px); opacity: 0; } } /* a short rise: starting fully off screen made iOS pan the page when the sheet took focus */
 @media (max-width: 560px) {
   .overlay-backdrop { padding: 0 !important; align-items: flex-end !important; }
@@ -437,6 +440,8 @@ button:active:not(:disabled) {
   .overlay-handle-row { position: sticky; padding: 18px 10px 4px 18px !important; border-radius: 22px 22px 0 0 !important; }
   .overlay-handle-row::before { content: ""; position: absolute; top: 7px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--color-border); }
   .overlay-body { padding: 10px 18px calc(20px + env(safe-area-inset-bottom)) !important; }
+  /* one height for every box in a form */
+  .overlay-body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select) { height: 48px !important; min-height: 48px; box-sizing: border-box; }
   .overlay-body > :last-child:has(> button):not(:has(> button:nth-of-type(5))):not(:has(input, select, textarea)), .overlay-body .ov-actions {
     position: sticky; bottom: 0; z-index: 2; display: flex !important; flex-wrap: nowrap !important; gap: 8px; justify-content: stretch !important;
     margin: 14px -18px calc(-20px - env(safe-area-inset-bottom)) !important; padding: 12px 18px calc(12px + env(safe-area-inset-bottom)) !important;

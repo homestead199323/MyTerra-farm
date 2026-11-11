@@ -2,8 +2,8 @@ import { spacingGuide, plantDensity } from "../../data/spacing.js";
 import BedPlan from "./BedPlan";
 
 const PATTERNS = [
-  ["rows", "Grid", "Plants line up in straight rows."],
-  ["offset", "Hexagonal (biointensive)", "Every other row is shifted; each plant is the same distance from its neighbours."],
+  ["rows", "Grid", ""],
+  ["offset", "Hexagonal", ""],
 ];
 
 function GridIcon({ offset, vertical }) {
@@ -53,7 +53,6 @@ export default function PlantingControls({
   };
   const hex = value.pattern === "offset";
   const guide = spacingGuide(crop, value.pattern === "offset" ? "offset" : "rows");
-  const alongMax = zone ? (vertical ? zone.hM : zone.wM) : 0;
   const density = scatter ? 0 : plantDensity(value.spacingCM, value.rowSpacingCM);
   const factor = plan?.yieldFactor ?? 1;
   // on (or wider than) the biointensive guide the lower per-plant figure is expected, not a mistake
@@ -62,7 +61,9 @@ export default function PlantingControls({
     Number(value.spacingCM) >= guide.hexCM * 0.985 &&
     Number(value.rowSpacingCM) >= guide.rowCM * 0.97;
   // which field fixes the problem: the first one-tap fix's field, or the field a bad number lives in
-  const problem = plan?.problem || null,
+  // an untouched "number of plants" box is not a mistake yet: no red box until something is typed
+  const blank = plan?.problem?.kind === "input" && plan.problem.field === "plantCount" && String(value.plantCount ?? "").trim() === "";
+  const problem = blank ? null : plan?.problem || null,
     fixes = (problem?.fixes || []).filter((f) => f.field !== "lengthM" && f.field !== "rowCount"),
     rawBad = problem ? (problem.kind === "input" ? problem.field : fixes[0]?.field || problem.fixes?.[0]?.field || null) : null,
     badField = rawBad === "lengthM" || rawBad === "rowCount" ? "plantCount" : rawBad;
@@ -109,8 +110,8 @@ export default function PlantingControls({
             <legend>Row direction</legend>
             <div className="q-grid2">
               {[
-                ["horizontal", "Horizontal", "Rows run left–right on the map."],
-                ["vertical", "Vertical", "Long streaks top–bottom on the map."],
+                ["horizontal", "Horizontal", ""],
+                ["vertical", "Vertical", ""],
               ].map(([key, label, description]) => (
                 <label key={key} className={value.axis === key ? "is-selected" : ""}>
                   <input
@@ -122,7 +123,7 @@ export default function PlantingControls({
                   />
                   <GridIcon vertical={key === "vertical"} offset={value.pattern === "offset"} />
                   <strong>{label}</strong>
-                  <small>{description}</small>
+                  {description ? <small>{description}</small> : null}
                 </label>
               ))}
             </div>
@@ -143,19 +144,13 @@ export default function PlantingControls({
                     />
                     <GridIcon offset={key === "offset"} vertical={showAxis && vertical} />
                     <strong>{label}</strong>
-                    <small>{description}</small>
+                    {description ? <small>{description}</small> : null}
                   </label>
                 ))}
               </div>
             </fieldset>
           )}
         </>
-      )}
-      {!showAxis && !scatter && (
-        <small>
-          Rows run {vertical ? "top to bottom" : "left to right"} along this bed. Change the bed's row
-          direction on the farm map.
-        </small>
       )}
       <div className="q-grid2">
         <label className={field("plantCount").className}>
@@ -203,20 +198,13 @@ export default function PlantingControls({
           </label>
         )}
       </div>
-      <small>
-        {scatter
-          ? "Trees are placed naturally, keeping this spacing from every other tree."
-          : hex
-            ? "Hexagonal: every plant is this far from each neighbour, in the row and across rows."
-            : `Rows fill along the bed (${alongMax} m); the planting uses only the space its plants need.`}
-      </small>
       <p className="q-spacing-guide">
-        Guide for {crop?.name}:{" "}
+        Guide:{" "}
         {scatter
-          ? `${crop?.spacing} cm between trees`
+          ? `${crop?.spacing} cm apart`
           : hex
-            ? `${guide.hexCM} cm between every plant`
-            : `${guide.inRowCM} cm between plants, ${guide.rowCM} cm between rows`}
+            ? `${guide.hexCM} cm apart`
+            : `${guide.inRowCM} cm apart, rows ${guide.rowCM} cm`}
         {(String(value.spacingCM) !== String(scatter ? crop?.spacing : hex ? guide.hexCM : guide.inRowCM) ||
           (!scatter && !hex && String(value.rowSpacingCM) !== String(guide.rowCM))) && (
           <>
@@ -249,22 +237,16 @@ export default function PlantingControls({
         {yieldKg != null && <span>Estimated harvest: ~{yieldKg} kg</span>}
       </div>
       {factor < 1 && !plan?.error && (onBioGuide ? (
-        <small>
-          Biointensive spacing is closer than standard rows, so each plant is estimated at{" "}
-          {Math.round(factor * 100)}% of its row-grown yield. The estimate per square metre stays the same as
-          standard rows.
-        </small>
+        null
       ) : (
         <p className="q-warning">
-          Closer than standard row spacing: each plant is estimated at {Math.round(factor * 100)}% of its
-          usual yield, so the extra plants don’t raise the harvest estimate. Widen spacing to give each plant
-          its full share.
+          Tight spacing: {Math.round(factor * 100)}% yield per plant.
         </p>
       ))}
       {plan?.shortened && (
-        <small>Rows shortened to {plan.layout.lengthM} m to fit the free space in this bed.</small>
+        <small>Rows shortened to {plan.layout.lengthM} m to fit.</small>
       )}
-      {plan?.error && (
+      {plan?.error && !blank && (
         <div className="q-problem" role="alert">
           <strong>{problem?.kind === "space" ? "Doesn’t fit yet" : "Check this value"}</strong>
           <p>{plan.error}</p>
@@ -279,12 +261,11 @@ export default function PlantingControls({
               })}
             </div>
           )}
-          {problem?.canForce && <small>Or plant anyway — real beds can be fuller than the plan.</small>}
         </div>
       )}
-      {plots && crops && zone && (
+      {plots && crops && zone && (!plan?.error || plots.some((p) => p.zone === zone.id && p.id !== editId)) && (
         <div className="q-planting-preview">
-          <small>{plan?.error ? "Current bed" : "Preview — the new planting is highlighted"}</small>
+          <small>{plan?.error ? "Current bed" : "Preview"}</small>
           <BedPlan
             zone={zone}
             crops={crops}

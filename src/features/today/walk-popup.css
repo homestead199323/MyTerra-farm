@@ -55,3 +55,34 @@
   .q-walk-pop .q-walk-map-live .quiet-map-scroll svg{max-height:36dvh}
 }
 @media (prefers-reduced-motion:reduce){.q-walk.q-walk-pop,.q-walk-pop .q-walk-shell,.q-tp-undo{animation:none}}
+/* Walk as one list (2026-11-11): every stop in walking order, the one you are on opened; Map shows the same stop on the 3D farm. */
+.q-walk-view{display:inline-flex;padding:3px;border-radius:12px;background:var(--surface-soft);flex-shrink:0}
+.q-walk-view button{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:var(--color-text-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.q-walk-view button[aria-pressed=true]{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 3px #0003}
+.q-walk-list{list-style:none;margin:6px 0 4px;padding:0;display:flex;flex-direction:column;gap:8px}
+.q-walk-row>button{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 14px;border:1px solid var(--color-border);border-radius:16px;background:transparent;color:var(--color-text);font:inherit;text-align:left;cursor:pointer}
+.q-walk-row>button:disabled{cursor:default;opacity:.62}
+.q-walk-dot{flex:0 0 28px;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-soft);color:var(--color-text-2);font-size:13px;font-weight:700}
+.q-walk-row.is-done .q-walk-dot{background:#4f9460;color:#fff}
+.q-walk-row-name{flex:1;min-width:0;display:flex;flex-direction:column}
+.q-walk-row-name strong{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-walk-row-name small{font-size:12px;color:var(--color-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-walk-row-meta{flex-shrink:0;font-size:12px;font-weight:600;color:var(--color-text-2)}
+.q-walk-row.is-current{border:2px solid var(--color-green);border-radius:18px;padding:12px 14px 0;background:var(--surface-soft)}
+.q-walk-pop .q-walk-row.is-current .q-walk-footer{position:static;background:transparent;border-top:0;padding:10px 0 14px;margin-top:4px}
+.q-walk-pop .q-walk-row.is-current .q-walk-stop-head{margin-top:0}
+.q-walk-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 6px}
+.q-walk-pop .q-walk-quick .q-secondary{min-height:44px;border-radius:12px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 6px;position:relative;overflow:hidden}
+.q-walk-quick .q-photo-button input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.q-walk-pop .q-walk-quick .q-walk-issue[aria-pressed=true]{background:var(--tint-orange-soft,#fbeee2);border-color:#d0843c;color:#8a4a12}
+[data-theme=dark] .q-walk-pop .q-walk-quick .q-walk-issue[aria-pressed=true]{background:#3a2a1a;color:#f0b77a}
+.q-walk-other{display:block;margin:8px auto 16px;min-height:44px}
+.q-walk-end{display:flex;flex-direction:column;align-items:center;gap:8px;padding:28px 0 24px!important;text-align:center}
+.q-walk-end h2{margin:0;font-size:22px}.q-walk-end p{margin:0;color:var(--color-text-2)}
+.q-walk-end .q-button{margin-top:10px;min-width:160px;min-height:48px;border-radius:14px}
+.q-walk-end-tick{width:56px;height:56px;border-radius:50%;background:#4f9460;color:#fff;display:inline-flex;align-items:center;justify-content:center}
+.q-walk-pop .q-walk-where{display:flex;align-items:center;gap:4px;margin:2px 0 0;font-size:13px;color:var(--color-text-2)}
+.q-walk-pop .q-walk-stop-art{width:52px;height:52px}
+.q-walk-map .q-walk-map-live{overflow:hidden;border-radius:18px}
+.q-walk-map .q-walk-map-live{position:relative}
+.q-walk-next{position:absolute;left:14px;bottom:14px;z-index:2;max-width:calc(100% - 28px);padding:6px 12px;border-radius:999px;background:rgba(20,30,24,.78);color:#fff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}

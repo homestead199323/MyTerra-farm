@@ -1,6 +1,6 @@
 const OPTIONS = [
-  ["horizontal", "Left to right", "Rows run along the bed's width."],
-  ["vertical", "Top to bottom", "Long streaks run down the bed."],
+  ["horizontal", "Left to right", ""],
+  ["vertical", "Top to bottom", ""],
 ];
 
 function BedIcon({ vertical }) {
@@ -44,7 +44,7 @@ export default function BedDirectionPicker({ zone, fits = true, onRotate }) {
             />
             <BedIcon vertical={key === "vertical"} />
             <strong>{label}</strong>
-            <small>{description}</small>
+            {description ? <small>{description}</small> : null}
           </label>
         ))}
       </div>

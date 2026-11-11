@@ -389,6 +389,7 @@ export default function GroveScene({
   activeZoneId,
   route = [],
   focus = null,
+  guideZoneId = null,
   onStartGuide,
 }) {
   const id = useId().replace(/:/g, "");
@@ -675,7 +676,7 @@ export default function GroveScene({
         {three ? (
           <Suspense fallback={<div style={{ width: "100%", aspectRatio: "1 / 0.64" }} />}>
             <Grove3D data={data} zones={zones} roads={allPaths} crops={cropMap} fW={fW} fH={fH} margin={margin} env={env}
-              pathTexture={pathTexture} roadWidth={roadWidth} tasksByZone={tasksByZone} selectedId={selectedId} cardZoneId={selected}
+              pathTexture={pathTexture} roadWidth={roadWidth} tasksByZone={guideZoneId == null ? tasksByZone : {}} selectedId={selectedId} cardZoneId={selected} guideZoneId={guideZoneId}
               onZoneOpen={open} onBadge={setTaskZone} interactive={canInteract} onUnavailable={() => setNoGL(true)} onShowCrops={onShowCrops} weather={weather} skyOverride={skyOverride} />
           </Suspense>
         ) : (
@@ -1188,7 +1189,7 @@ export default function GroveScene({
           {edit
             ? "Drag to move · corner to resize"
             : three
-              ? isCoarse() ? "Tap the map to open it" /* phones: the tile takes no gestures */ : interactive ? "Drag to look around · tap an area to open it" : "Drag to look around"
+              ? isCoarse() ? "" /* phones: the tile takes no gestures; the Open map button says the rest */ : interactive ? "Drag to look around · tap an area to open it" : "Drag to look around"
               : showHelperText
                 ? "Tap an area to explore"
                 : "Growth stages are estimates"}
