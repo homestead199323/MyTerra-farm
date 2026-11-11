@@ -36,6 +36,7 @@ import { TREE_RE } from "./crop-families";
 import { PAL, STAGE_COLOR, NIGHT, WIND, DETAIL, setDetail, detailFor, setEnvironment, fillLight, bakeSource, mergeBaked, nightGlow, nightTint, texture, ripple, flat, layered, rbox, box, ball, tube, ring, disc, plane, pill, bar, instances, rboxGeo, sphereGeo, capsuleGeo, cylGeo, discGeo, HPI, clamp, clamp01, smoothstep } from "./toy";
 import { cropScale, buildCrops } from "./crops3d";
 import { DECO_TREES } from "./trees-real";
+import { crownGeo, hedgeGeo } from "./crowns";
 import { skyState, FIXED_SKY, vaneAngle, cloudCount, precipCount } from "./sky";
 import { WX, buildClouds, buildPrecip, RAIN_SPAN } from "./weather-fx";
 import { ORNAMENTS, wheelbarrow, barrel, crates, birdbath, mailbox, scarecrow, tractor, ladder, fruitCrate, rake, lilyPads, reeds, jetty, silo, cloche, hoseReel, hayScatter } from "./props3d";
@@ -190,23 +191,22 @@ function tree(g, x, z, r, seed, M, y = 0, leafIdx = null) {
   const mk = new THREE.Object3D(); mk.position.set(x, y, z); mk.userData.decoTree = { x, z, r, seed, y, leafIdx }; g.add(mk);
   if (M.blob) disc(g, r * 1.12, M.blob, x, y + .028, z, { seg: 20, cast: false, receive: false }); // a soft dark patch grounds every tree
 }
-function toyTree(g, x, z, r, seed, M, y = 0, leafIdx = null) { // a backdrop tree: round crowns in the leafy hedge surface, cheap per pixel
+/* a mass of leaves (crowns.js): billowed, flatter underneath, its shade baked in. sc = [x, y, z] radii in metres */
+function clump(g, habit, variant, mat, x, y, z, sc, ry = 0, cast = true) {
+  const m = new THREE.Mesh(crownGeo(habit, variant), mat); m.position.set(x, y, z); m.scale.set(sc[0], sc[1], sc[2]); m.rotation.y = ry; m.castShadow = cast; m.receiveShadow = true; g.add(m); return m;
+}
+const TREE_HABITS = ["round", "round", "wide", "round", "tall", "wide"];
+function toyTree(g, x, z, r, seed, M, y = 0, leafIdx = null) { // a backdrop tree: one billowed crown in the leafy hedge surface, cheap per pixel
   if (y) { const tg = new THREE.Group(); tg.position.y = y; g.add(tg); g = tg; }
   const th = r * .55 + .3, leaf = M.leaf[leafIdx ?? Math.floor(srand(seed + 3) * 4)], spin = srand(seed) * 6.28;
-  const trunk = tube(g, r * .11, r * .16, th + r * .6, M.bark, x, (th + r * .6) / 2, z, { seg: 12 }); trunk.rotation.z = (srand(seed + 7) - .5) * .06;
-  const top = th + r * .9;
-  // two short branches forking out of the trunk into the crown
-  [0, 2.4].forEach((a, i) => pill(g, [x, th + r * .25, z], [x + Math.cos(spin + a) * r * .38, th + r * .75 + i * r * .1, z + Math.sin(spin + a) * r * .38], r * .055, M.bark, { seg: 7, cast: false }));
-  // a smooth lumpy crown: five overlapping spheres, slightly squashed, the biggest on top, a lighter one where the sun hits
-  const blob = (rr, dx, dy, dz, sy, mat = leaf, seg = 16, rings = 12) => ball(g, [rr, rr * sy, rr], mat, x + dx, top + dy, z + dz, { seg, rings, minSeg: 10, minRings: 7 }); // crowns are big on screen: they stay round on the phone tier
-  blob(r * .92, 0, 0, 0, .86);
-  blob(r * .66, Math.cos(spin) * r * .5, -r * .3, Math.sin(spin) * r * .5, .82);
-  blob(r * .58, -Math.cos(spin + .9) * r * .48, -r * .2, -Math.sin(spin + .9) * r * .48, .84);
-  blob(r * .5, Math.cos(spin + 2.1) * r * .55, -r * .36, Math.sin(spin + 2.1) * r * .55, .8, leaf, 12, 9);
-  blob(r * .44, Math.cos(spin + 3.9) * r * .4, r * .3, Math.sin(spin + 3.9) * r * .4, .9, M.leaf[leafIdx != null ? leafIdx : 2], 12, 9); // the sunlit top
+  const habit = TREE_HABITS[Math.floor(srand(seed + 11) * TREE_HABITS.length)], tall = habit === "tall", k = r * (1.04 + srand(seed + 13) * .1), top = th + r * (tall ? 1.15 : .9);
+  // a trunk that thickens to the ground and leans a little, with three limbs reaching up into the crown
+  const trunk = tube(g, r * .075, r * .15, th + r * .6, M.bark, x, (th + r * .6) / 2, z, { seg: 12 }); trunk.rotation.z = (srand(seed + 7) - .5) * .08; trunk.rotation.x = (srand(seed + 8) - .5) * .06;
+  [0, 2.2, 4.3].forEach((a, i) => pill(g, [x, th + r * .15, z], [x + Math.cos(spin + a) * r * .42, th + r * (.62 + i * .08), z + Math.sin(spin + a) * r * .42], r * .04, M.bark, { seg: 7, cast: false }));
+  clump(g, habit, Math.floor(srand(seed + 5) * 3), leaf, x, top, z, [k, k * (.94 + srand(seed + 17) * .14), k], spin);
 }
 /* Trees standing on the property are look-C models (trees-real.js), drawn with the crops and orchard trees: instanced,
-   swaying, their own level of detail. Backdrop trees (border, street, neighbours, countryside) stay round toy crowns in
+   swaying, their own level of detail. Backdrop trees (border, street, neighbours, countryside) are billowed toy crowns (crowns.js) in
    the leafy surface: fifty look-C crowns cost a third more frame time on a farm, all of it per-pixel leaf shading. */
 function plantDecoTrees(world, ctx, M) {
   const marks = []; world.updateMatrixWorld(true); world.traverse((o) => { if (o.userData.decoTree) marks.push(o); });
@@ -265,10 +265,10 @@ function gate(g, x, z, width, ry, M, { pickets = false } = {}) {
   box(gg, .07, .1, .12, M.metal, inner / 2 + .07, .85, .06, { cast: false });
   return gg;
 }
-function hedge(g, segs, M, { h = 1.4, t = .8 } = {}) { // a clipped hedge: one rounded pill per run
-  segs.forEach(([a, b]) => {
+function hedge(g, segs, M, { h = 1.4, t = .8 } = {}) { // a clipped hedge: one run of crowns.js hedgeGeo per side, swelling and dipping a little
+  segs.forEach(([a, b], i) => {
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]); if (len < .3) return;
-    rbox(g, len + t * .5, h, t, M.hedge, (a[0] + b[0]) / 2, h / 2 - .02, (a[1] + b[1]) / 2, { ry: Math.atan2(-(b[1] - a[1]), b[0] - a[0]), r: Math.min(h, t) * .48, seg: DETAIL.value >= 1 ? 3 : 2 }); // look A: a fully rounded, plump top
+    const m = new THREE.Mesh(hedgeGeo(len, h, t, Math.round(a[0] * 7 + a[1] * 13 + i * 31)), M.hedge); m.position.set((a[0] + b[0]) / 2, -.02, (a[1] + b[1]) / 2); m.rotation.y = Math.atan2(-(b[1] - a[1]), b[0] - a[0]); m.castShadow = true; m.receiveShadow = true; g.add(m);
   });
 }
 function shelter(g, x, z, w, d, M, ry = 0) { // open-sided field shelter: chunky capsule posts, a rounded plank back wall, a thick rounded mono-pitch roof
@@ -1203,7 +1203,7 @@ function balconyEdge(world, ctx, fW, fH, M) {
   const nt = Math.max(2, Math.min(4, Math.round((x1 - x0) / 5)));
   for (let i = 0; i < nt; i++) { const x = x0 + (i + .5) * (x1 - x0) / nt + (srand(i + 51) - .5) * 1.2, z = fH + 2.6 + srand(i + 57) * 3.2; tree(world, x, z, 1.35 + srand(i + 53) * .4, i + 61, M, -drop); }
   { const cg = new THREE.Group(); cg.position.y = -drop; world.add(cg); // shrubs along the foot of the building and two benches on the paving
-    for (let x = x0 + .6; x < x1 - .4; x += 1.1 + srand(Math.round(x * 3) + 451) * .5) { const r = .38 + srand(Math.round(x * 7) + 455) * .16, k = Math.abs(Math.round(x * 11)); ball(cg, [r * 1.25, r, r * 1.1], M.leaf[k % 4], x, r * .8, 1.9 + srand(Math.round(x * 5) + 453) * .3, { seg: 14, rings: 10, minSeg: 10, minRings: 7 }); ball(cg, [r * .8, r * .7, r * .8], M.leaf[(k + 1) % 4], x + r * .7, r * .55, 2.05, { seg: 12, rings: 9, minSeg: 9, minRings: 6 }); }
+    for (let x = x0 + .6; x < x1 - .4; x += 1.1 + srand(Math.round(x * 3) + 451) * .5) { const r = .38 + srand(Math.round(x * 7) + 455) * .16, k = Math.abs(Math.round(x * 11)); clump(cg, "shrub", k % 3, M.leaf[k % 4], x, r * .62, 1.9 + srand(Math.round(x * 5) + 453) * .3, [r * 1.35, r * 1.25, r * 1.2], k); clump(cg, "shrub", (k + 1) % 3, M.leaf[(k + 1) % 4], x + r * .75, r * .42, 2.05, [r * .9, r * .85, r * .9], k * 2); }
     ORNAMENTS.bench(cg, x0 + (x1 - x0) * .3, .9, { ry: 0 }); ORNAMENTS.bench(cg, x0 + (x1 - x0) * .72, .9, { ry: 0 }); }
   balconyTown(world, ctx, fW, fH, M, x0, x1, win);
 }
@@ -1356,7 +1356,7 @@ function gardenLife(g, ctx, fW, fH, M, free) {
   for (let z = .4; z < fH - .3; z += .45) border.push([.32, z], [fW - .32, z]);
   for (let x = .75; x < fW - .7; x += .45) border.push([x, fH - .32]);
   border.forEach(([x, z], i) => { if (!free(x, z, .18, .18, .05) || !offShed(x, z)) return; if (i % 3 === 0) shrubs.push([x, z, .2 + srand(i + 501) * .12, i]); else { headsAt(ctx, x, .22, z, 3, .26, 520 + i); (ctx.tufts ||= []).push({ p: [x, 0, z], ry: srand(i + 523) * 3, s: .7 }); } });
-  shrubs.forEach(([x, z, r, i]) => ball(g, [r * 1.2, r, r * 1.1], M.leaf[i % 4], x, r * .85, z, { seg: 10, rings: 7 }));
+  shrubs.forEach(([x, z, r, i]) => clump(g, "shrub", i % 3, M.leaf[i % 4], x, r * .66, z, [r * 1.3, r * 1.25, r * 1.2], i * 1.7));
   // props in free corners and along the sides (each tries a few spots; none goes on a bed, pot area or path)
   const side = []; for (let z = fH - .75; z > .7; z -= .35) side.push([.75, z], [fW - .75, z]); for (let x = 1.2; x < fW - 1.1; x += .4) side.push([x, fH - .75], [fW - x, fH - .75]);
   const bin = tryAt(side.filter(([x, z]) => !shed || Math.hypot(x - shed[0], z - shed[1]) > 1.6), .45, .45, (x, z) => compostBin(g, x, z, M));

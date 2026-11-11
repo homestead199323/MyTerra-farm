@@ -160,7 +160,7 @@ const TEX = {
   hay: `{ float fine = g3fine(14., 40.); vec3 p = vG3W, c = diffuseColor.rgb;
   if (fine > .02) { float st = max(g3n(vec2(p.x * 70. + p.y * 30., p.z * 6.)), g3n(vec2(p.z * 64. - p.y * 26., p.x * 7.))); c *= mix(1., .8 + st * .36, fine); g3H = st * .01; g3K = fine; }
   diffuseColor.rgb = mix(c, c * vec3(.8, .74, .6), smoothstep(.6, .8, g3n(p.xz * 3.)) * .4); }`,
-  hedge: `{ vec3 p = vG3W; float fine = g3fine(16., 45.); float n = g3n(p.xz * 2.2 + p.y * 3.7) * .55 + g3n(p.xy * 3.5 + p.z * 2.) * .45; vec3 c = diffuseColor.rgb * (.78 + n * .44);
+  hedge: `{ vec3 p = vG3W; float fine = g3fine(16., 45.); float n = g3n(p.xz * 2.2 + p.y * 3.7) * .55 + g3n(p.xy * 3.5 + p.z * 2.) * .45; vec3 c = diffuseColor.rgb * (.78 + n * .44) * (vG3U.x > 1.5 ? vG3U.x - 2. : 1.); /* crowns.js bakes its shade into uv.x as 2 + shade */
   if (fine > .02) { vec2 q = g3uv(g3face()) * 15. + p.zx * 4., i = floor(q), f = fract(q); float s = g3h(i), leafy = 1. - smoothstep(.18, .5, length(f - .5 - (vec2(s, g3h(i + 7.)) - .5) * .5));
     c = mix(c, mix(c * .55, c * (.92 + s * .34) * mix(vec3(1.), vec3(1.14, 1.06, .78), g3h(i + 3.)), leafy), fine); g3H = leafy * .02; g3K = fine; }
   diffuseColor.rgb = c; }`,
