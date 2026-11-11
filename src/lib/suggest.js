@@ -26,6 +26,23 @@ export const CONTAINER_FRIENDLY = [
   "Pepper (Sweet)","Swiss Chard","Parsley","Thyme","Oregano","Rosemary","Kale",
 ];
 
+// Crops that also crop well in a pot, trough or grow bag of the right size (RHS container-growing advice:
+// short carrots, beetroot, potatoes in bags, peas, courgettes, cucumbers, aubergines, chillies, garlic,
+// onions, herbs; figs, citrus and olives as patio trees). The onboarding matcher keeps the shorter
+// CONTAINER_FRIENDLY list; this wider one sorts the crop picker and the calendar's Pots filter.
+const POT_ALSO = [
+  "Pepper (Hot)","Eggplant","Cucumber","Zucchini","Potato","Carrot","Beetroot","Turnip","Garlic","Onion","Pea",
+  "Sage","Lavender","Chamomile","Dill","Fig","Lemon","Orange","Olive",
+];
+const POT_SET = new Set(CONTAINER_FRIENDLY.concat(POT_ALSO));
+export function growsInPots(name) { return POT_SET.has(name); }
+/** Someone whose growing space is pots only: a balcony, or a map whose only growing areas are containers. */
+export function potGrower(data) {
+  if (data && data.profile && data.profile.environment === "balcony") return true;
+  var beds = ((data && data.zones) || []).filter(function (z) { return ["veg","raised","greenhouse","container","herbs","orchard"].includes(z.type); });
+  return beds.length > 0 && beds.every(function (z) { return z.type === "container"; });
+}
+
 // Beginner-friendly ranking — earlier = suggested first.
 export const BEGINNER_PRIORITY = [
   "Radish","Lettuce","Spinach","Basil","Mint","Kale","Pea","Zucchini",

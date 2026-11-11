@@ -75,3 +75,14 @@ test('"Up to N" is the most plants the free space takes: N fits, N + 1 does not'
   const taken = [{ id: 'a', zone: 'pl', crop: 'Garlic', status: 'planted', plantCount: n, layout: full.layout }];
   assert.equal(maxPlantCount(planter, taken, input, garlic), 0);
 });
+
+import { growsInPots, potGrower } from '../src/lib/suggest.js';
+test('Pots: the picker and calendar know what crops in a pot, and who grows only in pots', () => {
+  ['Lettuce', 'Garlic', 'Potato', 'Fig', 'Lemon'].forEach((n) => assert(growsInPots(n), n));
+  ['Wheat', 'Walnut', 'Apple', 'Pumpkin', 'Asparagus'].forEach((n) => assert(!growsInPots(n), n));
+  ['Garlic', 'Potato', 'Fig'].forEach((n) => assert(CROP_MAP.has(n)));
+  assert(potGrower({ profile: { environment: 'balcony' }, zones: [] }));
+  assert(potGrower({ zones: [{ type: 'container' }, { type: 'coop' }] }));
+  assert(!potGrower({ zones: [{ type: 'container' }, { type: 'raised' }] }));
+  assert(!potGrower({ zones: [] }));
+});

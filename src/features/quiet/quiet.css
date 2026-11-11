@@ -285,3 +285,6 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
   .q-home-side>*{margin:0!important}
   .q-home-side>.q-home-section{order:-1}
 }
+/* crop picker groups (2026-11-11): Plant now / Later / Needs open ground */
+.q-crop-group{margin:0;padding:12px 14px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-2);background:var(--color-bg)}
+.q-crop-options button>.q-crop-name{flex:1;min-width:0}.q-crop-options button>small{flex:0 0 auto;font-size:13px;color:var(--color-text-2)}

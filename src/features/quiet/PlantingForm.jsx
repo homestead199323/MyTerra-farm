@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Overlay, Inp, Sel, Btn } from "../../components/ui";
 import { rCR, rCM, getRegionalVarieties } from "../../lib/regional";
 import { uid } from "../../lib/storage";
-import { appendLog, todayLocalKey, addDaysToLocalKey } from "../../lib/utils";
+import { appendLog, todayLocalKey, addDaysToLocalKey, localDateFromKey } from "../../lib/utils";
 import { expectedYield } from "../../lib/farm-calc";
 import { zoneGeometry } from "./farm-model";
 import { cropFitsZone, planPlanting, plantingInput } from "./planting-plan";
@@ -24,7 +24,10 @@ import { usesSeedling } from "./planting-mode";
 import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
+import { sowTiming, growsInPots, potGrower } from "../../lib/suggest";
+import { CROP_MAP } from "../../data/crops";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const PLANT_TYPES = ["veg", "raised", "greenhouse", "container", "herbs", "orchard"];
 const empty = {
   crop: "",
@@ -62,6 +65,20 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
   const choices = crops.filter(
     (c) => (!zone || cropFitsZone(c, zone)) && c.name.toLowerCase().includes(query.trim().toLowerCase()),
   );
+  // The list reads as an answer to "what can I plant?": in season first, then what comes later (with its month);
+  // for someone growing in pots, crops that need open ground go last.
+  const pots = zone ? zone.type === "container" : potGrower(data);
+  const groups = (() => {
+    const now = [], later = [], ground = [], day = localDateFromKey(todayLocalKey());
+    choices.forEach((c) => {
+      const t = sowTiming(CROP_MAP.get(c.name) || c, data.region, day);
+      if (pots && !growsInPots(c.name)) ground.push({ c, t });
+      else if (t.status === "later") later.push({ c, t });
+      else now.push({ c, t });
+    });
+    later.sort((a, b) => a.t.inMonths - b.t.inMonths);
+    return [["Plant now", now], ["Later", later], ["Needs open ground", ground]].filter((g) => g[1].length);
+  })();
   const varieties = crop ? getRegionalVarieties(crop.name, data.region) : [],
     variety = varieties.find((v) => v.name === form.variety);
   const input = crop && zone ? plantingInput(form, crop, zone) : form;
@@ -213,28 +230,34 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
         />
         {browse && (
           <div className="q-crop-options">
-            {choices.map((c) => (
-              <button
-                type="button"
-                key={c.name}
-                onClick={() => {
-                  update({
-                    ...form,
-                    crop: c.name,
-                    variety: "",
-                    spacingCM: undefined,
-                    rowSpacingCM: undefined,
-                    pattern: undefined,
-                    startM: undefined,
-                    lengthM: undefined,
-                  });
-                  setCompanion("");
-                  setBrowse(false);
-                }}
-              >
-                <FarmIcon name={c.name} emoji={c.emoji} size={30} harvest />
-                <span>{c.name}</span>
-              </button>
+            {groups.map((g) => (
+              <div key={g[0]} role="group" aria-label={g[0]}>
+                <h4 className="q-crop-group">{g[0]}</h4>
+                {g[1].map(({ c, t }) => (
+                  <button
+                    type="button"
+                    key={c.name}
+                    onClick={() => {
+                      update({
+                        ...form,
+                        crop: c.name,
+                        variety: "",
+                        spacingCM: undefined,
+                        rowSpacingCM: undefined,
+                        pattern: undefined,
+                        startM: undefined,
+                        lengthM: undefined,
+                      });
+                      setCompanion("");
+                      setBrowse(false);
+                    }}
+                  >
+                    <FarmIcon name={c.name} emoji={c.emoji} size={30} harvest />
+                    <span className="q-crop-name">{c.name}</span>
+                    {t.status === "later" && <small>from {MONTHS[t.month]}</small>}
+                  </button>
+                ))}
+              </div>
             ))}
             {!choices.length && <p>No matching crops for this area.</p>}
           </div>

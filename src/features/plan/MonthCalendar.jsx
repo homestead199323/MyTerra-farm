@@ -5,6 +5,7 @@ import FarmIcon from "../../components/FarmIcon";
 import { MN_ABR, MN_FULL } from "../../lib/calendar";
 import { todayLocalKey, localDateFromKey } from "../../lib/utils";
 import { monthPlan, monthTip, nextMonthPreview, cropYear, cropTips, JOBS, JOB_TITLES, JOB_TIPS, seasonText } from "../../lib/month-plan";
+import { growsInPots, potGrower } from "../../lib/suggest";
 
 /* ═══════════════════════════════════════════
    CALENDAR (2026-11-11) — one month at a time, split by the job:
@@ -16,6 +17,7 @@ import { monthPlan, monthTip, nextMonthPreview, cropYear, cropTips, JOBS, JOB_TI
 const JOB_ICONS = { indoors: Sprout, outside: Shovel, plantOut: Fence, plant: TreeDeciduous, harvest: ShoppingBasket };
 const KINDS = [
   ["all", "All"],
+  ["pots", "Pots"],
   ["easy", "Easy"],
   ["veg", "Vegetables"],
   ["herb", "Herbs"],
@@ -25,6 +27,7 @@ const PREVIEW = 4;
 const LETTERS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 
 function inKind(item, kind) {
+  if (kind === "pots") return growsInPots(item.name);
   if (kind === "easy") return item.diff.l === "Easy";
   if (kind === "veg") return item.crop.cat === "Vegetable" || item.crop.cat === "Grain";
   if (kind === "herb") return item.crop.cat === "Herb";
@@ -61,7 +64,7 @@ export default function MonthCalendar({ data, onAdd }) {
   const today = todayLocalKey(),
     nowMonth = localDateFromKey(today).getMonth();
   const [month, setMonth] = useState(nowMonth);
-  const [kind, setKind] = useState("all");
+  const [kind, setKind] = useState(function () { return potGrower(data) ? "pots" : "all"; }); // a balcony is shown what grows in pots
   const [showAll, setShowAll] = useState({});
   const [open, setOpen] = useState(null); // { item, job }
 
