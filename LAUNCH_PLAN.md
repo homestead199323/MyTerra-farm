@@ -720,6 +720,18 @@
   legs was looked at in stills only. Honest limit: still no muscle or face modelling; the gain is clear on cow,
   donkey, goat, horse and sheep, small on pig and alpaca. Grove3D chunk 243.0 KB gzip of 245 KB.
   Still open: thin crops on a zoomed-out farm; a check on Dervis's iPhone.
+- **3D map — small things everywhere, shipped 2026-11-11 (`9a16c66`, `b62c538`)** — owner: "continue with the
+  implementation; don't worry about the KB budget for now". Grass tufts are seven thin bent blades instead of
+  five cones; backdrop trunks and limbs carry the wood surface in a browner bark; window-box and rail-planter
+  greenery is a stretched shrub crown; broad crop leaves at the light levels of detail are cut blunt at both ends
+  instead of being diamonds (a big farm's lettuce and basil read as shards close up) — no extra triangles.
+  All-zones desktop 618,406 → 627,016 triangles (the tufts), draw calls unchanged. Barn, coop, orchard and pasture
+  tiles re-rendered. Audit note: the "thin crops leave beds empty" item is mostly the harness (one row of 40
+  plants in a 1.2 × 10 m bed), not the models; the drawing follows the planting data. Verified: tests, ESLint,
+  build (sandbox and Mac); production `dpl_rLR1FsPnZ1JpNDD3Eb3wbZ8dZ3qY` READY, live `Grove3D-B3r1IE3h.js` carries
+  `8149052` (the bark colour), `fleece` and `vG3U.x > 1.5`, no `__g3harness`, CSP present. NOT verified: any real
+  phone or GPU. Grove3D chunk 243.1 KB gzip (budget waived by the owner for now). Still open: a check on
+  Dervis's iPhone; building and prop shapes; a deeper animal sculpt.
 - **Phone pass 1, shipped 2026-11-11 (`bf74918`)** — from the mobile audit (project doc
   `claude/mobile-audit-2026-11-11.md`, 16 findings, six slices planned). Farm Designer on a phone: short
   header, undo/redo and snapping in one row, first-run guide covers the whole screen so its button is no
