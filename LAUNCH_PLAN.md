@@ -690,6 +690,15 @@
   draws with the new surfaces (headless Chrome screenshot). NOT verified: any real phone or GPU — the
   shaders use screen-space derivatives, standard in WebGL2 but untested on iOS here. Grove3D chunk 240.4 KB
   gzip; budget raised 240 → 245 KB. Not done: building and prop SHAPES are the same geometry as before.
+- **Phone pass 1, shipped 2026-11-11 (`bf74918`)** — from the mobile audit (project doc
+  `claude/mobile-audit-2026-11-11.md`, 16 findings, six slices planned). Farm Designer on a phone: short
+  header, undo/redo and snapping in one row, first-run guide covers the whole screen so its button is no
+  longer cut off. Area card: Plant / Edit buttons first, no blank plan for an empty bed, one-line empty
+  journal. Sub-page tabs and account button 44 px; four Progress tabs fit. Verified: 210 + 3 tests, ESLint,
+  build (sandbox and Mac); 390 × 844 screenshots in headless Chrome; production
+  `dpl_CDLpc4NTnfvQcgxSPJh5KzzCPFiB` READY, live CSS carries `fd-tools` and `zs-actions`, live JS the new
+  journal line, CSP present. NOT verified on a real phone. Open decision for slice 2 (forms): bottom sheets
+  on phones versus the small centred cards chosen earlier.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a
