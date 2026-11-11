@@ -1,9 +1,10 @@
-import { Sun, Map, CalendarDays, BookOpen, TrendingUp, ShieldCheck } from "lucide-react";
+import { Sun, Tractor, CalendarDays, BookOpen, TrendingUp, ShieldCheck } from "lucide-react";
 
 /* ═══════════════════════════════════════════
    NAVIGATION CONFIG — Launch Stage 5 (2026-09-28)
-   Five areas for everyone (brief §8): Today, My Space, Plan, Learn,
-   Progress. Each area groups existing pages; no page was removed and
+   Five areas for everyone (brief §8): Today, Farm, Plan, Learn,
+   Progress. ("Farm" was "My Space", and "Map" on the phone tab bar, until 2026-11-11.
+   It opens on Crops; the map is last because Today already shows it.) Each area groups existing pages; no page was removed and
    page ids are unchanged (they are persisted by savePage and used by
    setPage calls all over the app). New pages: "plan", "progress".
 
@@ -17,10 +18,10 @@ export const SECTIONS = [
     { id: "home", l: "Overview" },
     { id: "tasks", l: "All tasks" },
   ] },
-  { id: "space", l: "My Space", E: Map, pages: [
-    { id: "map", l: "Map" },
+  { id: "space", l: "Farm", E: Tractor, pages: [
     { id: "crops", l: "Crops" },
     { id: "live", l: "Animals" },
+    { id: "map", l: "Map" },
   ] },
   { id: "plan", l: "Plan", E: CalendarDays, pages: [
     { id: "plan", l: "Plan" },

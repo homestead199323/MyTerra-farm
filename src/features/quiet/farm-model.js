@@ -196,3 +196,21 @@ export function animalZone(animal, zones) {
   // poultry and rabbits live in the coop; without one they share the barn, as do grazers without a pasture
   return zones.find((z) => z.type === type) || zones.find((z) => z.type === "barn");
 }
+
+/**
+ * The animals page, split by where the animals live: one group per area, in the order of the map.
+ * Animals with no area to live in yet come last, under "No area yet".
+ */
+export function animalGroups(animals, zones) {
+  const byZone = new Map();
+  for (const a of animals || []) {
+    const zone = animalZone(a, zones || []) || null,
+      key = zone ? zone.id : "none";
+    if (!byZone.has(key)) byZone.set(key, { key, zone, title: zone ? zone.name : "No area yet", animals: [], head: 0 });
+    const g = byZone.get(key);
+    g.animals.push(a);
+    g.head += Number(a.count) || 0;
+  }
+  const order = new Map((zones || []).map((z, i) => [z.id, i]));
+  return [...byZone.values()].sort((x, y) => (x.zone ? order.get(x.zone.id) : Infinity) - (y.zone ? order.get(y.zone.id) : Infinity));
+}

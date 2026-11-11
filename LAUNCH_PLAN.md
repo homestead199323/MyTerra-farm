@@ -795,6 +795,11 @@
   removed; bottom room is now 80 px + inset; every page ends 24 px or more above the bar. Second cause,
   iOS only and NOT verifiable here: the shell was `height:100vh`, taller than the visible screen in Safari;
   it is now `.mt-shell` at `100dvh` (assistant panel too). Regression test in `tests/domain.test.js`.
+- **Farm section (Dervis, 2026-11-11).** The area called "My Space" (desktop) and "Map" (phone tab) is now
+  "Farm" everywhere, with a tractor icon. Its pages run Crops · Animals · Map: it opens on Crops, the map is
+  last because Today already shows it. Page ids are unchanged. Settings still has its "My Space" heading
+  (type of space). Animals page: animals are grouped by the area they live in (`animalGroups` in
+  `farm-model.js`, map order, "No area yet" last), with the same collapsible headers as the crop sections.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

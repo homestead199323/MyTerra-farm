@@ -561,7 +561,9 @@ import {waitingPlantings,sowNowSuggestions,comingUp,seasonTimeline} from '../src
 import {produceTotals,moneyTotals,badgeList,nextHarvest,plantingCounts} from '../src/lib/progress.js';
 import {sectionOf,normalizePage,SECTIONS} from '../src/app/navigation.js';
 test('Five areas hold every page; old saved pages still open',()=>{
-  assert.deepEqual(SECTIONS.map(s=>s.l),['Today','My Space','Plan','Learn','Progress']);
+  assert.deepEqual(SECTIONS.map(s=>s.l),['Today','Farm','Plan','Learn','Progress']);
+  // Farm opens on Crops; the map is last because Today already shows it (Dervis, 2026-11-11)
+  assert.deepEqual(SECTIONS[1].pages.map(p=>p.id),['crops','live','map']);
   assert.equal(sectionOf('tasks').id,'today');assert.equal(sectionOf('live').id,'space');assert.equal(sectionOf('fin').id,'progress');
   assert.equal(sectionOf('feedback'),null);assert.equal(sectionOf('nonsense').id,'today');
   assert.equal(normalizePage('farm'),'map');assert.equal(normalizePage('season'),'plan');assert.equal(normalizePage('setup'),'home');assert.equal(normalizePage('bogus'),'home');assert.equal(normalizePage('pantry'),'pantry');
@@ -969,4 +971,18 @@ test('phone shell: nothing overrides the room left for the tab bar, and the shel
   assert.match(app,/className="mt-shell"/);
   assert.match(app,/calc\(80px \+ env\(safe-area-inset-bottom\)\)/);
   assert.ok(!/height:"100vh"/.test(app),'a fixed 100vh height is back in App.jsx');
+});
+
+// Animals page: groups by where the animals live on the farm, in map order (2026-11-11)
+import {animalGroups} from '../src/features/quiet/farm-model.js';
+test('animals are grouped by the area they live in, in the order of the map; no area comes last',()=>{
+  const zones=[{id:'b',type:'barn',name:'Big barn'},{id:'c',type:'coop',name:'Coop'},{id:'p',type:'pasture',name:'Top field'},{id:'v',type:'veg',name:'Beds'}];
+  const animals=[{id:1,type:'Goat',count:2},{id:2,type:'Chicken',count:6},{id:3,type:'Chicken',count:4,zone:'b'},{id:4,type:'Sheep',count:'3'},{id:5,type:'Bee',count:1}];
+  const g=animalGroups(animals,zones);
+  assert.deepEqual(g.map(x=>x.title),['Big barn','Coop','Top field']);
+  assert.deepEqual(g.map(x=>x.animals.map(a=>a.id)),[[3,5],[2],[1,4]]); // bees have no hive here, so they fall back to the barn
+  assert.deepEqual(g.map(x=>x.head),[5,6,5]);
+  const none=animalGroups([{id:9,type:'Goat',count:1}],[{id:'v',type:'veg',name:'Beds'}]);
+  assert.deepEqual(none.map(x=>[x.key,x.title,x.head]),[['none','No area yet',1]]);
+  assert.deepEqual(animalGroups([],zones),[]);
 });

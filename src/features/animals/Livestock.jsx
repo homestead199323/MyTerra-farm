@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { C, SX } from "../../lib/theme";
 import { uid } from "../../lib/storage";
 import { appendLog, todayLocalKey, markTaskDone } from "../../lib/utils";
@@ -11,6 +12,7 @@ import { Btn, Card, Inp, Sel, Overlay } from "../../components/ui";
 import AnimalOverlay from "./AnimalOverlay";
 import { currencySymbol } from "../../lib/money";
 import AnimalArt from "../quiet/AnimalArt";
+import { animalGroups } from "../quiet/farm-model";
 
 /* ═══════════════════════════════════════════
    LIVESTOCK
@@ -64,11 +66,24 @@ function Livestock({data, setData}) {
     toast(`${q} ${a.type} processed`,{detail:`+${mq} kg added to your pantry`,actionLabel:"Undo",onAction:()=>setData(d=>{const animals=d.livestock?.animals||[];const has=animals.some(x=>x.id===a.id);const back=has?animals.map(x=>x.id===a.id?{...x,count:x.count+q}:x):[...animals,{...a,count:q}];const pantry=d.pantry||{items:[]};const left=(pantry.items||[]).map(it=>{if(it.id!==lotId)return it;const r=Math.round(((Number(it.qty)||0)-mq)*1000)/1000;return r>0?{...it,qty:r}:null;}).filter(Boolean);return{...subtractProduce(d,a.type,"meatKg",mq,today,true),livestock:{...d.livestock,animals:back},pantry:{...pantry,items:left}};})});
   };
   const sa=sel?data.livestock.animals.find(a=>a.id===sel):null;
+  // Split by where the animals live on the farm, as crops are split into beds, herbs and orchard.
+  const [openSec,setOpenSec]=useState({});
+  const groups=animalGroups(data.livestock.animals,data.zones);
 
   return (
     <div className="page-enter" style={SX.mw800}>
       <div className="pg-head" style={SX.pageHead}><div><h2 className="pg-h2" style={SX.headerH2}>Your animals</h2><p className="pg-sub" style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div><Btn onClick={()=>setShowAdd(true)}>+ Add</Btn></div>
-      <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.s15Bold}>No animals yet</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Add chickens, goats, or any livestock to track them</div></Card>:data.livestock.animals.map(a=>{const db=LDB[a.type];return (
+      <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.s15Bold}>No animals yet</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Add chickens, goats, or any livestock to track them</div></Card>:groups.map(function(g){const open=openSec[g.key]??true;return (
+        <section key={g.key} style={{marginBottom:10}}>
+          <button type="button" aria-expanded={open} onClick={function(){setOpenSec({...openSec,[g.key]:!open});}}
+            style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,width:"100%",minHeight:44,padding:"8px 2px",margin:"0 0 8px",background:"none",border:0,borderBottom:`1px solid ${C.bdr}`,cursor:"pointer",color:C.text,textAlign:"left"}}>
+            <span style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+              {open?<ChevronDown size={18}/>:<ChevronRight size={18}/>}
+              <span style={{fontSize:17,fontWeight:650,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.title}</span>
+            </span>
+            <span style={{fontSize:12,color:C.t2,whiteSpace:"nowrap"}}>{g.head} {g.animals.every(function(x){return x.type==="Bee";})?(g.head===1?"hive":"hives"):(g.head===1?"animal":"animals")}</span>
+          </button>
+          {open&&<div style={{display:"grid",gap:8}}>{g.animals.map(function(a){const db=LDB[a.type];return (
         <Card key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <button className="q-animal-open" onClick={()=>setSel(a.id)}>
             <AnimalArt species={a.type} size={72}/><div><strong style={{fontSize:15}}>{a.name||a.type}</strong>{a.breed?<span style={SX.t2_12}> ({a.breed})</span>:null}<div style={SX.t2_12}>×{a.count} · Guide & details</div></div>
@@ -82,6 +97,8 @@ function Livestock({data, setData}) {
             {db?.prod.includes("Meat")&&<button type="button" className="q-animal-meat" aria-label={`Process ${a.name||a.type} for meat`} title="Process for meat" onClick={()=>{setShowK(a);setKQ("1")}}>Meat</button>}
           </div>
         </div></Card>
+      );})}</div>}
+        </section>
       );})}</div>
 
       {/* Manual Collection Modal */}

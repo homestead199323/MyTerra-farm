@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } 
 import { createPortal } from "react-dom";
 import {
   Leaf, User, UserRound, MessageSquare, MessageCircle, Settings, ChevronRight,
-  Sun, ListChecks, Map as MapIcon, CalendarDays, Menu, BookOpen, TrendingUp, Package, Wallet, Lightbulb
+  Sun, ListChecks, Tractor, CalendarDays, Menu, BookOpen, TrendingUp, Package, Wallet, Lightbulb
 } from "lucide-react";
 import { Overlay } from "./components/ui";
 
@@ -105,7 +105,7 @@ class ErrorBoundary extends React.Component {
 
 /* ═══════════════════════════════════════════
    BOTTOM NAVIGATION — mobile (< 768px)
-   Stage 5: the five areas (Today, My Space, Plan, Learn, Progress).
+   Stage 5: the five areas (Today, Farm, Plan, Learn, Progress).
    An area opens its first page; the pages inside an area are the tabs
    at the top of the screen (SectionBar).
    ═══════════════════════════════════════════ */
@@ -114,7 +114,7 @@ class ErrorBoundary extends React.Component {
 const PHONE_TABS = [
   { id: "today", l: "Today", E: Sun, page: "home", pages: ["home"] },
   { id: "tasks", l: "Tasks", E: ListChecks, page: "tasks", pages: ["tasks"] },
-  { id: "map", l: "Map", E: MapIcon, page: "map", pages: ["map", "crops", "live"] },
+  { id: "farm", l: "Farm", E: Tractor, page: "crops", pages: ["crops", "live", "map"] },
   { id: "cal", l: "Calendar", E: CalendarDays, page: "plan", pages: ["plan"] },
 ];
 const MORE_ROWS = [
