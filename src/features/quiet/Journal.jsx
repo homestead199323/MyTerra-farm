@@ -4,6 +4,7 @@ export default function Journal({ data, setData, zoneId, plotId }) {
     .filter((e) => (plotId ? e.plotId === plotId || (!e.plotId && e.plotIds?.includes(plotId)) : e.zoneId === zoneId))
     .slice()
     .reverse();
+  if (!entries.length) return <p className="q-journal-empty">Notes and photos from your walks will show here.</p>;
   return (
     <section className="q-journal">
       <div className="q-eyebrow">Your growing story</div>

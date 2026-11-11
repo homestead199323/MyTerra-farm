@@ -208,3 +208,18 @@ button.q-plant-row{cursor:pointer}button.q-plant-row:hover,button.q-plant-row:fo
 .q-plant-row .q-chev{font-size:24px;line-height:1;color:var(--color-text-2)}.q-plant-flag{color:#c98a2b}
 .q-layout-editor{margin-bottom:14px}
 .q-plant-entry{align-items:flex-start}
+/* ── Phone pass 2026-11-11 (claude/mobile-audit-2026-11-11.md) ── */
+.zs-actions{margin:0 0 14px}.zs-actions .q-button,.zs-actions .q-secondary{min-height:48px}
+.q-journal-empty{margin:14px 0 4px;color:var(--color-text-2);font-size:13px;line-height:1.45}
+@media (max-width:560px){
+  .zs-actions .q-button{flex:1 1 auto}
+  /* designer: one row of tools, the map keeps the room */
+  .fd-wide{display:none}
+  .fd-hint{display:none}
+  .fd-tools{flex-wrap:nowrap!important;gap:8px}.fd-tools>.q-secondary{min-width:46px;min-height:44px;padding:0;font-size:20px;line-height:1;flex:0 0 auto}
+  .fd-tools .fd-snap{flex-wrap:nowrap;gap:6px;min-width:0}.fd-tools .fd-snap .q-seg button{min-height:44px;padding:0 10px}.fd-tools .fd-snap select{min-height:44px;min-width:0;max-width:118px;font-size:13px;padding-left:8px;padding-right:20px}
+  .fd-tutorial{padding:20px 18px!important}
+  /* sub-page tabs and the account button: full-size touch targets, and four tabs fit beside the account button */
+  .mt-secbar-tabs button{min-height:44px;padding:0 10px}.mt-secbar-me{width:44px;height:44px;border-radius:22px}
+  .fd-preview-toggle{min-height:44px;min-width:44px;font-size:13px!important;padding:6px 12px!important}
+}

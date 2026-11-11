@@ -377,11 +377,11 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
               padding:"6px 8px", cursor:"pointer", WebkitTapHighlightColor:"transparent", fontFamily:"inherit"}}>✕</button>
         )}
         <div style={{flex:1, minWidth:0}}>
-          <div style={{fontSize:15, fontWeight:800, fontFamily:F.head, color:C.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>Farm Designer</div>
-          <div style={{fontSize:11, color:C.t2, fontFamily:F.mono}}>{farmW}×{farmH} m · {zones.length} {zones.length === 1 ? "zone" : "zones"} · {ornaments.length}/{MAX_ORNAMENTS} decor</div>
+          <div style={{fontSize:15, fontWeight:800, fontFamily:F.head, color:C.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}><span className="fd-wide">Farm </span>Designer</div>
+          <div style={{fontSize:11, color:C.t2, fontFamily:F.mono}}>{farmW}×{farmH} m · {zones.length} {zones.length === 1 ? "zone" : "zones"}<span className="fd-wide"> · {ornaments.length}/{MAX_ORNAMENTS} decor</span></div>
         </div>
         <button type="button" className="q-secondary fd-preview-toggle" aria-pressed={show3dPreview} onClick={function() { setShow3dPreview(!show3dPreview); }}>
-          {show3dPreview ? "Hide 3D" : "Preview 3D"}
+          {show3dPreview ? "Hide 3D" : <><span className="fd-wide">Preview </span>3D</>}
         </button>
         <button type="button" aria-label="Farm settings" onClick={function() { setSheet("settings"); }}
           style={{border:`1px solid ${C.bdr}`, background:C.card, color:C.text, fontSize:16, lineHeight:1,
@@ -471,7 +471,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
 
         {/* Idle hint pill */}
         {zones.length > 0 && !armedType && !armedOrn && !sz && !sOrn && !draw && !sLine && (
-          <div style={{position:"absolute", bottom:10, left:"50%", transform:"translateX(-50%)",
+          <div className="fd-hint" style={{position:"absolute", bottom:10, left:"50%", transform:"translateX(-50%)",
             background:"rgba(30,40,32,.72)", color:"#fff", fontSize:10.5, fontWeight:600,
             padding:"5px 12px", borderRadius:99, whiteSpace:"nowrap", pointerEvents:"none", maxWidth:"92%",
             overflow:"hidden", textOverflow:"ellipsis"}}>
@@ -509,13 +509,13 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
         {/* First-visit tutorial — shown until dismissed */}
         {!tutorialDismissed && (
           <div style={{
-            position:"absolute",inset:0,zIndex:80,
+            position:"fixed",inset:0,zIndex:80, /* the whole screen, not the map area: on a phone the card was taller than the map and its button was cut off */
             background:"rgba(0,0,0,.55)",backdropFilter:"blur(3px)",
-            display:"flex",alignItems:"center",justifyContent:"center",
+            display:"flex",alignItems:"center",justifyContent:"center",padding:16,boxSizing:"border-box",
           }}>
-            <div style={{
+            <div className="fd-tutorial" style={{
               background:C.card,borderRadius:16,padding:"28px 32px",
-              maxWidth:360,width:"90%",textAlign:"center",
+              maxWidth:360,width:"100%",maxHeight:"100%",overflowY:"auto",boxSizing:"border-box",textAlign:"center",
               boxShadow:"0 24px 64px rgba(0,0,0,.3)",
             }}>
               <div style={{fontSize:36,marginBottom:10}}>🗺️</div>
@@ -557,7 +557,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
       <div style={{flex:"0 0 auto", background:C.card, borderTop:`1px solid ${C.bdr}`,
         maxHeight:"43dvh",overflowY:"auto",padding:"10px 14px calc(10px + env(safe-area-inset-bottom))"}}>
         <div style={{maxWidth:720, margin:"0 auto"}}>
-          <div className="q-row q-wrap" style={{marginBottom:10}}><button className="q-secondary" disabled={!history.past.length} onClick={()=>travel(false)}>Undo</button><button className="q-secondary" disabled={!history.future.length} onClick={()=>travel(true)}>Redo</button><div className="fd-snap" role="group" aria-label="Snapping"><div className="q-seg"><button type="button" aria-pressed={snapOn} onClick={()=>setSnap({on:true})}>🧲 Snap</button><button type="button" aria-pressed={!snapOn} onClick={()=>setSnap({on:false})}>Free</button></div>{snapOn&&<select aria-label="Grid size" value={grid} onChange={e=>setSnap({grid:+e.target.value})}>{gridOptions.map(g=><option key={g} value={g}>{g} m grid</option>)}</select>}</div></div>
+          <div className="q-row q-wrap fd-tools" style={{marginBottom:10}}><button className="q-secondary" aria-label="Undo" disabled={!history.past.length} onClick={()=>travel(false)}><span aria-hidden="true">↶</span><span className="fd-wide"> Undo</span></button><button className="q-secondary" aria-label="Redo" disabled={!history.future.length} onClick={()=>travel(true)}><span aria-hidden="true">↷</span><span className="fd-wide"> Redo</span></button><div className="fd-snap" role="group" aria-label="Snapping"><div className="q-seg"><button type="button" aria-pressed={snapOn} onClick={()=>setSnap({on:true})}>🧲 Snap</button><button type="button" aria-pressed={!snapOn} onClick={()=>setSnap({on:false})}>Free</button></div>{snapOn&&<select aria-label="Grid size" value={grid} onChange={e=>setSnap({grid:+e.target.value})}>{gridOptions.map(g=><option key={g} value={g}>{g} m grid</option>)}</select>}</div></div>
 
           {sz && (
             <div className="fd-panel" data-fd-zone-panel>
