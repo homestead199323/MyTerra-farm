@@ -690,6 +690,23 @@
   draws with the new surfaces (headless Chrome screenshot). NOT verified: any real phone or GPU — the
   shaders use screen-space derivatives, standard in WebGL2 but untested on iOS here. Grove3D chunk 240.4 KB
   gzip; budget raised 240 → 245 KB. Not done: building and prop SHAPES are the same geometry as before.
+- **3D map — foliage shapes, shipped 2026-11-11 (`51831b9`)** — owner request "continue with the improvements of
+  all 3D assets, map and visuals". Audit first (farm, balcony, garden, zoo harnesses, overview and close-up):
+  buildings and props read well since slice 5; the weakest shapes left were the backdrop trees (five spheres),
+  shrubs (one sphere) and hedges (a rounded box). New `src/features/grove/crowns.js`: a tree or shrub is one
+  billowed crown (outer skin of a cluster of spheres, flatter underneath; habits round / wide / tall / shrub,
+  three variants each), a hedge side is one clipped run that swells and dips. Shade is baked per vertex into
+  `uv.x` (2 + shade) and read by the `hedge` surface; no new material, draw call or noise lookup. Trunks taper,
+  lean and send three limbs into the crown. Rules: `docs/MAP_STYLE.md` §12. Triangles before → after: all-zones
+  phone tier 404,968 → 402,848, desktop 619,694 → 618,406, back garden 192,062 → 192,872; draw calls unchanged.
+  `zone-house.webp` re-rendered (the only small picture with a hedge). Found on the way: the first hedge build had
+  its faces wound inwards and drew as a flat dark band; fixed, and a test now checks faces point out. Verified:
+  216 + 3 tests, ESLint, build (sandbox and Mac); screenshots day and `?hour=21` on g3-all, g3-balcony, g3-garden
+  at 390 × 844 and 1280 × 900, no page errors; production `dpl_8mGsevr7LUMsYNM5M9czZxSif2Nf` READY, live
+  `Grove3D-Dsc5zGhH.js` carries `vG3U.x > 1.5`, no `__g3harness`, CSP present. NOT verified: any real phone or
+  GPU; the new shapes on production itself (seen in the harnesses only). Grove3D chunk 242.6 KB gzip of the
+  245 KB budget. Not done: a second pass on animal anatomy; thin crops on a zoomed-out farm; building and prop
+  shapes (judged good enough in the audit, left alone).
 - **Phone pass 1, shipped 2026-11-11 (`bf74918`)** — from the mobile audit (project doc
   `claude/mobile-audit-2026-11-11.md`, 16 findings, six slices planned). Farm Designer on a phone: short
   header, undo/redo and snapping in one row, first-run guide covers the whole screen so its button is no
