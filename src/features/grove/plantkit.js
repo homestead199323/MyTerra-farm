@@ -82,9 +82,9 @@ export class PlantKit extends Parts {
     const c0 = C(color), ct = tip != null ? C(tip) : c0.clone().lerp(new THREE.Color(0xa8d86a), .12), cr = rib != null ? C(rib) : null, a = Math.log(.5) / Math.log(wide);
     // columns across the blade: edge … midrib … edge; a broad leaf gets two more for a smooth cup, a coloured rib its own narrow strip
     const strip = cr && ribW > 0 && !lite, U = [-1, 0, 1]; if (cols >= 5 && !lite) U.push(-.5, .5); if (strip) U.push(-ribW, ribW, -ribW * 1.7, ribW * 1.7); U.sort((x, y) => x - y);
-    const nc = U.length, P = [], Cc = [], S = [], I = [];
+    const nc = U.length, P = [], Cc = [], S = [], I = [], broad = lite && W / L >= .3; // a light broad leaf has two or three rows: with a pointed base and tip it was a diamond, so both ends are cut blunt
     for (let r = 0; r <= rows; r++) {
-      const t = r / rows, w = (W / 2) * Math.pow(Math.sin(Math.PI * Math.pow(t, a)), blunt), y = L * (rise * t - droop * t * t), z = L * t, e = c0.clone().lerp(ct, t * .7), taper = 1 - t * .7;
+      const t = r / rows, w0 = (W / 2) * Math.pow(Math.sin(Math.PI * Math.pow(t, a)), blunt), w = broad && r === rows ? W * .17 : broad && r === 0 ? W * .1 : w0, y = L * (rise * t - droop * t * t), z = L * t, e = c0.clone().lerp(ct, t * .7), taper = 1 - t * .7;
       for (let k = 0; k < nc; k++) {
         const u = U[k], au = Math.abs(u), x = strip && au > 0 && au < .5 ? Math.sign(u) * Math.min(w, au * W * .5 * taper) : u * w, f = w > 1e-6 ? Math.abs(x) / w : 0;
         const lift = fold * Math.abs(x) + cup * f * f * w + (au === 1 ? Math.sign(u) * wave * w * Math.sin(t * Math.PI * waveN) : 0);
