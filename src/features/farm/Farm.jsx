@@ -999,7 +999,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
               <span style={{fontSize:17,fontWeight:650}}>{sec.title}</span>
               {sec.ready>0&&<Pill c={C.orange} bg={C.harvestBg}>{sec.ready} ready</Pill>}
             </span>
-            <small style={{color:C.t2,fontSize:12}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${Math.round(sec.kg)}kg`:""}</small>
+            <small style={{color:C.t2,fontSize:12}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${sec.kg>=10?Math.round(sec.kg):Math.round(sec.kg*10)/10}kg`:""}</small>
           </button>
           {open&&<div style={{display:"grid",gap:8}}>{shown.map(function(p){return renderCrop(p,sec.unit);})}</div>}
           {open&&sec.plots.length>_PREVIEW+1&&(

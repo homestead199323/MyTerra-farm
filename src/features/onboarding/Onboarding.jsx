@@ -174,7 +174,7 @@ const S = {
     return {
       width:"100%", padding:"15px 0", borderRadius:14,
       background: enabled ? C.green : C.bdr,
-      color:"#fff", border:"none",
+      color: enabled ? "#fff" : C.t2, border:"none", opacity:1, // readable when disabled (the global :disabled fade made it vanish)
       fontSize:16, fontWeight:700, fontFamily:F.body,
       cursor: enabled ? "pointer" : "default",
       marginTop:8, letterSpacing:"0.01em",
@@ -252,7 +252,7 @@ function ScreenEnvironment({ value, onChange, onNext, onBack }) {
           </button>
         );
       })}
-      <button style={S.btnPrimary(!!value)} onClick={value ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(!!value)} disabled={!value} onClick={value ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -312,7 +312,7 @@ function ScreenDimensions({ environment, unit, setUnit, lenStr, setLenStr, widSt
           <div style={S.hint}>Covered balconies get less rain — we'll remind you to water more often.</div>
         </div>
       )}
-      <button style={S.btnPrimary(ok)} onClick={ok ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(ok)} disabled={!ok} onClick={ok ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -385,7 +385,7 @@ function ScreenSun({ sunlight, setSunlight, sunDirection, setSunDirection, onNex
           })}
         </div>
       </div>
-      <button style={S.btnPrimary(!!sunlight)} onClick={sunlight ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(!!sunlight)} disabled={!sunlight} onClick={sunlight ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -415,7 +415,7 @@ function ScreenGoals({ goals, setGoals, onNext, onBack }) {
           </button>
         );
       })}
-      <button style={S.btnPrimary(ok)} onClick={ok ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(ok)} disabled={!ok} onClick={ok ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -439,7 +439,7 @@ function ScreenExperience({ value, onChange, onNext, onBack }) {
           </button>
         );
       })}
-      <button style={S.btnPrimary(!!value)} onClick={value ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(!!value)} disabled={!value} onClick={value ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -463,7 +463,7 @@ function ScreenTime({ value, onChange, onNext, onBack }) {
           </button>
         );
       })}
-      <button style={S.btnPrimary(!!value)} onClick={value ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(!!value)} disabled={!value} onClick={value ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -519,7 +519,7 @@ function ScreenHousehold({ people, setPeople, use, setUse, dislikes, setDislikes
           })}
         </div>
       </div>
-      <button style={S.btnPrimary(ok)} onClick={ok ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(ok)} disabled={!ok} onClick={ok ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );
@@ -551,7 +551,7 @@ function ScreenAssets({ assets, setAssets, onNext, onBack }) {
           );
         })}
       </div>
-      <button style={S.btnPrimary(ok)} onClick={ok ? onNext : undefined}>Continue</button>
+      <button style={S.btnPrimary(ok)} disabled={!ok} onClick={ok ? onNext : undefined}>Continue</button>
       <button style={S.btnBack} onClick={onBack}>← Back</button>
     </>
   );

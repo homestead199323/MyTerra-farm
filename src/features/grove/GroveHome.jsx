@@ -1,6 +1,6 @@
 import {useState,useEffect,useMemo} from 'react';
 import {createPortal} from 'react-dom';
-import {ArrowRight,Leaf,Sun,Pencil,ChevronRight} from 'lucide-react';
+import {ArrowRight,Leaf,Sun,Pencil,ChevronRight,Sprout} from 'lucide-react';
 import {fetchWeather} from '../../lib/weather';
 import WeatherWeek from './WeatherWeek';
 import {todayLocalKey} from '../../lib/utils';
@@ -14,6 +14,7 @@ import FarmIcon from '../../components/FarmIcon';
 import {tasksByZone,taskGlyph} from './zone-tasks';
 import {RemindersPrompt} from '../settings/Reminders';
 import {budgetCheck,hm} from '../../lib/time-budget';
+import {isPlantZone} from '../farm/living/visuals';
 
 // What the row says under a job: where, how long, and — only when it matters — why now.
 function rowNote(t) {
@@ -55,6 +56,9 @@ export default function GroveHome({data,setData,setPage,tasks,forecast,forecastS
   const title=spaceTitle(data);
   const week=useMemo(()=>budgetCheck(data,forecast,todayLocalKey()),[data,forecast]);
   const empty=!(data.zones||[]).length;
+  // A space with a bed and nothing in it yet (no crop ever, no animal, no seed tray): the one useful thing on Today is planting the first crop.
+  const firstBed=(data.zones||[]).find(z=>isPlantZone(z.type));
+  const fresh=!!firstBed&&!(data.garden?.plots||[]).length&&!(data.livestock?.animals||[]).length&&!(data.nursery?.batches||[]).length;
   return <div className="q-home page-enter">
     <section className="q-garden-hero">
       <header className="q-greeting">
@@ -64,14 +68,15 @@ export default function GroveHome({data,setData,setPage,tasks,forecast,forecastS
       <GroveScene data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={()=>setPage('tasks')} taskZoneId={taskZone} onTaskZone={setTaskZone} showEditButton={false} showHelperText={false} noBorder onPlantInZone={zone=>setPage('crops',{zone})} onShowCrops={()=>setPage('crops')}
         onEditLayout={()=>setPage('map',{edit:true})} onStartGuide={()=>setData({...data,setupDone:false})}/>
       {!empty&&<section className="q-today-dock">
-        <button className="q-today-link" onClick={()=>setPage('tasks')}><span><strong>Today</strong><small>{due.length===0?'Nothing due':due.length===1?'1 job':`${due.length} jobs`}{issues?` · ${issues} areas to revisit`:due.length?' · a little care goes a long way':''}</small>{week.status==='over'&&<small className="mt-over">This week is ~{hm(week.over)} over your time. Tap to see how to trim.</small>}</span><ChevronRight size={18}/></button>
+        <button className="q-today-link" onClick={()=>setPage('tasks')}><span><strong>Today</strong><small>{due.length===0?(fresh?'Nothing planted yet':'Nothing due'):due.length===1?'1 job':`${due.length} jobs`}{issues?` · ${issues} areas to revisit`:due.length?' · a little care goes a long way':''}</small>{week.status==='over'&&<small className="mt-over">This week is ~{hm(week.over)} over your time. Tap to see how to trim.</small>}</span><ChevronRight size={18}/></button>
+        {fresh&&due.length===0&&<button className="q-button" onClick={()=>setPage('crops',{zone:firstBed.id})}><Sprout size={17}/>Plant your first crop<ArrowRight size={16}/></button>}
         {due.length>0&&<button className="q-button" onClick={()=>setWalk(true)}><Leaf size={17}/>{data.walkSession?.status==='active'?'Resume morning walk':'Start morning walk'}<ArrowRight size={16}/></button>}
       </section>}
     </section>
     {!empty&&<WeatherWeek data={data} setData={setData} forecast={forecast} forecastState={forecastState} alerts={alerts} onOpenTasks={()=>setPage('tasks')}/>}
     {!empty&&<RemindersPrompt/>}
     <StarterKit data={data} setData={setData}/>
-    {!empty&&<section className="q-home-section"><div className="q-row q-between"><h2>Around your {defaultSpaceTitle(data).replace(/^My /,'')}</h2><span className="q-eyebrow">Today’s care</span></div>
+    {!empty&&!(fresh&&due.length===0)&&<section className="q-home-section"><div className="q-row q-between"><h2>Around your {defaultSpaceTitle(data).replace(/^My /,'')}</h2><span className="q-eyebrow">Today’s care</span></div>
       {issues>0&&<p className="q-warning">{issues} area{issues===1?'':'s'} flagged on your last checks. Revisit them on a full round.</p>}
       {due.length===0?<p className="q-empty">Nothing due today. A look around is still a good habit.</p>:due.slice(0,5).map(t=><button type="button" className="q-task-row q-task-row-button" key={t.key} onClick={()=>{const z=zoneOf(t);if(z)setTaskZone(z);else setPage('tasks');}}>
         {t.type==='weather'?<span className="mt-wx-icon" aria-hidden="true">{t.emoji}</span>:t.speciesType?<AnimalArt species={t.speciesType} size={48}/>:t.sowing?<span style={{width:48,height:48,display:'inline-flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><FarmIcon name={t.cropName} emoji={t.emoji} size={40} harvest/></span>:<PlantArt crop={t.cropName||data.garden.plots.find(p=>p.id===t.plotId)?.crop||'Basil'} stage={t.type==='harvest'?5:3} size={48}/>}

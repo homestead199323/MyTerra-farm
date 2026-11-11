@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { spacingGuide, plantDensity } from "../../data/spacing.js";
+import { maxPlantCount } from "./planting-plan";
 import BedPlan from "./BedPlan";
 
 const PATTERNS = [
@@ -52,6 +54,12 @@ export default function PlantingControls({
     onChange(next);
   };
   const hex = value.pattern === "offset";
+  // how many plants the free space takes at this spacing: shown in the empty box, so nobody has to guess
+  const { spacingCM: vSpacing, rowSpacingCM: vRowSpacing, pattern: vPattern, axis: vAxis, seed: vSeed } = value;
+  const maxFit = useMemo(
+    () => (crop && zone && plots ? maxPlantCount(zone, plots, { spacingCM: vSpacing, rowSpacingCM: vRowSpacing, pattern: vPattern, axis: vAxis, seed: vSeed }, crop, editId) : 0),
+    [crop, zone, plots, vSpacing, vRowSpacing, vPattern, vAxis, vSeed, editId],
+  );
   const guide = spacingGuide(crop, value.pattern === "offset" ? "offset" : "rows");
   const density = scatter ? 0 : plantDensity(value.spacingCM, value.rowSpacingCM);
   const factor = plan?.yieldFactor ?? 1;
@@ -70,7 +78,7 @@ export default function PlantingControls({
   const hints = {
     lengthM: problem?.free ? `Longest free run here: ${problem.free.lengthM.toFixed(1)} m` : "Between 0.3 m and the bed length",
     rowCount: problem?.free ? `Free width here fits fewer rows` : "A whole number, 1 or more",
-    plantCount: problem?.free ? `Fewer plants would fit the free space` : "A whole number, 1 or more",
+    plantCount: problem?.free ? (maxFit > 0 ? `Up to ${maxFit} fit here` : `Fewer plants would fit the free space`) : "A whole number, 1 or more",
     spacingCM: problem?.free ? `Free width here: ${(problem.free.widthM * 100).toFixed(0)} cm` : "A positive number of centimetres",
     rowSpacingCM: problem?.free ? `Free width here: ${(problem.free.widthM * 100).toFixed(0)} cm` : "A positive number of centimetres",
   };
@@ -160,6 +168,7 @@ export default function PlantingControls({
             min="1"
             step="1"
             inputMode="numeric"
+            placeholder={maxFit > 0 ? `Up to ${maxFit}` : undefined}
             aria-invalid={field("plantCount").invalid || undefined}
             value={byRows ? plan?.count || "" : (value.plantCount ?? "")}
             onChange={(e) => update({ mode: "plants", plantCount: e.target.value })}

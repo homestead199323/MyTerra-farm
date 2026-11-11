@@ -245,6 +245,19 @@ export function planPlanting(zone, plots, input, crop, excludeId) {
   }
   return first;
 }
+/** The most plants this bed's free space takes at this spacing and pattern (0 when none fit): the ceiling for "Number of plants". */
+export function maxPlantCount(zone, plots, input, crop, excludeId) {
+  if (!zone || !crop) return 0;
+  const fitsN = (n) => {
+    const r = planPlanting(zone, plots, { ...input, mode: "plants", plantCount: n, rowCount: undefined, startM: undefined, alongStartM: undefined, lengthM: undefined, force: false }, crop, excludeId);
+    return !r.error && r.count >= n;
+  };
+  if (!fitsN(1)) return 0;
+  let lo = 1, hi = 2;
+  while (hi <= 8192 && fitsN(hi)) { lo = hi; hi *= 2; }
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (fitsN(mid)) lo = mid; else hi = mid; }
+  return lo;
+}
 /** The largest free strip in a bed for rows of a given width: { widthM, lengthM } in bed-local metres.
     widthM is the free cross-space at the best spot (capped at the bed), lengthM how far rows can run there. */
 export function freeStrip(taken, vertical, cross, alongMax, height) {

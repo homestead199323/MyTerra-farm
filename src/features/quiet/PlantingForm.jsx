@@ -25,6 +25,7 @@ import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
+const PLANT_TYPES = ["veg", "raised", "greenhouse", "container", "herbs", "orchard"];
 const empty = {
   crop: "",
   zone: "",
@@ -37,7 +38,11 @@ const empty = {
   rowCount: "",
 };
 export default function PlantingForm({ data, setData, initial = {}, onClose }) {
-  const [form, setForm] = useState({ ...empty, ...initial }),
+  // One growing area on the map: it is the answer, so it is already chosen.
+  const [form, setForm] = useState(() => {
+      const beds = (data.zones || []).filter((z) => PLANT_TYPES.includes(z.type));
+      return { ...empty, ...(beds.length === 1 ? { zone: beds[0].id } : {}), ...initial };
+    }),
     // The seedling batch this form plants out — consumed by the FIRST save only, so a
     // companion follow-up planting doesn't re-link the batch to the wrong bed.
     [fromBatch, setFromBatch] = useState(initial.fromBatch || null),
@@ -52,7 +57,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
   const availableZones = data.zones.filter((z) =>
     crop
       ? cropFitsZone(crop, z)
-      : ["veg", "raised", "greenhouse", "container", "herbs", "orchard"].includes(z.type),
+      : PLANT_TYPES.includes(z.type),
   );
   const choices = crops.filter(
     (c) => (!zone || cropFitsZone(c, zone)) && c.name.toLowerCase().includes(query.trim().toLowerCase()),

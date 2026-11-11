@@ -60,3 +60,18 @@ test('The calendar says Planned for a crop that is not in the ground yet, Growin
   assert.equal(tag([plan('Garlic', { status: 'planted', plantDate: '2026-11-01' })]).waiting, false);
   assert.equal(tag([]).mine, false);
 });
+
+import { maxPlantCount, planPlanting, plantingInput } from '../src/features/quiet/planting-plan.js';
+test('"Up to N" is the most plants the free space takes: N fits, N + 1 does not', () => {
+  const garlic = CROP_MAP.get('Garlic');
+  const planter = { id: 'pl', type: 'container', wM: 2.2, hM: 0.45 };
+  const input = plantingInput({ mode: 'plants', plantCount: '' }, garlic, planter);
+  const n = maxPlantCount(planter, [], input, garlic);
+  assert(n >= 1);
+  assert.equal(planPlanting(planter, [], { ...input, plantCount: n }, garlic).error, '');
+  assert.notEqual(planPlanting(planter, [], { ...input, plantCount: n + 1 }, garlic).error, '');
+  // a bed that is already full takes none
+  const full = planPlanting(planter, [], { ...input, plantCount: n }, garlic);
+  const taken = [{ id: 'a', zone: 'pl', crop: 'Garlic', status: 'planted', plantCount: n, layout: full.layout }];
+  assert.equal(maxPlantCount(planter, taken, input, garlic), 0);
+});
