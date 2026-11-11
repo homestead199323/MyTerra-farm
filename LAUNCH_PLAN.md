@@ -870,3 +870,25 @@
   account; Settings town search by hand. Known limits: plantings saved before today keep their old estimate
   until edited; saved farms keep their region; a Seattle farm sees the "Western Europe" label and UK-flavoured
   variety names; project instructions still say 70 crops.
+- [x] **QA pass 10: the app walked as a new user, phone and desktop (2026-11-11, commits `1ff7dd9`, `edc1b9f`,
+  `a10f4e5`).** Method: headless Chrome on production in demo mode: onboarding twice (balcony on a 390 px phone,
+  backyard with coop and fruit trees at 1280 px), Today, Tasks, Crops, plant a crop, crop card, Calendar, More, and
+  every page loaded at 12 widths from 320 to 1920 px (132 loads: no sideways overflow, no cut-off text, no page
+  errors). Found and fixed: (1) a planting saved from the form without a date made no job anywhere and the
+  calendar called it "Growing": it now waits for its window (job on Today when the window is open, otherwise from
+  the month it opens), and plans saved earlier are repaired on load; (2) the Umami script was blocked by its own
+  integrity hash on the landing and the app (Umami changed the file), so nothing was being recorded: hash
+  regenerated, it will break again on Umami's next change; (3) a new user who skipped the plant picks landed on
+  "Nothing due" with no next step: Today now offers "Plant your first crop"; (4) planting form: the only growing
+  area is already chosen, the empty plants box shows "Up to N", too many says "Up to N fit here"; (5) Crops section
+  total matched to its cards (0.5 kg read "~1kg"); (6) onboarding's greyed Continue is really disabled and readable;
+  (7) tablet rail buttons carry their names. Verified: 224 + 3 tests, ESLint, Vite build (sandbox and Mac);
+  production `dpl_8DKmB88QQq7RhPAHYZKh31DU6Rt5` READY; live `index-BM9R-dho.js` carries the new strings; on
+  production the old test farm's planned garlic shows "Garlic: Plant cloves" on Today, a new visitor at 360 px
+  gets the prompt, the chosen area and "Up to 5" for lettuce, and lettuce planned in November reads "Sow from
+  Mar"; the Umami script loads and its send call returns 200 on both pages. NOT verified: a real phone, a
+  signed-in account, the on-screen keyboard over the crop search, push notifications. Not walked this pass:
+  harvest, animals, pantry, money, the designer, the assistant (locked in demo). Left for the owner to choose
+  (project doc `claude/qa-pass-10-2026-11-11.md`): plant diary from the crop card, "good to plant now" in the crop
+  picker and a pots filter on the calendar, a windowsill track for winter starts, two columns on desktop Today,
+  phone text and target sizes for 561 to 767 px.
