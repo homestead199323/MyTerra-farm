@@ -699,6 +699,15 @@
   `dpl_CDLpc4NTnfvQcgxSPJh5KzzCPFiB` READY, live CSS carries `fd-tools` and `zs-actions`, live JS the new
   journal line, CSP present. NOT verified on a real phone. Open decision for slice 2 (forms): bottom sheets
   on phones versus the small centred cards chosen earlier.
+- **Phone pass 2 — forms as bottom sheets, 2026-11-11.** Dervis chose bottom sheets on phones (desktop keeps
+  centred cards). Every `Overlay` at 560 px and under is now a full-width sheet attached to the bottom
+  (`src/index.css`, class `overlay-body` added in `src/components/ui.jsx`); the last row of a form, when it
+  is a row of up to four buttons, stays pinned to the bottom (or mark a row `.ov-actions`). "Plant a crop":
+  choosing the crop is its own step, one scrolling list instead of a list inside a form inside a page.
+  Checked at 390 × 844: Plant a crop, Add your own job, Add animal, Add stock, Add entry, Settings.
+  Not changed: the morning-walk card and the assistant are their own components, still floating cards.
+  Correction to the audit: dates and currency were NOT wrong — the date field follows the phone's own
+  format and currency follows Settings (automatic by locale); the test browser was American.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

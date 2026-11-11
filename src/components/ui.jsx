@@ -106,7 +106,7 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
             <h3 style={{margin:0,fontSize:20,fontFamily:F.head,fontWeight:700}}>{title}</h3>
             <button aria-label="Close dialog" onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.t2,width:44,height:44,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center"}}><X size={18} strokeWidth={2}/></button>
           </div>
-          <div style={{padding:"16px 24px 24px"}}>{children}</div>
+          <div className="overlay-body" style={{padding:"16px 24px 24px"}}>{children}</div>
         </div>
       </div>,
       document.body
@@ -153,7 +153,7 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
           </div>
         </div>
         {/* Scrollable body */}
-        <div style={{padding:"8px 24px 24px",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",touchAction:"pan-y",flex:1}}>{children}</div>
+        <div className="overlay-body" style={{padding:"8px 24px 24px",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",touchAction:"pan-y",flex:1}}>{children}</div>
       </div>
     </div>,
     document.body
