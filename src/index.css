@@ -566,10 +566,11 @@ main > div {
   button { min-height: 40px; }
 }
 
-/* ── Legacy fallback (< 700) kept for any uncovered edge cases ── */
-@media (max-width: 700px) {
-  main { padding: 16px !important; }
-}
+/* The app shell fills the screen that is really visible. 100vh on iOS Safari is taller than that (it counts the
+   area under the browser bar), which put the end of every page out of reach; dvh follows the bar.
+   No rule here may set main's padding: App.jsx reserves the room for the phone tab bar at the bottom of main,
+   and a blanket "padding:16px !important" once hid the last 40px of every long page behind the bar. */
+.mt-shell { height: 100vh; height: 100dvh; }
 
 /* ═══════════════════════════════════════════
    FORM CONTROLS

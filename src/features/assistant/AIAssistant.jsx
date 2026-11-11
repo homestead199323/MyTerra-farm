@@ -205,7 +205,7 @@ export default function AIAssistant({data, lift }) {
           bottom: isMobile ? "calc(140px + env(safe-area-inset-bottom))" : 92,
           right:24, zIndex:1999,
           width:380, maxWidth:"calc(100vw - 32px)",
-          height:540, maxHeight:"calc(100vh - 120px)",
+          height:540, maxHeight:"calc(100dvh - 120px)",
           background:C.card, borderRadius:20,
           boxShadow:"0 12px 48px rgba(0,0,0,.18)",
           display:"flex", flexDirection:"column",

@@ -758,6 +758,13 @@
   now. Map view shows the stop on the 3D farm and the camera glides (2.2 s) to the next stop after each
   one (`guideZoneId` on GroveScene/Grove3D, `focusZone(zone, ms, wide)`). Per stop: jobs, Note, Photo,
   Problem, Skip, Done. Removed: round chooser, start-from, "How does it look?", tips, save-status line.
+- **Phone: pages did not scroll to their end (Dervis, 2026-11-11).** Root cause: a legacy rule in
+  `index.css` (`@media (max-width:700px){main{padding:16px!important}}`, from the Phase 2.2 nav commit)
+  cancelled the bottom room `App.jsx` leaves for the tab bar, so the last 40 px + the home-indicator inset of
+  every long page sat behind the bar (measured on Today, Tasks, Calendar, Learn, Progress, Insights). Rule
+  removed; bottom room is now 80 px + inset; every page ends 24 px or more above the bar. Second cause,
+  iOS only and NOT verifiable here: the shell was `height:100vh`, taller than the visible screen in Safari;
+  it is now `.mt-shell` at `100dvh` (assistant panel too). Regression test in `tests/domain.test.js`.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

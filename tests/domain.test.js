@@ -956,3 +956,16 @@ test('Starter-bed suggestions leave out plants wider than the bed',()=>{
   assert(!fit.some(c=>c.name==='Blackberry'),'a 1.2 m bed cannot hold a 2.5 m bramble');
   assert(fit.length>=3);
 });
+
+// Phone shell: the end of every page must be reachable (2026-11-11: a legacy "main{padding:16px!important}"
+// rule cancelled the room App.jsx leaves for the tab bar, and 100vh overshoots the visible screen on iOS).
+import {readFileSync} from 'node:fs';
+test('phone shell: nothing overrides the room left for the tab bar, and the shell follows the visible screen',()=>{
+  const css=readFileSync('src/index.css','utf8'),app=readFileSync('src/App.jsx','utf8');
+  const screenCss=css.replace(/@media print\s*{[\s\S]*?\n}/g,'');
+  assert.ok(!/(^|[\s,}])main\s*{[^}]*padding[^}]*!important/.test(screenCss),'a stylesheet rule overrides main padding');
+  assert.match(css,/\.mt-shell\s*{[^}]*height:\s*100dvh/);
+  assert.match(app,/className="mt-shell"/);
+  assert.match(app,/calc\(80px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.ok(!/height:"100vh"/.test(app),'a fixed 100vh height is back in App.jsx');
+});
