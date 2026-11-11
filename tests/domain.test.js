@@ -986,3 +986,44 @@ test('animals are grouped by the area they live in, in the order of the map; no 
   assert.deepEqual(none.map(x=>[x.key,x.title,x.head]),[['none','No area yet',1]]);
   assert.deepEqual(animalGroups([],zones),[]);
 });
+
+// Calendar month plan (2026-11-11): the month split by job, with seedlings planned ahead
+import {monthPlan,monthTip,plantOutMonths,planYear,startOf,cropYear,cropTips,nextMonthPreview,monthsOf} from '../src/lib/month-plan.js';
+import {CROP_MAP as _CM} from '../src/data/crops.js';
+test('calendar: a month is split into start indoors, sow outside, plant out, plant and harvest',()=>{
+  const farm={region:'western_europe',garden:{plots:[{id:1,crop:'Lettuce',status:'growing'}]}};
+  assert.equal(startOf(_CM.get('Tomato')),'indoors');assert.equal(startOf(_CM.get('Carrot')),'outside');assert.equal(startOf(_CM.get('Apple')),'plant');
+  assert.equal(startOf(_CM.get('Broad Bean')),'outside');assert.equal(startOf(_CM.get('Rhubarb')),'plant');
+  const mar=monthPlan(farm,2,'2026-11-11');
+  assert.equal(mar.year,2027); // planning ahead: March has passed, so it is next year's
+  const names=k=>mar[k].map(i=>i.name);
+  assert.ok(names('indoors').includes('Tomato'));assert.ok(!names('outside').includes('Tomato'));
+  assert.ok(names('outside').includes('Pea'));assert.ok(names('plant').includes('Raspberry'));
+  assert.match(mar.indoors.find(i=>i.name==='Tomato').note,/^7 weeks in trays · plant out May$/);
+  assert.match(mar.outside.find(i=>i.name==='Pea').note,/or start in trays/);
+  // tomatoes sown Feb–Apr wait for the frost: out from May (last frost 1 May + 2 weeks), never April
+  assert.deepEqual(plantOutMonths(_CM.get('Tomato'),{last:'05-01',first:'10-31'},2027),[4,5]);
+  assert.ok(monthPlan(farm,4,'2026-11-11').plantOut.some(i=>i.name==='Tomato'));
+  // an autumn sowing goes out in autumn only if the crop stands frost; chamomile waits for spring, onions do not
+  const fr={last:'05-01',first:'10-31'};
+  assert.ok(!plantOutMonths(_CM.get('Chamomile'),fr,2026).some(m=>m>=9));assert.ok(plantOutMonths(_CM.get('Onion'),fr,2026).includes(10));
+  assert.ok(!monthPlan(farm,10,'2026-11-11').plantOut.some(i=>i.name==='Chamomile'));
+  // the crop already growing sorts last in its list and is marked
+  const let_=mar.indoors.find(i=>i.name==='Lettuce');assert.equal(let_.mine,true);assert.equal(mar.indoors.at(-1).name,'Lettuce');
+  // harvest: your own crops first
+  assert.equal(monthPlan(farm,6,'2026-11-11').harvest[0].name,'Lettuce');
+  assert.equal(planYear(10,'2026-11-11'),2026);assert.equal(planYear(11,'2026-11-11'),2026);assert.equal(planYear(0,'2026-11-11'),2027);
+  assert.equal(monthsOf('Year-round').length,12);assert.deepEqual(monthsOf('Nov-Feb'),[10,11,0,1]);
+});
+test('calendar: tips come from the frost dates and the crop data',()=>{
+  const farm={region:'western_europe',garden:{plots:[]}};
+  assert.match(monthTip(farm,4),/^Last frost around 1 May\. Tender plants go outside after it/);
+  assert.match(monthTip(farm,2),/Start tender crops indoors now/);assert.match(monthTip(farm,9),/^First frost around 31 Oct\. Pick tender crops/);
+  assert.match(monthTip(farm,6),/^Frost-free until about 31 Oct/);assert.match(monthTip(farm,0),/^Frost likely until about 1 May/);
+  assert.match(monthTip({region:'mediterranean'},0),/15 Mar/);
+  const y=cropYear(_CM.get('Tomato'),farm,2027);assert.deepEqual(y.sow,[1,2,3]);assert.deepEqual(y.out,[4,5]);assert.deepEqual(y.harvest,[6,7,8,9]);
+  const tips=cropTips(_CM.get('Tomato'),farm,2027);
+  assert.match(tips[0],/about 7 days/);assert.match(tips[1],/7 weeks, moving it to a bigger pot once/);assert.match(tips[2],/from about 15 May \(2 weeks after the last frost\)/);
+  assert.equal(cropTips(_CM.get('Apple'),farm,2027).length,_CM.get('Apple').waterNote?1:0);
+  const nx=nextMonthPreview(farm,0,'2026-11-11');assert.equal(nx.name,'February');assert.equal(nx.year,2027);assert.ok(nx.indoors>0);assert.match(nx.tip,/seed compost/);
+});

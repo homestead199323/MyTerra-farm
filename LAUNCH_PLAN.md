@@ -812,6 +812,18 @@
   last because Today already shows it. Page ids are unchanged. Settings still has its "My Space" heading
   (type of space). Animals page: animals are grouped by the area they live in (`animalGroups` in
   `farm-model.js`, map order, "No area yet" last), with the same collapsible headers as the crop sections.
+- **Calendar rebuilt (Dervis, 2026-11-11: "easier to read, plan ahead planting and seedlings, give tips").**
+  `src/features/plan/MonthCalendar.jsx` + `src/lib/month-plan.js` replace `SeasonalCalendar` (removed from
+  Manuals.jsx). All twelve months on screen (6 × 2 on a phone); a month that has passed means next year
+  and the heading says so. The month is split by job: Start indoors · Sow outside · Plant out · Plant ·
+  Harvest. Start indoors/Sow outside/Plant come from `sowIn` + how the crop is started (propagation.js);
+  Plant out = sowing month + weeks in trays, held back to the frost window (`plantOutWindow`); a
+  frost-tender crop sown in autumn waits for spring. Rows are one name and one line ("7 weeks in trays ·
+  plant out May"); four per job, then "Show all". Tap a crop: its year on twelve cells, four facts, tips
+  from the nursery data, and "Sow it now" (this month, form dated today) or "Plan for Mar" (date left
+  open). Tips: one line per month from the farm's frost dates, one short line per job, "Get ready for
+  <next month>" with what to buy or prepare. Removed: the three stat cards, the pills per crop, the
+  category dropdown (now chips: All, Easy, Vegetables, Herbs, Fruit), the "New to farming?" paragraph.
 - [x] **Knowledge base audit (2026-11-10, owner request "go through all knowledge base about animals, crops,
   plants, everything; make sure it's correct and consistent"; commits `7d7b871`, `d502fb3`).** Read every file in
   `src/data/` (recipes spot-checked on safety figures only), the knowledge text in `src/lib/`, and ran a

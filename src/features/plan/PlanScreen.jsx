@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { C, F, SX } from "../../lib/theme";
 import { Btn, Card, Pill } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
-import { SeasonalCalendar } from "../manuals/Manuals";
+import MonthCalendar from "./MonthCalendar";
 import { waitingPlantings, sowNowSuggestions, comingUp, seasonTimeline, cropByName } from "../../lib/plan";
 import { startGrowing, nextStepAfter } from "../../lib/sowing";
 import { rCM } from "../../lib/regional";
@@ -55,9 +55,11 @@ export default function PlanScreen({ data, setData, setPage }) {
     });
   }
 
-  function addCrop(name) {
-    if (canPlant) setPage("crops", { crop: name });
-    else setPage("map", { edit: true });
+  // now = it goes in today (the form opens dated today); otherwise it is planned, with the date left open
+  function addCrop(name, now) {
+    if (!canPlant) setPage("map", { edit: true });
+    else if (now === true) setPage("crops", { crop: name, plantDate: today });
+    else setPage("crops", { crop: name });
   }
 
   return (
@@ -73,7 +75,7 @@ export default function PlanScreen({ data, setData, setPage }) {
         <button type="button" role="tab" aria-selected={view === "calendar"} onClick={function () { setView("calendar"); }}>Calendar</button>
       </div>
 
-      {view === "calendar" && <SeasonalCalendar data={data} setPage={setPage} embedded />}
+      {view === "calendar" && <MonthCalendar data={data} onAdd={addCrop} />}
 
       {view === "foryou" && (
         <>

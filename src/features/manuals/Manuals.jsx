@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { C, F, SX } from "../../lib/theme";
 
 /* Jump links for a long guide: one chip per section found on the page after it renders (built straight in the
@@ -17,16 +17,15 @@ function JumpBar({ k }) {
   }, [k]);
   return <div ref={ref} className="lr-jump" role="navigation" aria-label="Jump to a section" hidden />;
 }
-import { rCR, rCM, getRegionalCalendar } from "../../lib/regional";
-import { todayLocalKey, daysBetweenLocalKeys } from "../../lib/utils";
-import { parseSowMonths, parseHarvestMonths, getCropDifficulty, MN_ABR, MN_FULL } from "../../lib/calendar";
+import { rCR, getRegionalCalendar } from "../../lib/regional";
+import { parseSowMonths, parseHarvestMonths } from "../../lib/calendar";
 import { COMP } from "../../data/companions";
 import { LDB } from "../../data/livestock";
 import { REGION_MAP } from "../../data/regions";
 import { PRESERVATION } from "../../data/preservation";
 import { RECIPES } from "../../data/recipes";
 import { PROJECT_GUIDES, BLUEPRINT_IMAGES } from "../../data/projects";
-import { Btn, Card, Inp, Overlay, Pill, Stat } from "../../components/ui";
+import { Btn, Card, Inp, Overlay, Pill } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 
 /* ═══════════════════════════════════════════
@@ -39,7 +38,7 @@ function Manuals({data}) {
   const q=s.trim().toLowerCase(); // spaces alone are not a search
   const fil=rgCrops.filter(c=>!q||c.name.toLowerCase().includes(q));
   const mn=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  // The seasonal calendar moved to Plan (Launch Stage 5); SeasonalCalendar is still exported from here.
+  // The calendar lives in Plan (src/features/plan/MonthCalendar.jsx).
   const TABS=[{id:"crops",l:"Crops"},{id:"animals",l:"Animals"},{id:"preserving",l:"Preserving"},{id:"projects",l:"Projects"}];
   return (
     <div className="page-enter" style={{maxWidth:960}}>
@@ -365,199 +364,6 @@ function Preserving({embedded}) {
 }
 
 
-/* ═══════════════════════════════════════════
-   SEASONAL PLANTING CALENDAR
-   Location-aware "what to plant this month"
-   ═══════════════════════════════════════════ */
-export function SeasonalCalendar({data, setPage, embedded}) {
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [filter, setFilter] = useState("sow"); // sow | harvest | all
-  const [catFilter, setCatFilter] = useState("all");
-  const monthStripRef = useRef(null);
-  const monthBtnRefs = useRef([]);
-
-  // 6.4.1 — auto-scroll month strip to the current month on mount and on month change
-  useEffect(() => {
-    const btn = monthBtnRefs.current[month];
-    const strip = monthStripRef.current;
-    if (!btn || !strip) return;
-    // Center the active month button horizontally inside the strip
-    const stripRect = strip.getBoundingClientRect();
-    const btnRect = btn.getBoundingClientRect();
-    const offset = (btnRect.left - stripRect.left) - (stripRect.width / 2) + (btnRect.width / 2);
-    strip.scrollBy({ left: offset, behavior: "smooth" });
-  }, [month]);
-
-  const isCurrentMonth = month === new Date().getMonth();
-  const alreadyPlanted = data.garden.plots.filter(p => p.status !== "harvested").map(p => p.crop);
-
-  const results = useMemo(() => {
-    const sow = [], harvest = [], maintain = [];
-    rCR(data.region).forEach(c => {
-      const sowM = parseSowMonths(c.sowIn);
-      const harM = parseHarvestMonths(c.harvest);
-      const diff = getCropDifficulty(c.name);
-      const planted = alreadyPlanted.includes(c.name);
-      if (sowM.includes(month)) sow.push({...c, diff, planted, action: "sow"});
-      if (harM.includes(month)) harvest.push({...c, diff, planted, action: "harvest"});
-    });
-    // Maintenance: steps that fall in the SELECTED month (its middle ± 2 weeks covers the month), not just around today.
-    const now = new Date();
-    const midMonth = new Date(now.getFullYear() + (month < now.getMonth() - 6 ? 1 : 0), month, 15);
-    data.garden.plots.filter(p => p.status !== "harvested" && p.plantDate).forEach(p => {
-      const crop = rCM(data.region).get(p.crop);
-      if (!crop) return;
-      const ds = daysBetweenLocalKeys(p.plantDate, midMonth);
-      const pendingSteps = (p.steps||[]).filter(s => !s.done && Math.abs(s.d - ds) <= 16);
-      if (pendingSteps.length > 0) maintain.push({...crop, plot: p, pendingSteps, action: "maintain"});
-    });
-    return {sow, harvest, maintain};
-  }, [month, data, alreadyPlanted]);
-
-  const cats = useMemo(() => {
-    const all = [...results.sow, ...results.harvest];
-    return [...new Set(all.map(c => c.cat))].sort();
-  }, [results]);
-
-  const filtered = useMemo(() => {
-    let items = filter === "sow" ? results.sow : filter === "harvest" ? results.harvest : [...results.sow, ...results.harvest];
-    if (catFilter !== "all") items = items.filter(c => c.cat === catFilter);
-    // Deduplicate by name for "all" view
-    if (filter === "all") { const seen = new Set(); items = items.filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; }); }
-    return items;
-  }, [results, filter, catFilter]);
-
-  // 6.4.3 — beginner tip data, pre-computed so the JSX stays IIFE-free
-  const beginnerTip = useMemo(() => {
-    const easyHere = results.sow.filter(c => c.diff.l === "Easy" && !c.planted);
-    if (easyHere.length === 0) return { kind: "empty" };
-    const examples = easyHere.slice(0, 2).map(c => c.name).join(" or ");
-    return { kind: "tip", examples };
-  }, [results]);
-
-  const CropRow = ({c}) => (
-    <Card style={{marginBottom:6, borderLeft:`4px solid ${c.color}`, opacity: c.planted ? 0.65 : 1}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <FarmIcon name={c.name} emoji={c.emoji} size={28}/>
-        <div style={SX.flex1}>
-          <div style={SX.rowCenterG6}>
-            <span style={{fontSize:15,fontWeight:600}}>{c.name}</span>
-            {c.planted && <Pill c={C.blue} bg={C.tBlue}>Already planted</Pill>}
-          </div>
-          <div style={SX.t2_12mt2}>{c.cat} · {c.days}d to harvest · {c.spacing}cm spacing</div>
-          <div style={{display:"flex",gap:4,marginTop:4,flexWrap:"wrap"}}>
-            <Pill sm c={c.diff.c} bg={c.diff.bg} border={c.diff.c}>{c.diff.e} {c.diff.l}</Pill>
-            <Pill sm c={C.blue} bg={C.tBlue}>☀ {c.sun}</Pill>
-            <Pill sm c={C.green} bg={C.tGreen}>💧 {c.waterFreq}</Pill>
-          </div>
-        </div>
-        {!c.planted && <Btn sm onClick={() => setPage("crops", {crop: c.name, plantDate: todayLocalKey()})}>+ Plant</Btn>}
-      </div>
-    </Card>
-  );
-
-  return (
-    <div className="page-enter" style={SX.mw800}>
-      {!embedded && <h2 style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>Seasonal Calendar</h2>}
-      {!embedded && <p style={{color:C.t2,fontSize:13,margin:"0 0 16px",fontWeight:500}}>What to plant and harvest each month — tailored to your farm</p>}
-
-      {/* Month selector — 6.4.1: horizontal scroll on mobile, auto-centers current month */}
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
-        <button onClick={() => setMonth(m => m === 0 ? 11 : m-1)} aria-label="Previous month" style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:C.t2,flexShrink:0}}>‹</button>
-        <div
-          ref={monthStripRef}
-          style={{
-            display:"flex",
-            gap:4,
-            flex:1,
-            overflowX:"auto",
-            scrollBehavior:"smooth",
-            WebkitOverflowScrolling:"touch",
-            scrollbarWidth:"none",
-            msOverflowStyle:"none",
-            justifyContent:"center",
-          }}
-        >
-          {MN_ABR.map((m,i) => (
-            <button
-              key={i}
-              ref={el => { monthBtnRefs.current[i] = el; }}
-              onClick={() => setMonth(i)}
-              aria-label={`Show ${MN_FULL[i]}`}
-              aria-pressed={month===i}
-              style={{
-                padding:"6px 10px",borderRadius:20,border:"none",fontSize:12,fontWeight:month===i?700:500,cursor:"pointer",
-                background:month===i?C.green:i===new Date().getMonth()?"#d8f3dc":"transparent",
-                color:month===i?"#fff":C.text,
-                flexShrink:0,
-              }}
-            >{m}</button>
-          ))}
-        </div>
-        <button onClick={() => setMonth(m => m === 11 ? 0 : m+1)} aria-label="Next month" style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:C.t2,flexShrink:0}}>›</button>
-      </div>
-
-      {/* Summary stats */}
-      <div className="g3 cal-stats" style={{gap:10,marginBottom:16}}>
-        <Stat label="To sow" value={results.sow.length} sub={`${results.sow.filter(c=>!c.planted).length} new`} color={C.green}/>
-        <Stat label="Harvest" value={results.harvest.length} sub="in season" color={C.orange}/>
-        <Stat label="Maintain" value={results.maintain.length} sub="due" color={C.blue}/>
-      </div>
-
-      {/* Filter tabs */}
-      <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-        {[{id:"sow",l:"Sow",n:results.sow.length},{id:"harvest",l:"Harvest",n:results.harvest.length},{id:"all",l:"All",n:0}].map(t => (
-          <button key={t.id} onClick={() => setFilter(t.id)} style={{
-            padding:"7px 16px",borderRadius:20,border:filter===t.id?"none":`1.5px solid ${C.bdr}`,
-            background:filter===t.id?C.green:C.card,color:filter===t.id?"#fff":C.t2,
-            fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:F.body
-          }}>{t.l}{t.n > 0 ? ` (${t.n})` : ""}</button>
-        ))}
-        <select value={catFilter} onChange={e => setCatFilter(e.target.value)} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:20,border:`1.5px solid ${C.bdr}`,fontSize:12,fontFamily:F.body,color:C.t2,background:C.card}}>
-          <option value="all">All categories</option>
-          {cats.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
-      {/* Beginner tip — 6.4.3: shown on every month, not just current; copy adapts to whether anything sows here */}
-      {filter === "sow" && (
-        beginnerTip.kind === "empty"
-          ? <Card style={{marginBottom:12,background:C.tGreen2,border:`1px solid ${C.gm}`}}>
-              <div style={{fontSize:12,fontWeight:700,color:C.green,marginBottom:4}}>New to farming?</div>
-              <div style={{fontSize:13,lineHeight:1.6}}>No Easy crops to sow in {MN_FULL[month]} — flip through months to find a forgiving start. Spring and early autumn are the kindest for first-timers.</div>
-            </Card>
-          : <Card style={{marginBottom:12,background:C.tGreen2,border:`1px solid ${C.gm}`}}>
-              <div style={{fontSize:12,fontWeight:700,color:C.green,marginBottom:4}}>New to farming?</div>
-              <div style={{fontSize:13,lineHeight:1.6}}>Start with Easy crops {isCurrentMonth ? "this month" : `in ${MN_FULL[month]}`}. They're forgiving, grow fast, and build your confidence. Try {beginnerTip.examples} — {isCurrentMonth ? "plant a row today and" : "when this month comes around"} you'll be harvesting in weeks.</div>
-            </Card>
-      )}
-
-      {/* Crop list */}
-      {filtered.length === 0
-        ? <Card style={{textAlign:"center",padding:"56px 24px",background:C.grdWarm}}><div style={SX.s15Bold}>Quiet month</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Nothing to {filter} in {MN_FULL[month]} — try a different filter</div></Card>
-        : filtered.map(c => <CropRow key={c.name + c.action} c={c}/>)
-      }
-
-      {/* Maintenance section */}
-      {filter === "sow" && results.maintain.length > 0 && (
-        <div style={{marginTop:20}}>
-          <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,marginBottom:10}}>Maintenance Due This Month</div>
-          {results.maintain.map((c, i) => (
-            <Card key={i} style={{marginBottom:6,borderLeft:`3px solid ${C.blue}`}}>
-              <div style={SX.rowCenterG10}>
-                <FarmIcon name={c.name} emoji={c.emoji} size={20}/>
-                <div style={SX.flex1}>
-                  <div style={{fontSize:14,fontWeight:600}}>{c.plot.name || c.name}</div>
-                  {c.pendingSteps.map((s,j) => <div key={j} style={SX.t2_12mt2}>→ {s.l}: {s.t}</div>)}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════════
    DIY PROJECTS & INFRASTRUCTURE
