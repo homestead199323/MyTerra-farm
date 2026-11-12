@@ -914,3 +914,31 @@
   and are counted in seeds, not trays; their list pictures are the plain greens artwork (icons not re-rendered);
   in demo mode at 800 px height the banner pushes the morning-walk button just under the first screen;
   a quick-log "Watered" does not tick the day's watering job.
+
+- [x] **Website: three demo videos (Balcony, Backyard, Farm) and a steady hero loop (2026-11-12, owner request;
+  commit `36e95b3`).** Owner: the homepage video is "very rushed and shaking, doesnt make sense"; make three demos
+  that explain the special features of each space. The 15-second tour showed five features in 15 s on a phone
+  about 290 px wide; the hero loop rocked every 6 s and still had the old map look. Now: one section
+  ("Balcony, backyard or farm. Watch yours.", `#demo`; `#spaces` and `#tour` still land there) where each tab plays
+  its own demo, 720x1280, captions, no sound, six chapters with a chapter list that follows the film and jumps to
+  any part: Balcony 47.6 s (setup, 3D map, planter jobs, plant diary, calendar, growth preview), Backyard 50.8 s
+  (what you already have, planting planner, seed trays, layout editor, hens, weather warnings), Farm 49.0 s (whole
+  map, milking, orchard harvest, animal groups, pantry sale and money, morning walk). Filmed from the real app at
+  build 46dbacc, frame by frame (frozen clock, CSS animations stepped, Open-Meteo mocked), demo gardens seeded
+  with the app's own planner, pantry and garden-memory code. Hero: one slow push-in over the farm, 12 s, one-second
+  dissolve back to its start (`hero4-*`); hero button "Watch the demo". Demo videos load only near the section,
+  one pause choice for all three, posters only with reduced motion or data saver. Removed `tour3-*`, `d3-*`,
+  `hero3-*` (18 files). Pipeline and site check: `marketing/site-demos/` (README there).
+  Verified: 230 + 3 tests, ESLint, Vite build; deployment `dpl_7x3DGU8wxyHq2MWqDLW4LYVnjRn5` READY;
+  www.myterra.farm serves HTML byte-identical to the tested build (myterra.farm 308-redirects there); all 25
+  files in `/landing/` are 200 and byte-identical to the repo, old names 404, range requests 206, CSP and HSTS
+  headers intact; Playwright (Chrome) on the live site at 1440x900 and iPhone 14 size: hero loop plays (wide on
+  desktop, tall on phone), each demo starts in view, the chapter-6 jump lands and the list follows, hidden demos
+  stop, pause carries over between tabs, the hero button brings the film on screen and plays it, reduced motion
+  shows posters until tapped, no failed requests, no console errors, no sideways overflow.
+  NOT verified: real iPhone Safari or any real phone; Firefox; Low Power Mode autoplay. Known: the films are 48
+  to 51 s, not 45. App bugs visible on film (not fixed here): the growth-preview chip ("Preview · 25 Aug · in 60
+  days") sits partly behind the area selector at phone width (balcony, last chapter; `.g3-preview` in
+  Grove3D.jsx); pantry tiles for Honey, Chicken Eggs and Goat Milk have an empty icon (farm, chapter 5).
+  Also found: `myterra-sigma.vercel.app` now answers DEPLOYMENT_NOT_FOUND; the Vercel project only has
+  myterra.farm and www.myterra.farm attached. Not changed by this work.
