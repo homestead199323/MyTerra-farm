@@ -1,6 +1,6 @@
 /* Map-first home (HomeV2, GameDock): glass controls floating on the 3D map.
    Spec: docs/superpowers/specs/2026-11-12-map-first-home-design.md */
-.hv2,.hv2-dock,.hv2-plus,.hv2-fan,.hv2-scrim,.hv2-done-scrim{
+.hv2,.hv2-dock,.hv2-plus,.hv2-fan,.hv2-scrim,.hv2-done-scrim,.hv2-setup{
   --hv2-glass:color-mix(in srgb,var(--color-card,#fff) 86%,transparent);
   --hv2-edge:color-mix(in srgb,var(--color-card,#fff) 70%,transparent);
   --hv2-shadow:0 8px 24px rgba(16,24,18,.22);
@@ -96,6 +96,7 @@ body.g3-full-open .hv2-plus{display:none}
 .hv2-dock.is-wide button{height:56px;font-size:12px}
 .hv2-dock.is-wide .hv2-dock-gap{flex-basis:84px}
 .hv2-dock button:hover{color:var(--hv2-ink)}
+@media(hover:none){.hv2-dock button:hover:not([aria-current=page]){background:transparent!important}} /* no tint stuck on the last-tapped item on touch screens */
 body.mt-home-v2 .mt-fab{display:none!important} /* the assistant is the dock's Ask */
 
 /* ── day done ── */
@@ -109,6 +110,36 @@ body.mt-home-v2 .mt-fab{display:none!important} /* the assistant is the dock's A
 .hv2-confetti{position:absolute;left:50%;top:50%;width:0;height:0}
 .hv2-confetti i{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:3px;animation:hv2-conf .7s cubic-bezier(.2,.8,.3,1) .12s both}
 
+/* ── first run: one setup screen, then cues on the map ── */
+.hv2-setup{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:16px;box-sizing:border-box;overflow:auto;background:linear-gradient(180deg,#5a9150,#2f6b45)}
+.hv2-setup-card{width:min(390px,100%);box-sizing:border-box;padding:24px 20px 20px;display:flex;flex-direction:column;gap:12px;border-radius:28px;background:var(--color-card,#fff);color:var(--hv2-ink);box-shadow:0 20px 44px rgba(16,24,18,.4);animation:hv2-fan .4s cubic-bezier(.2,.8,.3,1) both}
+.hv2-setup-brand{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:var(--hv2-green)}
+.hv2-setup h1{margin:0 0 4px;font-size:26px;font-weight:700;line-height:1.15;letter-spacing:-.02em}
+.hv2-setup h2{margin:8px 0 0;font-size:16px;font-weight:700}
+.hv2-setup-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.hv2-setup-tile,.hv2-setup-size{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px solid var(--color-border,#e4e9e5);border-radius:18px;background:var(--color-card,#fff);color:var(--hv2-ink);font:700 15px/1 Inter,-apple-system,sans-serif;cursor:pointer}
+.hv2-setup-tile{height:96px}.hv2-setup-size{height:52px;border-radius:16px}
+.hv2-setup-tile[aria-pressed=true],.hv2-setup-size[aria-pressed=true]{border-color:var(--hv2-green);background:var(--color-green-pale,#e7f3ec);color:var(--color-green-dark,#0c5e33)}
+.hv2-setup-tile:focus-visible,.hv2-setup-size:focus-visible,.hv2-setup-go:focus-visible{outline:2px solid var(--hv2-green);outline-offset:2px}
+.hv2-setup-dims{min-height:17px;margin:-4px 0 0;font-size:13px;color:var(--hv2-ink2);text-align:center}
+.hv2-setup-region{position:relative;display:block}
+.hv2-setup-region>svg{position:absolute;left:14px;top:16px;color:var(--hv2-ink2);pointer-events:none}
+.hv2-setup .hv2-setup-region select{width:100%;height:52px;padding:0 34px 0 44px;border-radius:16px!important;font:600 16px/1 Inter,-apple-system,sans-serif}
+.hv2-setup-go{height:56px;border:0;border-radius:18px;background:var(--hv2-green);color:var(--hv2-on-green);font:700 17px/1 Inter,-apple-system,sans-serif;cursor:pointer}
+.hv2-setup-go:disabled{opacity:.45;cursor:default}
+.hv2-cues{position:fixed;inset:0;z-index:420;pointer-events:none}
+.hv2-cue-ring{position:fixed;box-sizing:border-box;padding:0;border:3px solid #fff;border-radius:18px;background:rgba(255,255,255,.2);animation:hv2-pulse 1.6s ease-out infinite}
+button.hv2-cue-ring{pointer-events:auto;cursor:pointer}
+.hv2-cue-ring.is-round{border-radius:50%;background:none}
+.hv2-cue-tail{position:fixed;width:16px;height:16px;border-radius:3px;background:var(--color-card,#fff);transform:rotate(45deg)}
+.hv2-cue{position:fixed;pointer-events:auto;box-sizing:border-box;padding:8px 8px 14px 16px;border-radius:22px;background:var(--color-card,#fff);color:var(--hv2-ink);box-shadow:0 14px 34px rgba(16,24,18,.4)}
+.hv2-cue-top{display:flex;align-items:center;justify-content:space-between}
+.hv2-cue-top span{height:26px;padding:0 10px;display:inline-flex;align-items:center;border-radius:13px;background:var(--hv2-green);color:var(--hv2-on-green);font-size:13px;font-weight:700}
+.hv2-cue-top button{min-height:44px;padding:0 10px;border:0;background:none;color:var(--hv2-ink2);font:600 14px/1 Inter,-apple-system,sans-serif;cursor:pointer}
+.hv2-cue p{margin:0 10px 0 0;font-size:18px;font-weight:700;line-height:1.3}
+.hv2-cue-go{margin-top:10px;min-height:44px;padding:0 18px;border:0;border-radius:14px;background:var(--hv2-green);color:var(--hv2-on-green);font:700 15px/1 Inter,-apple-system,sans-serif;cursor:pointer}
+@keyframes hv2-pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.85)}100%{box-shadow:0 0 0 22px rgba(255,255,255,0)}}
+
 /* with the dock on screen, toasts and notices sit above it */
 body.mt-home-v2 .mt-toast-wrap{bottom:calc(96px + env(safe-area-inset-bottom))}
 body.mt-home-v2 .g3-completion{bottom:calc(100px + env(safe-area-inset-bottom))}
@@ -119,4 +150,4 @@ body.mt-home-v2 .g3-completion{bottom:calc(100px + env(safe-area-inset-bottom))}
 @keyframes hv2-fan{0%{opacity:0;transform:scale(0)}70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
 @keyframes hv2-fade{from{opacity:0}to{opacity:1}}
 @keyframes hv2-conf{0%{opacity:0;transform:rotate(var(--a)) translateY(0) scale(.3)}100%{opacity:1;transform:rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(1)}}
-@media(prefers-reduced-motion:reduce){.hv2-first,.hv2-fan-item,.hv2-fan-scrim,.hv2-panel,.hv2-scrim,.hv2-done,.hv2-done-scrim,.hv2-confetti i,.g3-host.g3-home .g3-badge{animation:none!important}.hv2-bar i{transition:none}}
+@media(prefers-reduced-motion:reduce){.hv2-first,.hv2-fan-item,.hv2-fan-scrim,.hv2-panel,.hv2-scrim,.hv2-done,.hv2-done-scrim,.hv2-confetti i,.g3-host.g3-home .g3-badge,.hv2-setup-card,.hv2-cue-ring{animation:none!important}.hv2-bar i{transition:none}}

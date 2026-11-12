@@ -906,7 +906,8 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
   const [openSec,setOpenSec]=useState({});
   const [showAll,setShowAll]=useState({});
   const [initial,setInitial]=useState({});
-  useEffect(()=>{if(pageData?.crop||pageData?.zone||pageData?.add){setInitial(pageData.add?{}:pageData);setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]);
+  const [backHome,setBackHome]=useState(false); // opened from the home map (its + or a first-run cue): saving goes back to the map
+  useEffect(()=>{if(pageData?.crop||pageData?.zone||pageData?.add){const next={...pageData};delete next.add;delete next.returnHome;setInitial(next);setBackHome(!!pageData.returnHome);setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]);
   const sp=data.garden.plots.find(p=>p.id===selP);
   // Pre-computed values to avoid IIFEs in JSX (IIFEs crash the app)
   const _active=data.garden.plots.filter(function(p){return p.status!=="harvested";});
@@ -1010,7 +1011,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
 
       {sp && <PlotOverlay plot={sp} data={data} setData={setData} onClose={()=>setSelP(null)}/>}
 
-      {showAdd&&<PlantingForm data={data} setData={setData} initial={initial} onClose={()=>{setShowAdd(false);setInitial({});}}/>}
+      {showAdd&&<PlantingForm data={data} setData={setData} initial={initial} onClose={()=>{setShowAdd(false);setInitial({});setBackHome(false);}} onSaved={()=>{if(backHome)setPage?.("home");}}/>}
     </div>
   );
 }

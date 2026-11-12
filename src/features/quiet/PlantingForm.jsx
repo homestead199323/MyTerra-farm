@@ -40,7 +40,7 @@ const empty = {
   plantCount: "",
   rowCount: "",
 };
-export default function PlantingForm({ data, setData, initial = {}, onClose }) {
+export default function PlantingForm({ data, setData, initial = {}, onClose, onSaved }) {
   // One growing area on the map: it is the answer, so it is already chosen.
   const [form, setForm] = useState(() => {
       const beds = (data.zones || []).filter((z) => PLANT_TYPES.includes(z.type));
@@ -209,7 +209,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose }) {
       setCompanion("");
       setQuery("");
       setBrowse(false);
-    } else onClose();
+    } else { onClose(); onSaved?.(); }
   }
   return (
     <Overlay title="Plant a crop" onClose={onClose}>

@@ -62,7 +62,7 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
           {FAN.map(function (f, i) {
             const target = fanTarget(f.id, canPlant);
             return (
-              <button type="button" key={f.id} className={`hv2-fan-item hv2-fan-${i}`} aria-label={f.a} onClick={function () { go(target[0], target[1]); }}>
+              <button type="button" key={f.id} className={`hv2-fan-item hv2-fan-${i}`} aria-label={f.a} onClick={function () { go(target[0], f.id === "plant" && page === "home" && target[1].add ? { add: true, returnHome: true } : target[1]); }}>
                 <span className={`hv2-fan-dot is-${f.id}`}><f.E size={26} strokeWidth={2} /></span>
                 <span className="hv2-fan-label">{f.l}</span>
               </button>

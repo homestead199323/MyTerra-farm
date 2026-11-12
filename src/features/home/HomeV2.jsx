@@ -15,6 +15,7 @@ import AnimalArt from "../quiet/AnimalArt";
 import { RemindersPrompt } from "../settings/Reminders";
 import { isPlantZone } from "../farm/living/visuals";
 import { dueToday, trackDay, jobsProgress, showDayDone, rowNote } from "./home-model";
+import { cueState, endCues } from "./setup-model";
 import "./home-v2.css";
 
 /* The map-first home (spec: docs/superpowers/specs/2026-11-12-map-first-home-design.md).
@@ -48,6 +49,61 @@ function JobArt({ task, data }) {
   const crop = task.cropName || (data.garden?.plots || []).find((p) => p.id === task.plotId)?.crop;
   if (crop) return <PlantArt crop={crop} stage={task.type === "harvest" ? 5 : 3} size={40} />;
   return <span className="hv2-emoji" aria-hidden="true">{taskGlyph(task)}</span>;
+}
+
+const CUE_TEXT = {
+  plant: "Tap here to plant your first crop",
+  animal: "Tap + to add your first animal",
+  job: "Jobs pop up on the map. Tap one to tick it off",
+};
+/** Where a cue's target is on screen right now (the map's labels move with the camera). */
+function useTargetRect(selector) {
+  const [rect, setRect] = useState(null);
+  useEffect(() => {
+    let last = "";
+    const read = () => {
+      const el = Array.from(document.querySelectorAll(selector)).find((n) => n.getClientRects().length > 0);
+      const r = el ? el.getBoundingClientRect() : null;
+      const key = r ? [r.left, r.top, r.width, r.height].map(Math.round).join(",") : "";
+      if (key !== last) { last = key; setRect(r ? { x: r.left, y: r.top, w: r.width, h: r.height } : null); }
+    };
+    read();
+    const timer = setInterval(read, 250);
+    return () => clearInterval(timer);
+  }, [selector]);
+  return rect;
+}
+
+/** First-run cue: a bubble and a pulsing ring on the thing to tap next (plant → animal → job). */
+function Cue({ cue, bedId, onPlant, onSkip }) {
+  const selector = cue.current === "plant" ? `.g3-label[data-zone="${bedId}"] .g3-pill` : cue.current === "animal" ? ".hv2-plus" : ".g3-home .g3-badge";
+  const rect = useTargetRect(selector);
+  if (cue.current === "job" && !rect) return null; // nothing due yet: this cue waits for the first marker
+  const vw = window.innerWidth, vh = window.innerHeight, width = Math.min(280, vw - 24);
+  const cx = rect ? rect.x + rect.w / 2 : vw / 2;
+  const left = Math.max(12, Math.min(vw - width - 12, cx - width / 2));
+  // The bubble sits above its target, except the bed cue: there it goes below so the bed itself stays in view.
+  const roomBelow = !!rect && rect.y + rect.h + 190 < vh - 110;
+  const above = !rect || (cue.current === "plant" ? !roomBelow : rect.y > 190);
+  const pad = 9;
+  let box = { left, width, bottom: 124 }, tail = null, ring = null;
+  if (rect) {
+    ring = { left: rect.x - pad, top: rect.y - pad, width: rect.w + pad * 2, height: rect.h + pad * 2 };
+    if (above) { box = { left, width, bottom: vh - ring.top + 16 }; tail = { left: cx - 8, bottom: vh - ring.top + 7 }; }
+    else { box = { left, width, top: ring.top + ring.height + 16 }; tail = { left: cx - 8, top: ring.top + ring.height + 7 }; }
+  }
+  return (
+    <div className="hv2-cues">
+      {ring && cue.current === "plant" && <button type="button" className="hv2-cue-ring" aria-label="Plant your first crop" style={ring} onClick={onPlant} />}
+      {ring && cue.current !== "plant" && <span className="hv2-cue-ring is-round" aria-hidden="true" style={ring} />}
+      {tail && <i className="hv2-cue-tail" aria-hidden="true" style={tail} />}
+      <div className="hv2-cue" role="status" style={box}>
+        <div className="hv2-cue-top"><span>{cue.index} of {cue.total}</span><button type="button" onClick={onSkip}>Skip</button></div>
+        <p>{!rect && cue.current === "plant" ? "Plant your first crop" : CUE_TEXT[cue.current]}</p>
+        {!rect && cue.current === "plant" && <button type="button" className="hv2-cue-go" onClick={onPlant}>Plant</button>}
+      </div>
+    </div>
+  );
 }
 
 function Bar({ done, total }) {
@@ -86,6 +142,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   const firstBed = (data.zones || []).find((z) => isPlantZone(z.type));
   const fresh = !!firstBed && !(data.garden?.plots || []).length && !(data.livestock?.animals || []).length && !(data.nursery?.batches || []).length;
   const streak = data.gamify?.streak || 0;
+  const cue = cueState(data);
 
   useEffect(() => {
     if (!modal) return undefined;
@@ -133,7 +190,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
 
   return (
     <div className="hv2">
-      <GroveScene home homeRight={wide && open ? PANEL_W : 0} data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
+      <GroveScene home homeRight={wide && open ? PANEL_W : 0} guideZoneId={cue && cue.current === "plant" && firstBed ? firstBed.id : null} data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
         showEditButton={false} showHelperText={false} noBorder onPlantInZone={(zone) => setPage("crops", { zone })} onShowCrops={() => setPage("crops")}
         onEditLayout={() => setPage("map", { edit: true })} onStartGuide={() => setData({ ...data, setupDone: false })} />
 
@@ -153,8 +210,12 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
 
       {demo && onDemoSignup && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Keep it free <ArrowRight size={14} /></button>}
 
-      {fresh && due.length === 0 && (
-        <button type="button" className="hv2-first" onClick={() => setPage("crops", { zone: firstBed.id })}><Sprout size={18} />Plant your first crop<ArrowRight size={16} /></button>
+      {cue && firstBed && !taskZone && !walk && !modal && !celebrate && (
+        <Cue cue={cue} bedId={firstBed.id} onPlant={() => setPage("crops", { zone: firstBed.id, returnHome: true })} onSkip={() => setData(endCues(data))} />
+      )}
+
+      {fresh && due.length === 0 && !cue && (
+        <button type="button" className="hv2-first" onClick={() => setPage("crops", { zone: firstBed.id, returnHome: true })}><Sprout size={18} />Plant your first crop<ArrowRight size={16} /></button>
       )}
 
       {panel && !wide && createPortal(

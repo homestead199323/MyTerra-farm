@@ -40,6 +40,7 @@ import TaskQueue from "./features/tasks/TaskQueue";
 import GroveHome from "./features/grove/GroveHome";
 import HomeV2 from "./features/home/HomeV2";
 import GameDock from "./features/home/GameDock";
+import SetupV2 from "./features/home/SetupV2";
 import { useHomeV2 } from "./lib/home-v2";
 import AIAssistant from "./features/assistant/AIAssistant";
 import FeedbackSurvey, { FeedbackPrompt } from "./features/feedback/FeedbackSurvey";
@@ -730,7 +731,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       <Toaster/>
       <UpgradeSheet open={upgradeOpen} onClose={() => setUpgradeOpen(false)} ent={ent}/>
       {settingsOpen && <SettingsPanel onClose={()=>setSettingsOpen(false)} data={data} setData={setData} exportData={exportData} readBackup={readBackup} restoreBackup={restoreBackup} darkMode={darkMode} setDarkMode={setDarkMode} onSignOut={demo ? null : onSignOut} onExitDemo={demo ? onExitDemo : null} plan={planText} ent={ent} onAccountDeleted={demo ? null : onAccountDeleted} onUpgrade={()=>{setSettingsOpen(false);openUpgrade();}}/>}
-      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete}/>}
+      {showOnboarding && (homeV2 ? <SetupV2 onComplete={handleOnboardingComplete}/> : <Onboarding onComplete={handleOnboardingComplete}/>)}
     </>
   );
 }
