@@ -28,7 +28,7 @@ function niceDate(key) {
 /* ═══════════════════════════════════════════
    PLOT OVERLAY — shared popup used from Farming, TaskQueue, Dashboard
    ═══════════════════════════════════════════ */
-function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
+function PlotOverlay({plot, data, setData, onClose, setPage=null, dock=false}) {
   const layoutId = plot ? `crop-card-${plot.id}` : undefined;
   const crop = rCM(data.region).get(plot.crop);
   const zone = plot.zone ? data.zones.find(z => z.id === plot.zone) : null;
@@ -106,14 +106,14 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null}) {
 
   if (!crop) {
     return (
-      <Overlay title={`${plot.name || plot.crop}`} onClose={onClose} sheet layoutId={layoutId}>
+      <Overlay title={`${plot.name || plot.crop}`} onClose={onClose} dock={dock} sheet layoutId={layoutId}>
         <div style={{padding:"24px 12px",color:C.t2,fontSize:13}}>Crop data not found for this plot.</div>
       <Journal data={data} setData={setData} plotId={plot.id}/></Overlay>
     );
   }
 
   return (
-    <Overlay ariaLabel={plot.name || plot.crop} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={plot.crop} emoji={crop.emoji} size={24}/>{plot.name || plot.crop}</span>} onClose={onClose} sheet layoutId={layoutId}>
+    <Overlay ariaLabel={plot.name || plot.crop} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={plot.crop} emoji={crop.emoji} size={24}/>{plot.name || plot.crop}</span>} onClose={onClose} dock={dock} sheet layoutId={layoutId}>
       <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
         <Pill>{plot.status === "harvested" ? "Harvested" : growth.label}</Pill>
         <Pill>☀ {crop.sun}</Pill>

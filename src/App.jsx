@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } 
 import { createPortal } from "react-dom";
 import {
   Leaf, User, UserRound, MessageSquare, MessageCircle, Settings, ChevronRight,
-  Sun, ListChecks, Tractor, CalendarDays, Menu, BookOpen, TrendingUp, Package, Wallet, Lightbulb
+  Sun, ListChecks, Tractor, CalendarDays, Menu, BookOpen, TrendingUp, Package, Wallet, Lightbulb, X
 } from "lucide-react";
 import { Overlay } from "./components/ui";
 
@@ -178,7 +178,7 @@ const BottomNav = React.memo(function BottomNav({page, setPage, taskCount, onAsk
 
 /* Pages inside the current area, as tabs above the page (phones + tablets),
    plus the account button on phones (Settings, feedback, plan). */
-const SectionBar = React.memo(function SectionBar({page, setPage, onAccount}) {
+const SectionBar = React.memo(function SectionBar({page, setPage, onAccount, onClose}) {
   const sec = sectionOf(page);
   const pages = sec ? sec.pages : [];
   return (
@@ -193,6 +193,11 @@ const SectionBar = React.memo(function SectionBar({page, setPage, onAccount}) {
       {onAccount && (
         <button type="button" className="mt-secbar-me" aria-label="Account, settings and feedback" onClick={onAccount}>
           <UserRound size={19} strokeWidth={1.9}/>
+        </button>
+      )}
+      {onClose && (
+        <button type="button" className="mt-secbar-me mt-secbar-x" aria-label="Back to the farm" onClick={onClose}>
+          <X size={20} strokeWidth={2}/>
         </button>
       )}
     </div>
@@ -642,7 +647,10 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
 
   const currentSection = sectionOf(page);
   // The map is the whole screen on the new home (an empty space still gets the old page with its set-up prompt).
-  const mapHome = homeV2 && page === "home" && (data.zones || []).length > 0;
+  // New home: the farm is a stage that stays mounted; every other page opens as a panel over it.
+  const stage = homeV2 && (data.zones || []).length > 0 && !showOnboarding;
+  const mapHome = stage && page === "home";
+  const goFarm = () => setPage("home");
 
   const pg = () => {
     switch(page) {
@@ -658,8 +666,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       case "insights": return <InsightsScreen data={data} setPage={setPage} locked={!analyticsAllowed} onUpgrade={openUpgrade}/>;
       case "feedback": return <FeedbackSurvey setPage={setPage}/>;
       case "admin": return <AdminDashboard/>;
-      default: return mapHome
-        ? <HomeV2 wide={!isMobile} data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts} demo={demo} onDemoSignup={openUpgrade}/>
+      default: return stage ? null
         : <GroveHome data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts}/>;
     }
   };
@@ -711,10 +718,14 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
             <Settings size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Settings</span>}
           </button>
         </nav>
-        <main style={{flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":homeV2?(isTablet?"24px 24px 104px":"32px 36px 104px"):isTablet?"24px":"32px 36px",background:C.bg}}>
+        {stage && <HomeV2 wide={!isMobile} covered={!mapHome} data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts} demo={demo} onDemoSignup={openUpgrade}/>}
+        {stage && !mapHome && <button type="button" className="hv2-page-strip" aria-label="Back to the farm" onClick={goFarm}/>}
+        {stage && !mapHome && <div className={`hv2-page-bg${isMobile ? "" : " is-wide"}`} aria-hidden="true"/>}
+        <main className={stage ? `hv2-page${isMobile ? "" : " is-wide"}` : undefined} hidden={mapHome} style={stage ? undefined : {flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":homeV2?(isTablet?"24px 24px 104px":"32px 36px 104px"):isTablet?"24px":"32px 36px",background:C.bg}}>
+          {stage && isMobile && <span className="hv2-page-grab" aria-hidden="true"/>}
           {/* Nothing renders under the first-run setup: the 3D map would otherwise
               animate behind it and drain a phone's battery for no one. */}
-          {!showOnboarding && !mapHome && (viewW < 1024 || homeV2) && <SectionBar page={page} setPage={setPage} onAccount={noSide ? () => setAccountOpen(true) : null}/>}
+          {!showOnboarding && !mapHome && (viewW < 1024 || homeV2) && <SectionBar page={page} setPage={setPage} onAccount={noSide ? () => setAccountOpen(true) : null} onClose={stage ? goFarm : null}/>}
           {!showOnboarding && !mapHome && (demo ? <DemoBanner onSignup={openUpgrade} onSignin={onDemoSignin}/> : <TrialBanner ent={ent} onUpgrade={openUpgrade}/>)}
           {!showOnboarding && pg()}
         </main>

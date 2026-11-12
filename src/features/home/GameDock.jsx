@@ -7,6 +7,7 @@ import {
 import { Overlay } from "../../components/ui";
 import { isPlantZone } from "../farm/living/visuals";
 import { fanTarget } from "./home-model";
+import { keepsAnimals } from "../../lib/suggest";
 import "./home-v2.css";
 
 /* The floating dock of the map-first home. Phone: Farm · Calendar · + · Ask · More.
@@ -42,7 +43,9 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
   const canPlant = (data.zones || []).some((z) => isPlantZone(z.type));
   const go = (p, pd) => { setFan(false); setMore(false); setPage(p, pd); };
   const top = wide ? ["home", "plan", "manuals", "progress"] : ["home", "plan"];
-  const rows = MORE.filter((r) => !top.includes(r.page));
+  const animals = keepsAnimals(data) || ((data.livestock && data.livestock.animals) || []).length > 0; // a balcony keeps none
+  const rows = MORE.filter((r) => !top.includes(r.page) && (animals || r.page !== "live"));
+  const fanItems = FAN.filter((f) => animals || f.id !== "animal"), slots = fanItems.length === 4 ? [0, 1, 3, 4] : [0, 1, 2, 3, 4];
   const inMore = !top.includes(page);
   return (
     <>
@@ -59,10 +62,14 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
       {fan && createPortal(
         <div className="hv2-fan" role="dialog" aria-modal="true" aria-label="Add">
           <button type="button" className="hv2-fan-scrim" aria-label="Close" onClick={() => setFan(false)} />
-          {FAN.map(function (f, i) {
+          {fanItems.map(function (f, n) {
+            const i = slots[n];
             const target = fanTarget(f.id, canPlant);
             return (
-              <button type="button" key={f.id} className={`hv2-fan-item hv2-fan-${i}`} aria-label={f.a} onClick={function () { go(target[0], f.id === "plant" && page === "home" && target[1].add ? { add: true, returnHome: true } : target[1]); }}>
+              <button type="button" key={f.id} className={`hv2-fan-item hv2-fan-${i}`} aria-label={f.a} onClick={function () {
+                if (f.id === "build" && (data.zones || []).length > 0) { go("home"); setTimeout(function () { window.dispatchEvent(new Event("mt-build")); }, 0); return; }
+                go(target[0], f.id === "plant" && page === "home" && target[1].add ? { add: true, returnHome: true } : target[1]);
+              }}>
                 <span className={`hv2-fan-dot is-${f.id}`}><f.E size={26} strokeWidth={2} /></span>
                 <span className="hv2-fan-label">{f.l}</span>
               </button>

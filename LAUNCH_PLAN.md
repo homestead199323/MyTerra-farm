@@ -992,3 +992,39 @@
   from the weather card; the one-screen setup creates one empty starter bed and no starter kit.
   Next: owner tries it on his iPhone → fixes → switch ON for everyone → delete the old Today layout,
   BottomNav and the 12-step onboarding (slice 4).
+
+- [~] **Map-first home, round 2 (2026-11-12, owner feedback after trying it on desktop; still behind the switch).**
+  (1) **The farm is a stage that stays mounted.** With the switch on, every other page opens as a glass panel
+  over the live map (phone: a sheet with the map showing above it; desktop: a panel that fills the screen
+  above the dock). The map pauses underneath and is not rebuilt until you come back (`paused` on Grove3D), so
+  returning to the farm is instant. Close with the X, the dock's Farm button, or a tap outside the panel.
+  (2) **Desktop pages use the whole screen:** width caps are lifted in the panel; Progress, Insights, All tasks
+  and Money flow into two columns; Animals and Pantry rows form a grid; Crops is a list with the picked
+  crop's full details docked beside it (one is always open).
+  (3) **Crop panel on the map (desktop):** clicking a planted row opens everything about that crop beside the
+  map: stage track, jobs due today, sowing and harvest windows, days in the ground, watering, feeding, the
+  step-by-step with the current step marked, neighbours, pests, storing. The map frames the bed clear of it.
+  (4) **Words, not icons, on a wide screen:** "See how it grows", "Show the whole farm", the weather in words,
+  "day streak", "Today's jobs".
+  (5) **Build mode on the map** (`+` → Build no longer jumps to the designer): a tray of pieces for the kind of
+  space; drag one onto the ground (a green footprint shows where it lands, snapped to the grid and to
+  neighbours) or tap it to drop it in free ground; drag an area to move it; tap it for width / depth
+  steppers, quarter turn and remove (asks first; crops and animals stay, without a place); Undo; Done.
+  "Paths, decor, exact sizes" still opens the old designer. Pure logic in `src/features/home/build-model.js`.
+  (6) **Only what fits the space (NOT behind the switch, live for everyone).** Owner: "planting figs on a
+  balcony… things like this shouldn't happen". `growsHere()` in `src/lib/suggest.js` is the one rule: pots (a
+  balcony or a container area) take only pot crops; a balcony takes no trees; only patio trees (fig, lemon,
+  orange, olive) go in a container area elsewhere. The planting form no longer lists what cannot grow there
+  (a search for it shows it greyed out, "Won't grow here"); the Plan calendar drops it in every month; the
+  winter tip no longer tells a balcony to plant bare-root trees; a balcony gets no "Animal" in the + menu, no
+  Animals row in More and no Add button on the Animals page.
+  Verified: 266 + 3 tests (13 new), ESLint, build; headless Chrome (software WebGL): every page in the panel
+  at 1728 × 900 dark and 1440 × 800 light, the crop panel, Crops list + detail, build mode by mouse at
+  1728 × 900 and 1280 × 760 (drag-place, tap-place, drag-move, resize, turn, undo, remove, done), the phone at
+  390 × 844 (pages over the farm, map paused and resumed, build mode), a balcony (4-item + menu, crop picker,
+  "fig" search), and the old home with the switch off. No console errors.
+  NOT verified: a real phone or tablet (touch-dragging pieces was only simulated with a mouse pointer),
+  Safari, Firefox, a signed-in account, how long the farm takes to redraw after a build on a slow phone.
+  Known gaps: job pins sit over small beds at whole-farm zoom, so a crop there needs a zoom-in before it can
+  be clicked; pieces may overlap each other (the old designer allows it too); no corner-drag resize; Learn
+  guides and the Plan calendar are still single-column; a garden may still add any animal (cows included).

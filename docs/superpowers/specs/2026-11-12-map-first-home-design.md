@@ -76,3 +76,19 @@ thing three ways. First run asked 12 questions before showing anything.
 - 3D map as the first thing that loads on a phone: start-up time and battery, never measured
   on a real iPhone.
 - Glass panels in direct sunlight: panels are kept at about 85 % white for that reason.
+
+## Round 2 (2026-11-12, after the owner tried slices 1–3 on desktop)
+
+Owner feedback, and what was built for each:
+
+| Feedback | Built |
+|---|---|
+| Phone: "all menus interact with the new visuals" (asked which reading; answer: open over the farm) | The farm stays mounted as a stage; every page is a glass panel over it. `App.jsx`: `stage`, `.hv2-page`, `.hv2-page-bg`, `.hv2-page-strip`. Grove3D `paused`: no animation and no world rebuild while covered. |
+| Desktop: pages should fill the screen | Caps lifted inside the panel; two-column flows and grids per page (`home-v2.css`, "wide screens: pages use the whole panel"). |
+| Desktop: clicking a crop shows its information next to it | Map: the crop card becomes a full panel (`rich` on Grove3D, reports its rect through `cover.js`). Crops page: `Overlay dock` + `useWideStage()`. |
+| Desktop: no icon-only buttons at the sides | Labels on the map controls and the two capsules (`.hv2-word`, `rich`). |
+| Phone: Build should stay on the map, drag and drop | `BuildMode.jsx` + `build-model.js`; Grove3D exposes `onEngine` (groundAt, zoneAt, project, setGhost, view). |
+| Never suggest what is not possible (fig on a balcony) | `growsHere()` / `keepsAnimals()` in `src/lib/suggest.js`, used by the planting form, `cropFitsZone`, the month plan and the dock. Not behind the switch. |
+
+Decisions: pieces may overlap (the designer already allows it, and beds do sit inside greenhouses); the old
+designer stays for paths, fences, decor and typed sizes; a patio tree in a pot stays possible in a garden.

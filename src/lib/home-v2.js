@@ -46,3 +46,17 @@ export function useHomeV2() {
   }, []);
   return on;
 }
+
+/** Wide screen with the new home on: pages have room for a detail panel beside their list. */
+const WIDE = "(min-width: 1100px)";
+export function useWideStage() {
+  const on = useHomeV2();
+  const [wide, setWide] = useState(() => typeof matchMedia === "function" && matchMedia(WIDE).matches);
+  useEffect(() => {
+    if (typeof matchMedia !== "function") return undefined;
+    const q = matchMedia(WIDE), sync = () => setWide(q.matches);
+    q.addEventListener("change", sync);
+    return () => q.removeEventListener("change", sync);
+  }, []);
+  return on && wide;
+}

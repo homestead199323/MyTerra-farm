@@ -144,7 +144,7 @@ function Preserving({embedded}) {
   );
 
   return (
-    <div style={{ maxWidth: 960 }}>
+    <div className="mt-manual-detail" style={{ maxWidth: 960 }}>
       {!embedded && <>
         <h2 style={{ fontFamily: F.head, fontSize: 28, margin: "0 0 4px" }}>Preservation Manual</h2>
         <p style={{ color: C.t2, fontSize: 14, margin: "0 0 16px" }}>
@@ -417,7 +417,7 @@ function Projects({embedded}) {
   );
 
   return (
-    <div style={{ maxWidth: 960 }}>
+    <div className="mt-manual-detail" style={{ maxWidth: 960 }}>
       {!embedded && <>
         <h2 style={{ fontFamily: F.head, fontSize: 28, margin: "0 0 4px" }}>DIY Project Guides</h2>
         <p style={{ color: C.t2, fontSize: 14, margin: "0 0 16px" }}>

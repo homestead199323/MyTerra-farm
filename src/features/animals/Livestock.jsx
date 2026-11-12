@@ -7,6 +7,7 @@ import { addStock } from "../../lib/inventory";
 import { recordProduce, subtractProduce } from "../../lib/memory";
 import { toast } from "../../lib/toast";
 import { LDB } from "../../data/livestock";
+import { keepsAnimals } from "../../lib/suggest";
 import { BREEDS } from "../../data/breeds";
 import { Btn, Card, Inp, Sel, Overlay } from "../../components/ui";
 import AnimalOverlay from "./AnimalOverlay";
@@ -73,9 +74,9 @@ function Livestock({data, setData, pageData, clearPageData}) {
   const groups=animalGroups(data.livestock.animals,data.zones);
 
   return (
-    <div className="page-enter" style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}><div><h2 className="pg-h2" style={SX.headerH2}>Your animals</h2><p className="pg-sub" style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div><Btn onClick={()=>setShowAdd(true)}>+ Add</Btn></div>
-      <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.s15Bold}>No animals yet</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>Add chickens, goats, or any livestock to track them</div></Card>:groups.map(function(g){const open=openSec[g.key]??true;return (
+    <div className="page-enter mt-animals" style={SX.mw800}>
+      <div className="pg-head" style={SX.pageHead}><div><h2 className="pg-h2" style={SX.headerH2}>Your animals</h2><p className="pg-sub" style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div>{keepsAnimals(data)&&<Btn onClick={()=>setShowAdd(true)}>+ Add</Btn>}</div>
+      <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.s15Bold}>{keepsAnimals(data)?"No animals yet":"No room for animals on a balcony"}</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>{keepsAnimals(data)?"Add chickens, goats, or any livestock to track them":"Animals need ground. If your space becomes a garden or a farm, change it in Settings and they show up here."}</div></Card>:groups.map(function(g){const open=openSec[g.key]??true;return (
         <section key={g.key} style={{marginBottom:10}}>
           <button type="button" aria-expanded={open} onClick={function(){setOpenSec({...openSec,[g.key]:!open});}}
             style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,width:"100%",minHeight:44,padding:"8px 2px",margin:"0 0 8px",background:"none",border:0,borderBottom:`1px solid ${C.bdr}`,cursor:"pointer",color:C.text,textAlign:"left"}}>

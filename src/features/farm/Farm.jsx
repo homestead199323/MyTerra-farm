@@ -12,6 +12,7 @@ import {isTreeCrop} from "../quiet/planting-plan";
 import PlantArt from "../quiet/PlantArt";
 import MapLines from "../quiet/MapLines";
 import { addDraftPoint, lineLength, snapPoint, lineAnchors, snapZone, defaultGrid } from "../grove/path-draw";
+import { useWideStage } from "../../lib/home-v2";
 import { REGIONS, REGION_MAP } from "../../data/regions";
 import { ZT, ZT_MAP } from "../../data/zones";
 import { searchCity } from "../../data/cities";
@@ -909,6 +910,10 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
   const [backHome,setBackHome]=useState(false); // opened from the home map (its + or a first-run cue): saving goes back to the map
   useEffect(()=>{if(pageData?.crop||pageData?.zone||pageData?.add){const next={...pageData};delete next.add;delete next.returnHome;setInitial(next);setBackHome(!!pageData.returnHome);setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]);
   const sp=data.garden.plots.find(p=>p.id===selP);
+  // Wide new home: the crop's details sit beside the list, and one is always open.
+  const dock=useWideStage();
+  const firstId=dock?(data.garden.plots.find(function(p){return p.status!=="harvested";})||{}).id:null;
+  useEffect(()=>{if(dock&&!selP&&firstId&&!showAdd)setSelP(firstId);},[dock,selP,firstId,showAdd]);
   // Pre-computed values to avoid IIFEs in JSX (IIFEs crash the app)
   const _active=data.garden.plots.filter(function(p){return p.status!=="harvested";});
   const _totalArea=_active.reduce(function(s,p){return s+(p.measureType==="area"?+(p.qty||0):0);},0);
@@ -942,7 +947,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
         const hasQty = p.plantCount || p.qty;
         return (
           <div key={p.id}>
-          <Card onClick={()=>setSelP(p.id)} style={isR?{boxShadow:`0 0 0 2px ${C.orange}`}:{}}>
+          <Card onClick={()=>setSelP(p.id)} style={dock&&selP===p.id?{boxShadow:`0 0 0 2px ${C.green}`}:isR?{boxShadow:`0 0 0 2px ${C.orange}`}:{}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <Ring pct={pct} size={60} color={isR?C.orange:C.green}><PlantArt crop={p.crop} stage={growth.index} size={48}/></Ring>
               <div style={SX.flex1}>
@@ -968,7 +973,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
         );
   }
   return (
-    <div className="page-enter" style={SX.mw800}>
+    <div className={`page-enter mt-crops${dock&&sp?" has-detail":""}`} style={SX.mw800}>
       <div className="pg-head" style={SX.pageHead}>
         <div><h2 className="pg-h2" style={SX.headerH2}>Your crops</h2><p className="pg-sub" style={SX.pageSubHead}>Track your crops from seed to harvest</p></div>
         {_canPlant&&<Btn onClick={()=>setShowAdd(true)}>+ Plant Crop</Btn>}
@@ -1009,7 +1014,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
             </button>)}
         </section>);})}</>}
 
-      {sp && <PlotOverlay plot={sp} data={data} setData={setData} onClose={()=>setSelP(null)}/>}
+      {sp && !(dock&&showAdd) && <PlotOverlay key={sp.id} dock={dock} plot={sp} data={data} setData={setData} onClose={()=>setSelP(null)}/>}
 
       {showAdd&&<PlantingForm data={data} setData={setData} initial={initial} onClose={()=>{setShowAdd(false);setInitial({});setBackHome(false);}} onSaved={()=>{if(backHome)setPage?.("home");}}/>}
     </div>

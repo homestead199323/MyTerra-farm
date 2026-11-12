@@ -557,7 +557,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast, pageData, clearPage
   const goToFarm = useCallback(() => setPage("crops"), [setPage]);
 
   return (
-    <div className="page-enter" style={{maxWidth:1100}}>
+    <div className="page-enter mt-tasks" style={{maxWidth:1100}}>
       <h2 className="pg-h2" style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>All tasks</h2>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",margin:"0 0 16px"}}>
         <p className="pg-sub" style={{color:C.t2,fontSize:13,margin:0,fontWeight:500}}>Today's work first, then the week, then the month</p>

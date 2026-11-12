@@ -53,8 +53,9 @@ export const Txt = React.memo(function Txt({label,...p}) {
   </div>;
 });
 
-export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
+export function Overlay({title,ariaLabel,onClose,children,wide,sheet,dock}) {
   const isSheet = !!sheet;
+  const docked = !!dock; // beside the list (wide new home): no scrim, the page behind stays usable
   const dialogRef=useRef(null);
   const closeRef=useRef(onClose);
   useEffect(()=>{closeRef.current=onClose;},[onClose]);
@@ -68,6 +69,7 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function blockOuterScroll(e) {
+      if (docked) return;
       let el = e.target;
       while (el && el !== document.body) {
         if (el.classList && el.classList.contains("overlay-sheet")) return;
@@ -80,7 +82,7 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
       document.body.style.overflow = prev;
       document.removeEventListener("touchmove", blockOuterScroll);
     };
-  }, []);
+  }, [docked]);
 
   function handleTouchStart(e) {
     setStartY(e.touches[0].clientY);
@@ -115,9 +117,9 @@ export function Overlay({title,ariaLabel,onClose,children,wide,sheet}) {
 
   // Sheet variant — spring drag-to-dismiss
   return createPortal(
-    <div className="overlay-backdrop" onClick={onClose} style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,boxSizing:"border-box",overflowX:"hidden"}}>
+    <div className={`overlay-backdrop${docked ? " overlay-dock" : ""}`} onClick={docked ? undefined : onClose} style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:docked?130:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,boxSizing:"border-box",overflowX:"hidden"}}>
       {/* Backdrop fades as sheet is dragged down */}
-      <div style={{position:"absolute",inset:0,background:"rgba(18,26,20,.3)",opacity}}/>
+      {!docked && <div style={{position:"absolute",inset:0,background:"rgba(18,26,20,.3)",opacity}}/>}
       <div
         onClick={function(e){e.stopPropagation();}}
         style={{

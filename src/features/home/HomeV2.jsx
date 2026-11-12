@@ -16,6 +16,7 @@ import { RemindersPrompt } from "../settings/Reminders";
 import { isPlantZone } from "../farm/living/visuals";
 import { dueToday, trackDay, jobsProgress, showDayDone, rowNote } from "./home-model";
 import { cueState, endCues } from "./setup-model";
+import BuildMode from "./BuildMode";
 import "./home-v2.css";
 
 /* The map-first home (spec: docs/superpowers/specs/2026-11-12-map-first-home-design.md).
@@ -110,12 +111,23 @@ function Bar({ done, total }) {
   return <span className="hv2-bar" aria-hidden="true"><i style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} /></span>;
 }
 
-export default function HomeV2({ data, setData, setPage, tasks, forecast, forecastState, alerts, demo, onDemoSignup, wide = false }) {
+export default function HomeV2({ data, setData, setPage, tasks, forecast, forecastState, alerts, demo, onDemoSignup, wide = false, covered = false }) {
   const [walk, setWalk] = useState(false), [weather, setWeather] = useState(null), [taskZone, setTaskZone] = useState(null);
   // Phone: the jobs list is a card over the map, closed until the chip is tapped. Wide screen: it floats
   // beside the map, open unless it was collapsed on this device.
   const [open, setOpen] = useState(() => stored(OPEN_KEY) !== "0"), [modal, setModal] = useState(false), [week, setWeek] = useState(false);
+  const [build, setBuild] = useState(false), [engine, setEngine] = useState(null);
   const panel = wide ? open : modal;
+  // A page opened over the farm: the map waits underneath with nothing floating on it.
+  useEffect(() => { if (covered) { setModal(false); setWeek(false); setTaskZone(null); setBuild(false); } }, [covered]);
+  // The dock's Build button starts build mode here, on the map.
+  useEffect(() => {
+    const start = () => { setModal(false); setWeek(false); setTaskZone(null); setBuild(true); };
+    window.addEventListener("mt-build", start);
+    return () => window.removeEventListener("mt-build", start);
+  }, []);
+  useEffect(() => { document.body.classList.toggle("mt-building", build); return () => document.body.classList.remove("mt-building"); }, [build]);
+  const quiet = covered || build; // nothing but the map (and build mode's own controls)
   const setPanel = (on) => { if (wide) { setOpen(on); store(OPEN_KEY, on ? "1" : "0"); } else setModal(on); };
   useEffect(() => {
     let active = true;
@@ -136,7 +148,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   const progress = jobsProgress(day && day.day === today ? day : null, due.length);
 
   const [shown, setShown] = useState(() => stored(DONE_KEY));
-  const celebrate = showDayDone(progress, shown, today) && !taskZone && !walk && !modal;
+  const celebrate = showDayDone(progress, shown, today) && !taskZone && !walk && !modal && !quiet;
   const dismissDone = () => { setShown(today); store(DONE_KEY, today); };
 
   const firstBed = (data.zones || []).find((z) => isPlantZone(z.type));
@@ -157,6 +169,21 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
     if (zone) setTaskZone(zone);
     else setPage("tasks");
   }
+
+  // Jobs due today for the crop picked on the map: shown in the crop panel beside it.
+  const cropJobs = (cropName) => {
+    const plots = data.garden?.plots || [];
+    const list = due.filter((t) => (t.cropName || plots.find((p) => p.id === t.plotId)?.crop) === cropName);
+    if (!list.length) return null;
+    return (
+      <section className="g3-crop-sec">
+        <h4>Due today</h4>
+        {list.map(function (t) {
+          return <button type="button" key={t.key} className="g3-crop-job" onClick={function () { openJob(t); }}><span aria-hidden="true">{taskGlyph(t)}</span><span>{t.title}</span><ChevronRight size={15} aria-hidden="true" /></button>;
+        })}
+      </section>
+    );
+  };
 
   const jobsList = (
     <section className={`hv2-panel${wide ? " is-docked" : ""}`} role={wide ? "region" : "dialog"} aria-modal={wide ? undefined : "true"} aria-label="Today's jobs">
@@ -189,42 +216,48 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   );
 
   return (
-    <div className="hv2">
-      <GroveScene home homeRight={wide && open ? PANEL_W : 0} guideZoneId={cue && cue.current === "plant" && firstBed ? firstBed.id : null} data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
+    <div className={`hv2${wide ? " is-wide" : ""}${covered ? " is-covered" : ""}${build ? " is-build" : ""}`}>
+      <GroveScene home homeRight={wide && open && !build ? PANEL_W : 0} paused={covered} rich={wide} building={build} onEngine={setEngine} cropExtra={cropJobs}
+        guideZoneId={!quiet && cue && cue.current === "plant" && firstBed ? firstBed.id : null} data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
         showEditButton={false} showHelperText={false} noBorder onPlantInZone={(zone) => setPage("crops", { zone })} onShowCrops={() => setPage("crops")}
         onEditLayout={() => setPage("map", { edit: true })} onStartGuide={() => setData({ ...data, setupDone: false })} />
 
-      <div className="hv2-hud">
+      {!quiet && <div className="hv2-hud">
         <button type="button" className="hv2-cap" aria-label={`${weather?.ok ? `${weather.temp} degrees. ` : ""}${streak} day streak. Open this week's weather`} onClick={() => setWeek(true)}>
           <span className="hv2-sun"><Sun size={17} strokeWidth={2.2} /></span>
           <b>{weather?.ok ? `${weather.temp}°` : new Date().toLocaleDateString(undefined, { weekday: "short" })}</b>
+          {wide && weather?.ok && <span className="hv2-word">{weather.desc}{weather.location ? ` in ${weather.location}` : ""}</span>}
           <i aria-hidden="true" />
           <Flame size={18} strokeWidth={2.2} className="hv2-flame" />
           <b>{streak}</b>
+          {wide && <span className="hv2-word">day streak</span>}
         </button>
         {!(wide && open) && <button type="button" className="hv2-chip" aria-haspopup="dialog" aria-expanded={panel} aria-label={`Today's jobs: ${progress.done} of ${progress.total} done`} onClick={() => setPanel(true)}>
           <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
+          {wide && <span className="hv2-word">Today’s jobs</span>}
           <span className="hv2-chip-text"><b>{progress.done}/{progress.total}</b><Bar done={progress.done} total={progress.total} /></span>
         </button>}
-      </div>
+      </div>}
 
-      {demo && onDemoSignup && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Keep it free <ArrowRight size={14} /></button>}
+      {demo && onDemoSignup && !quiet && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Keep it free <ArrowRight size={14} /></button>}
 
-      {cue && firstBed && !taskZone && !walk && !modal && !celebrate && (
+      {cue && firstBed && !taskZone && !walk && !modal && !celebrate && !quiet && (
         <Cue cue={cue} bedId={firstBed.id} onPlant={() => setPage("crops", { zone: firstBed.id, returnHome: true })} onSkip={() => setData(endCues(data))} />
       )}
 
-      {fresh && due.length === 0 && !cue && (
+      {fresh && due.length === 0 && !cue && !quiet && (
         <button type="button" className="hv2-first" onClick={() => setPage("crops", { zone: firstBed.id, returnHome: true })}><Sprout size={18} />Plant your first crop<ArrowRight size={16} /></button>
       )}
 
-      {panel && !wide && createPortal(
+      {panel && !wide && !quiet && createPortal(
         <div className="hv2-scrim" onClick={function (e) { if (e.target === e.currentTarget) setModal(false); }}>{jobsList}</div>,
         document.body,
       )}
-      {panel && wide && jobsList}
+      {panel && wide && !quiet && jobsList}
 
-      {week && (
+      {build && !covered && <BuildMode data={data} setData={setData} engine={engine} wide={wide} onDone={() => setBuild(false)} onDesigner={() => { setBuild(false); setPage("map", { edit: true }); }} />}
+
+      {week && !quiet && (
         <Overlay title="This week" onClose={() => setWeek(false)}>
           <div className="hv2-week"><WeatherWeek data={data} setData={setData} forecast={forecast} forecastState={forecastState} alerts={alerts} onOpenTasks={() => { setWeek(false); setPage("tasks"); }} /></div>
         </Overlay>
