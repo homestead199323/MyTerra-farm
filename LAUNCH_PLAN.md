@@ -965,3 +965,30 @@
   NOT verified: a real phone, Safari, Firefox. Not done (owner dropped them from the section): the time-budget
   and "built for beginners, Europe first" points. The comparison line is dated November 2026 and should be
   re-checked when competitors ship (Seedtime has announced weather alerts; Plotera a paid 3D growth simulator).
+
+- [~] **Map-first home, game HUD (2026-11-12, owner request; commits `a3eed0f`, `58c8b46`, `cfab7a1`; spec
+  `docs/superpowers/specs/2026-11-12-map-first-home-design.md`).** Owner approved 12 mockups ("love it, start
+  implementing"): the 3D map is the home screen, jobs live on it, a dock whose centre plus fans out, a
+  one-screen setup then cues on the map. **Shipped behind a device switch, OFF by default**: Settings →
+  "New home screen (beta)", or open `/app?home=new` once (`?home=old` turns it off). With it off nothing
+  changes (old Today, tab bar, sidebar, 12-step onboarding).
+  With it on: (1) home is the full-screen map (Grove3D `home` mode, z-index 5 so the app's sheets open over
+  it), a weather + streak capsule (opens the week's weather), a jobs chip `done/total` that drops a glass
+  list of today's jobs, area badges as bobbing pins (gold when produce waits), a "Day done!" card once a day;
+  (2) a floating dock on every page and every screen size: Farm · Calendar · + · Ask · More (desktop adds
+  Learn and Progress and loses the sidebar); + fans out Plant, Animal, Build, Job, Harvest; (3) desktop: the
+  jobs list floats beside the map, collapsible, and the map re-frames the farm clear of it; (4) first run:
+  one screen (space, size, region guessed from the time zone) then cues: plant → (farm only) add an animal →
+  tick a job, with Skip. New files in `src/features/home/` (+ `src/lib/home-v2.js`); 23 new unit tests.
+  Verified: 253 + 3 tests, ESLint, build; deployment `dpl_2FM7WpZ7maVygUbyh3bndD52GAbs` READY; live bundle
+  holds the new strings and the old onboarding's; headless Chrome (software WebGL) at 390 × 844, 360 × 640
+  dark, 1440 × 900: home, jobs list, fan and all five targets, area popup, day-done, More, other pages, flat
+  map fallback, first run for balcony / backyard / farm, and the old home + old onboarding with the switch
+  off. No console errors.
+  NOT verified: a real iPhone (start-up time, battery, glass in sunlight, safe areas, the pulse rings),
+  Safari, Firefox, a signed-in account with cloud sync (`profile.firstRun` rides in the profile), tablets.
+  Known gaps: pins can overlap neighbouring area names on tight layouts; "Harvest" in the fan opens the
+  Pantry's Add stock form (there is no harvest-anything form); Region is guessed, town is still asked later
+  from the weather card; the one-screen setup creates one empty starter bed and no starter kit.
+  Next: owner tries it on his iPhone → fixes → switch ON for everyone → delete the old Today layout,
+  BottomNav and the 12-step onboarding (slice 4).
