@@ -391,6 +391,7 @@ export default function GroveScene({
   focus = null,
   guideZoneId = null,
   onStartGuide,
+  home = false,
 }) {
   const id = useId().replace(/:/g, "");
   const svg = useRef(null),
@@ -657,7 +658,7 @@ export default function GroveScene({
       data-grove-scene="aerial"
       data-grove-camera={three ? "3d" : "flat"}
     >
-      {!edit && (
+      {!edit && !home && (
         <div className="quiet-map-top">
           <span>
             {env === "balcony" ? "Your balcony" : env === "backyard" ? "Your garden" : "Your farm"}{" "}
@@ -677,7 +678,7 @@ export default function GroveScene({
           <Suspense fallback={<div style={{ width: "100%", aspectRatio: "1 / 0.64" }} />}>
             <Grove3D data={data} zones={zones} roads={allPaths} crops={cropMap} fW={fW} fH={fH} margin={margin} env={env}
               pathTexture={pathTexture} roadWidth={roadWidth} tasksByZone={guideZoneId == null ? tasksByZone : {}} selectedId={selectedId} cardZoneId={selected} guideZoneId={guideZoneId}
-              onZoneOpen={open} onBadge={setTaskZone} interactive={canInteract} onUnavailable={() => setNoGL(true)} onShowCrops={onShowCrops} weather={weather} skyOverride={skyOverride} />
+              onZoneOpen={open} onBadge={setTaskZone} interactive={canInteract} onUnavailable={() => setNoGL(true)} onShowCrops={onShowCrops} weather={weather} skyOverride={skyOverride} home={home && !guideZoneId} />
           </Suspense>
         ) : (
         <svg
@@ -1184,7 +1185,7 @@ export default function GroveScene({
         </svg>
         )}
       </div>
-      <div className="quiet-map-bottom">
+      <div className="quiet-map-bottom" hidden={home && three}>
         <span>
           {edit
             ? "Drag to move · corner to resize"

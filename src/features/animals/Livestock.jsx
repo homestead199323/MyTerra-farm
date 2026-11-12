@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { C, SX } from "../../lib/theme";
 import { uid } from "../../lib/storage";
@@ -17,8 +17,10 @@ import { animalGroups } from "../quiet/farm-model";
 /* ═══════════════════════════════════════════
    LIVESTOCK
    ═══════════════════════════════════════════ */
-function Livestock({data, setData}) {
-  const [showAdd,setShowAdd]=useState(false);const [sel,setSel]=useState(null);const [showK,setShowK]=useState(null);const [kQ,setKQ]=useState("1");
+function Livestock({data, setData, pageData, clearPageData}) {
+  const [showAdd,setShowAdd]=useState(false);
+  useEffect(()=>{if(pageData?.add){setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]); // the + menu on the home map
+ const [sel,setSel]=useState(null);const [showK,setShowK]=useState(null);const [kQ,setKQ]=useState("1");
   const [showCollect,setShowCollect]=useState(null); // {animal, produce}
   const [collectQty,setCollectQty]=useState("");
   const [form,setForm]=useState({name:"",type:"Chicken",breed:"",count:"1",cost:"",zone:""});

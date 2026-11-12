@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown, MapPin, Clock, Timer } from "lucide-react";
 import { C, F, SX } from "../../lib/theme";
 import { Card, SwipeableRow, TaskCheckbox } from "../../components/ui";
@@ -110,7 +110,7 @@ const TaskRow = React.memo(function TaskRow({t, onOpen, onToggleStep, onMarkDone
 /* ═══════════════════════════════════════════
    TASK QUEUE — Calendar + Urgency + Timeline
    ═══════════════════════════════════════════ */
-function TaskQueue({data, setData, setPage, tasks, forecast}) {
+function TaskQueue({data, setData, setPage, tasks, forecast, pageData, clearPageData}) {
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState(null); // "YYYY-MM-DD" or null
@@ -124,6 +124,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast}) {
   const [attentionCollapsed, setAttentionCollapsed] = useState(false);
   const [routineCollapsed, setRoutineCollapsed] = useState(false);
   const [ownForm, setOwnForm] = useState(null); // null | {} (new) | task (edit)
+  useEffect(() => { if (pageData?.addJob) { setOwnForm({}); clearPageData?.(); } }, [pageData, clearPageData]); // the + menu on the home map
 
   // Phase 8.1 — FLIP animation for task completion
   // rowRefs: live DOM nodes for completable rows (keyed by task key) — used for snapshot (First)

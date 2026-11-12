@@ -38,6 +38,9 @@ import Livestock from "./features/animals/Livestock";
 import MapScreen, { CropsScreen } from "./features/farm/Farm";
 import TaskQueue from "./features/tasks/TaskQueue";
 import GroveHome from "./features/grove/GroveHome";
+import HomeV2 from "./features/home/HomeV2";
+import GameDock from "./features/home/GameDock";
+import { useHomeV2 } from "./lib/home-v2";
 import AIAssistant from "./features/assistant/AIAssistant";
 import FeedbackSurvey, { FeedbackPrompt } from "./features/feedback/FeedbackSurvey";
 import { BadgeCelebration } from "./components/BadgeCelebration";
@@ -420,6 +423,10 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   }, []);
 
   const isMobile = viewW < 768;
+  // Map-first home (spec 2026-11-12): a device switch while it is tried out. Phones first.
+  const homeV2 = useHomeV2();
+  const v2Phone = homeV2 && isMobile;
+  useEffect(() => { document.body.classList.toggle("mt-home-v2", v2Phone); return () => document.body.classList.remove("mt-home-v2"); }, [v2Phone]);
   const isTablet = viewW >= 768 && viewW < 1024;
 
   // Flush pending save on tab close / navigate away
@@ -633,14 +640,16 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   }
 
   const currentSection = sectionOf(page);
+  // The map is the whole screen on the new phone home (an empty space still gets the old page with its set-up prompt).
+  const mapHome = v2Phone && page === "home" && (data.zones || []).length > 0;
 
   const pg = () => {
     switch(page) {
-      case "tasks": return <TaskQueue data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast}/>;
+      case "tasks": return <TaskQueue data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} pageData={pageData} clearPageData={clearFarmPageData}/>;
       case "map": return <MapScreen data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData} setPage={setPage}/>;
       case "crops": return <CropsScreen data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData} setPage={setPage}/>;
-      case "live": return <Livestock data={data} setData={setData}/>;
-      case "pantry": return <Pantry data={data} setData={setData}/>;
+      case "live": return <Livestock data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData}/>;
+      case "pantry": return <Pantry data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData}/>;
       case "fin": return <Financials data={data} setData={setData}/>;
       case "manuals": return <Manuals data={data}/>;
       case "plan": return <PlanScreen data={data} setData={setData} setPage={setPage}/>;
@@ -648,7 +657,9 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       case "insights": return <InsightsScreen data={data} setPage={setPage} locked={!analyticsAllowed} onUpgrade={openUpgrade}/>;
       case "feedback": return <FeedbackSurvey setPage={setPage}/>;
       case "admin": return <AdminDashboard/>;
-      default: return <GroveHome data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts}/>;
+      default: return mapHome
+        ? <HomeV2 data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts} demo={demo} onDemoSignup={openUpgrade}/>
+        : <GroveHome data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts}/>;
     }
   };
 
@@ -702,12 +713,14 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
         <main style={{flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":isTablet?"24px":"32px 36px",background:C.bg}}>
           {/* Nothing renders under the first-run setup: the 3D map would otherwise
               animate behind it and drain a phone's battery for no one. */}
-          {!showOnboarding && viewW < 1024 && <SectionBar page={page} setPage={setPage} onAccount={isMobile ? () => setAccountOpen(true) : null}/>}
-          {!showOnboarding && (demo ? <DemoBanner onSignup={openUpgrade} onSignin={onDemoSignin}/> : <TrialBanner ent={ent} onUpgrade={openUpgrade}/>)}
+          {!showOnboarding && !mapHome && viewW < 1024 && <SectionBar page={page} setPage={setPage} onAccount={isMobile ? () => setAccountOpen(true) : null}/>}
+          {!showOnboarding && !mapHome && (demo ? <DemoBanner onSignup={openUpgrade} onSignin={onDemoSignin}/> : <TrialBanner ent={ent} onUpgrade={openUpgrade}/>)}
           {!showOnboarding && pg()}
         </main>
       </div>
-      {isMobile&&!showOnboarding&&<BottomNav page={page} setPage={setPage} taskCount={taskCount} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade}/>}
+      {isMobile&&!showOnboarding&&(v2Phone
+        ? <GameDock page={page} setPage={setPage} data={data} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade} onAccount={function(){ setAccountOpen(true); }}/>
+        : <BottomNav page={page} setPage={setPage} taskCount={taskCount} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade}/>)}
       {isMobile&&accountOpen&&<AccountSheet page={page} setPage={setPage} isAdmin={isAdmin} title={spaceTitle(data)} plan={planText} onUpgrade={openUpgrade} onClose={()=>setAccountOpen(false)} onOpenSettings={()=>{setAccountOpen(false);setSettingsOpen(true);}}/>}
       {showFeedbackPrompt && <FeedbackPrompt onOpen={() => { setShowFeedbackPrompt(false); setPage("feedback"); }} onDismiss={() => { setShowFeedbackPrompt(false); try { markFeedbackDismissed(); } catch(e) { console.warn("Could not save feedback dismissal state:", e); } }}/>}
       <BadgeCelebration queue={badgeQueue} onDismiss={dismissBadge}/>

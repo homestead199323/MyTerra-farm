@@ -906,7 +906,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
   const [openSec,setOpenSec]=useState({});
   const [showAll,setShowAll]=useState({});
   const [initial,setInitial]=useState({});
-  useEffect(()=>{if(pageData?.crop||pageData?.zone){setInitial(pageData);setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]);
+  useEffect(()=>{if(pageData?.crop||pageData?.zone||pageData?.add){setInitial(pageData.add?{}:pageData);setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]);
   const sp=data.garden.plots.find(p=>p.id===selP);
   // Pre-computed values to avoid IIFEs in JSX (IIFEs crash the app)
   const _active=data.garden.plots.filter(function(p){return p.status!=="harvested";});

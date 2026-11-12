@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Trash2, Minus, Plus, ShoppingBasket, Utensils, PackagePlus, ChevronDown } from "lucide-react";
 import { todayLocalKey } from "../../lib/utils";
 import { rCM } from "../../lib/regional";
@@ -59,7 +59,7 @@ function Segmented({ value, onChange, options, label }) {
 /* ═══════════════════════════════════════════
    PANTRY — the farm's inventory, tied to Financials
    ═══════════════════════════════════════════ */
-export default function Pantry({ data, setData }) {
+export default function Pantry({ data, setData, pageData, clearPageData }) {
   const E = currencySymbol(data).trim();
   const money = (n) => formatMoney(n, data);
   const today = todayLocalKey();
@@ -67,6 +67,7 @@ export default function Pantry({ data, setData }) {
   const [sell, setSell] = useState(null);
   const [use, setUse] = useState(null);
   const [add, setAdd] = useState(null);
+  useEffect(() => { if (pageData?.add) { setAdd({ name: "", category: "Fresh Produce", qty: "", unit: "kg", cost: "" }); clearPageData?.(); } }, [pageData, clearPageData]); // the + menu on the home map
   const [showMoves, setShowMoves] = useState(false);
   const cropMap = rCM(data.region);
   const lines = useMemo(() => stockLines(data.pantry?.items), [data.pantry?.items]);

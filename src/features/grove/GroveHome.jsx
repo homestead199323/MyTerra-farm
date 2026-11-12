@@ -28,7 +28,7 @@ function rowNote(t) {
 }
 
 /** Shopping list from onboarding: ticked off here, gone once everything is bought. */
-function StarterKit({data,setData}) {
+export function StarterKit({data,setData}) {
   const kit = data.starterKit;
   if (!kit || kit.dismissed || !Array.isArray(kit.items) || kit.items.length === 0) return null;
   const done = kit.items.filter(i => i.done).length, all = done === kit.items.length;
