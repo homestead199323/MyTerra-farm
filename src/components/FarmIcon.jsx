@@ -14,6 +14,7 @@ import AnimalArt from "../features/quiet/AnimalArt";
 import {CROP_MAP} from "../data/crops";
 import {LDB} from "../data/livestock";
 import {TOY} from "../features/grove/palette";
+import { PRODUCE_SVG } from "./farm-icons-produce";
 
 // leaf greens from the shared map palette, so produce icons sit with the 3D-rendered crop icons
 const LEAF = TOY.leaf[1];
@@ -323,6 +324,7 @@ export const FARM_SVG = {
   Rhubarb, Lavender, Raspberry, Blackberry, Walnut, Almond,
   Artichoke, Asparagus,
   Quail, "Guinea Fowl": GuineaFowl,
+  ...PRODUCE_SVG, // part 2: one picture per crop (farm-icons-produce.jsx)
 };
 
 // eslint-disable-next-line react-refresh/only-export-components -- see FARM_SVG note
@@ -336,7 +338,7 @@ export function hasFarmIcon(name) {
    in text rows like an emoji would. */
 export default function FarmIcon({ name, emoji, size = 20, style, harvest = false }) {
   if(LDB[name])return <span aria-hidden="true" style={{display:'inline-flex',verticalAlign:'middle',...style}}><AnimalArt species={name} size={size}/></span>;
-  if(!harvest&&CROP_MAP.has(name))return <span aria-hidden="true" style={{display:'inline-flex',verticalAlign:'middle',...style}}><PlantArt crop={name} stage={4} size={size}/></span>;
+  if(!harvest&&CROP_MAP.has(name)&&!CROP_MAP.get(name).tray)return <span aria-hidden="true" style={{display:'inline-flex',verticalAlign:'middle',...style}}><PlantArt crop={name} stage={4} size={size}/></span>;
   const Ic = name ? FARM_SVG[name] : null;
   if (Ic) {
     return (

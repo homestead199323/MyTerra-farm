@@ -1028,3 +1028,16 @@
   Known gaps: job pins sit over small beds at whole-farm zoom, so a crop there needs a zoom-in before it can
   be clicked; pieces may overlap each other (the old designer allows it too); no corner-drag resize; Learn
   guides and the Plan calendar are still single-column; a garden may still add any animal (cows included).
+
+- [x] **One drawn icon per crop (2026-11-12, owner: "create different icons for each plant, this looks very
+  unprofessional").** In lists (Plan calendar, crop picker, pantry, suggestions) 52 of the 75 crops fell back
+  to a device emoji: ten herbs were all 🌿, five leaf crops all 🥬, the three windowsill trays all 🌱, pumpkin
+  was a carved 🎃, and every emoji looked different from one phone to the next. Now every crop has its own
+  flat SVG icon in the existing FarmIcon style (`src/components/farm-icons-produce.jsx`, 52 new, merged into
+  `FARM_SVG`); no crop uses an emoji any more. The windowsill trays (no 3D model of their own) use their drawn
+  icon in the non-harvest spots too. Test `tests/crop-icons.test.js`: every crop has an icon and no two share
+  one. Verified: 267 + 3 tests, ESLint, build; all 75 rendered on a sheet at 64 px and 30 px; the Plan
+  calendar on a 390 px phone. NOT verified on a real device.
+  Still shared (the 3D-rendered plant pictures used where a growth stage is shown, e.g. Crops rows): potato /
+  sweet potato, onion / garlic, bean / pea, turnip / celeriac, dill / fennel, lentil / chickpea. Each pair
+  uses one 3D model; separating them means six new models and a re-render.

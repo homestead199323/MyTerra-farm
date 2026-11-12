@@ -23,6 +23,7 @@ import './home-model.test.js';
 import './setup-model.test.js';
 import './build-model.test.js';
 import './fits-space.test.js';
+import './crop-icons.test.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {companionsFor,relation,growthOf,validatePlantingLayout,bedLength,bedRows,animalZone,freePlantingRows} from '../src/features/quiet/farm-model.js';
