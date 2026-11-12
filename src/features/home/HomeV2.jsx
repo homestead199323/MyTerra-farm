@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Sun, Flame, ListChecks, ChevronRight, ArrowRight, Check, Sprout } from "lucide-react";
+import { Sun, Flame, ListChecks, ChevronRight, ChevronUp, ArrowRight, Check, Sprout } from "lucide-react";
 import { fetchWeather } from "../../lib/weather";
 import { todayLocalKey } from "../../lib/utils";
 import { Overlay } from "../../components/ui";
@@ -21,7 +21,8 @@ import "./home-v2.css";
    The 3D map is the screen; three controls float on it: weather + streak, the jobs chip, and the
    dock (GameDock, rendered by App). Area markers and their job popup come from GroveScene. */
 
-const DAY_KEY = "mt_day", DONE_KEY = "mt_day_done";
+const DAY_KEY = "mt_day", DONE_KEY = "mt_day_done", OPEN_KEY = "mt_jobs_open";
+const PANEL_W = 384; // the docked jobs list on a wide screen: the map keeps its farm clear of it
 function stored(key, json) {
   try {
     const raw = localStorage.getItem(key);
@@ -53,9 +54,13 @@ function Bar({ done, total }) {
   return <span className="hv2-bar" aria-hidden="true"><i style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} /></span>;
 }
 
-export default function HomeV2({ data, setData, setPage, tasks, forecast, forecastState, alerts, demo, onDemoSignup }) {
+export default function HomeV2({ data, setData, setPage, tasks, forecast, forecastState, alerts, demo, onDemoSignup, wide = false }) {
   const [walk, setWalk] = useState(false), [weather, setWeather] = useState(null), [taskZone, setTaskZone] = useState(null);
-  const [panel, setPanel] = useState(false), [week, setWeek] = useState(false);
+  // Phone: the jobs list is a card over the map, closed until the chip is tapped. Wide screen: it floats
+  // beside the map, open unless it was collapsed on this device.
+  const [open, setOpen] = useState(() => stored(OPEN_KEY) !== "0"), [modal, setModal] = useState(false), [week, setWeek] = useState(false);
+  const panel = wide ? open : modal;
+  const setPanel = (on) => { if (wide) { setOpen(on); store(OPEN_KEY, on ? "1" : "0"); } else setModal(on); };
   useEffect(() => {
     let active = true;
     setWeather(null);
@@ -75,7 +80,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   const progress = jobsProgress(day && day.day === today ? day : null, due.length);
 
   const [shown, setShown] = useState(() => stored(DONE_KEY));
-  const celebrate = showDayDone(progress, shown, today) && !taskZone && !walk && !panel;
+  const celebrate = showDayDone(progress, shown, today) && !taskZone && !walk && !modal;
   const dismissDone = () => { setShown(today); store(DONE_KEY, today); };
 
   const firstBed = (data.zones || []).find((z) => isPlantZone(z.type));
@@ -83,22 +88,52 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   const streak = data.gamify?.streak || 0;
 
   useEffect(() => {
-    if (!panel) return undefined;
-    const key = (e) => { if (e.key === "Escape") setPanel(false); };
+    if (!modal) return undefined;
+    const key = (e) => { if (e.key === "Escape") setModal(false); };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [panel]);
+  }, [modal]);
 
   function openJob(task) {
     const zone = Object.keys(markers).find((id) => markers[id].some((x) => x.key === task.key));
-    setPanel(false);
+    setModal(false);
     if (zone) setTaskZone(zone);
     else setPage("tasks");
   }
 
+  const jobsList = (
+    <section className={`hv2-panel${wide ? " is-docked" : ""}`} role={wide ? "region" : "dialog"} aria-modal={wide ? undefined : "true"} aria-label="Today's jobs">
+      <header className="hv2-panel-head">
+        <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
+        <h2>Today’s jobs</h2>
+        <b>{progress.done}/{progress.total}</b>
+        {!wide && due.length > 0 && <button type="button" className="hv2-walk" onClick={() => { setModal(false); setWalk(true); }}>{data.walkSession?.status === "active" ? "Resume walk" : "Start walk"}</button>}
+        {wide && <button type="button" className="hv2-collapse" aria-label="Hide today's jobs" onClick={() => setPanel(false)}><ChevronUp size={20} /></button>}
+      </header>
+      <div className="hv2-panel-list">
+        {due.length === 0
+          ? <p className="hv2-none">{fresh ? "Nothing planted yet" : "Nothing due"}</p>
+          : due.map(function (t) {
+              return (
+                <button type="button" key={t.key} className="hv2-row" onClick={function () { openJob(t); }}>
+                  <span className="hv2-art"><JobArt task={t} data={data} /></span>
+                  <span className="hv2-row-text"><strong>{t.title}</strong><small>{rowNote(t)}</small></span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </button>
+              );
+            })}
+        <StarterKit data={data} setData={setData} />
+        <RemindersPrompt />
+      </div>
+      <footer className="hv2-panel-foot">
+        <button type="button" onClick={() => { setModal(false); setPage("tasks"); }}>All tasks <ArrowRight size={15} /></button>
+      </footer>
+    </section>
+  );
+
   return (
     <div className="hv2">
-      <GroveScene home data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
+      <GroveScene home homeRight={wide && open ? PANEL_W : 0} data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
         showEditButton={false} showHelperText={false} noBorder onPlantInZone={(zone) => setPage("crops", { zone })} onShowCrops={() => setPage("crops")}
         onEditLayout={() => setPage("map", { edit: true })} onStartGuide={() => setData({ ...data, setupDone: false })} />
 
@@ -110,10 +145,10 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
           <Flame size={18} strokeWidth={2.2} className="hv2-flame" />
           <b>{streak}</b>
         </button>
-        <button type="button" className="hv2-chip" aria-haspopup="dialog" aria-expanded={panel} aria-label={`Today's jobs: ${progress.done} of ${progress.total} done`} onClick={() => setPanel(true)}>
+        {!(wide && open) && <button type="button" className="hv2-chip" aria-haspopup="dialog" aria-expanded={panel} aria-label={`Today's jobs: ${progress.done} of ${progress.total} done`} onClick={() => setPanel(true)}>
           <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
           <span className="hv2-chip-text"><b>{progress.done}/{progress.total}</b><Bar done={progress.done} total={progress.total} /></span>
-        </button>
+        </button>}
       </div>
 
       {demo && onDemoSignup && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Keep it free <ArrowRight size={14} /></button>}
@@ -122,37 +157,11 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         <button type="button" className="hv2-first" onClick={() => setPage("crops", { zone: firstBed.id })}><Sprout size={18} />Plant your first crop<ArrowRight size={16} /></button>
       )}
 
-      {panel && createPortal(
-        <div className="hv2-scrim" onClick={function (e) { if (e.target === e.currentTarget) setPanel(false); }}>
-          <section className="hv2-panel" role="dialog" aria-modal="true" aria-label="Today's jobs">
-            <header className="hv2-panel-head">
-              <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
-              <h2>Today’s jobs</h2>
-              <b>{progress.done}/{progress.total}</b>
-              {due.length > 0 && <button type="button" className="hv2-walk" onClick={() => { setPanel(false); setWalk(true); }}>{data.walkSession?.status === "active" ? "Resume walk" : "Start walk"}</button>}
-            </header>
-            <div className="hv2-panel-list">
-              {due.length === 0
-                ? <p className="hv2-none">{fresh ? "Nothing planted yet" : "Nothing due"}</p>
-                : due.map(function (t) {
-                    return (
-                      <button type="button" key={t.key} className="hv2-row" onClick={function () { openJob(t); }}>
-                        <span className="hv2-art"><JobArt task={t} data={data} /></span>
-                        <span className="hv2-row-text"><strong>{t.title}</strong><small>{rowNote(t)}</small></span>
-                        <ChevronRight size={17} aria-hidden="true" />
-                      </button>
-                    );
-                  })}
-              <StarterKit data={data} setData={setData} />
-              <RemindersPrompt />
-            </div>
-            <footer className="hv2-panel-foot">
-              <button type="button" onClick={() => { setPanel(false); setPage("tasks"); }}>All tasks <ArrowRight size={15} /></button>
-            </footer>
-          </section>
-        </div>,
+      {panel && !wide && createPortal(
+        <div className="hv2-scrim" onClick={function (e) { if (e.target === e.currentTarget) setModal(false); }}>{jobsList}</div>,
         document.body,
       )}
+      {panel && wide && jobsList}
 
       {week && (
         <Overlay title="This week" onClose={() => setWeek(false)}>

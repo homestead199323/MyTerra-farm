@@ -1908,7 +1908,7 @@ class FarmControls {
     // its length from outside the building; a back garden is framed on the garden and its patio, with the
     // house behind cropped by the top of the frame. `bars` (px) keeps the space clear of the phone's
     // full-screen controls.
-    const bars = this.bars, inset = bars ? { top: bars.top / this.size.h, bottom: bars.bottom / this.size.h } : undefined;
+    const bars = this.bars, inset = bars ? { top: bars.top / this.size.h, bottom: bars.bottom / this.size.h, right: (bars.right || 0) / this.size.w } : undefined;
     const v = homeView({ env: this.env, fW, fH, margin, aspect: this.size.w / this.size.h, fov: CAM.fov, az: CAM.az, el: CAM.el, patio: GARDEN_PATIO, inset });
     const t = new THREE.Vector3(v.target.x, 0, v.target.z), theta = v.theta, phi = v.phi, dist = v.dist;
     this.homeTurn = v.turn; this.homeFrac = v.frac; // share of the viewport height the space's own ground spans at the home view (harness check)
@@ -1923,7 +1923,7 @@ class FarmControls {
 
 /* ---------- component ---------- */
 export default function Grove3D(props) {
-  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, guideZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null, home = false } = props; // home: the map IS the home screen (always full size, under the app's overlays, no exit)
+  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, guideZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null, home = false, homeRight = 0 } = props; // home: the map IS the home screen (always full size, under the app's overlays, no exit)
   const liveSky = data.mapStyle?.liveSky !== "off", lat = typeof data.cityGeo?.lat === "number" ? data.cityGeo.lat : null, lng = typeof data.cityGeo?.lng === "number" ? data.cityGeo.lng : null; // "Live sky" setting; the town's geocode drives the sun
   const host = useRef(null), labels = useRef(null), tipRef = useRef(null), state = useRef(null), latest = useRef(props), fullRef = useRef(false);
   const [full, setFull] = useState(() => home || HARNESS?.full === true);
@@ -2394,7 +2394,7 @@ export default function Grove3D(props) {
     fullRef.current = full; const st = state.current, el = host.current, isPreview = mobile && !full;
     setFocusId("");
     st?.controls?.setCooperative(!full);
-    if (st?.controls) st.controls.bars = full && (mobile || home) ? { top: 92, bottom: 108 } : null; // the area chip + close button, and the control bar
+    if (st?.controls) st.controls.bars = full && (mobile || home) ? { top: 92, bottom: 108, right: home ? homeRight : 0 } : null; // the area chip + close button, and the control bar
     st?.controls?.setEnabled(!isPreview); // the preview tile takes no gestures: one tap opens full screen
     // Open on `click`, not `pointerup`: the browser fires click after pointerup, and if full screen were already
     // open by then the click would land on whatever full-screen control sits under the finger (Exit, the X).
@@ -2411,7 +2411,7 @@ export default function Grove3D(props) {
     window.addEventListener("keydown", key);
     if (st) { st.size(); st.reset(!isPreview); } // back to the tile: the whole farm, no animation
     return () => { window.removeEventListener("keydown", key); if (el) { el.removeEventListener("pointerdown", down); el.removeEventListener("pointercancel", cancel); el.removeEventListener("click", click); } if (full) { document.body.style.overflow = prev === "hidden" ? "" : prev; document.body.classList.remove("g3-full-open"); } };
-  }, [full, mobile, home]);
+  }, [full, mobile, home, homeRight]);
   useEffect(() => { if (!hint) return; const t = setTimeout(() => latest.current.dismissHint?.(), 6000); return () => clearTimeout(t); }, [hint]);
   const wholeName = env === "farm" ? "Whole farm" : env === "balcony" ? "Whole balcony" : "Whole garden";
   const areaName = zones.find((zone) => String(zone.id) === focusId)?.name || wholeName;

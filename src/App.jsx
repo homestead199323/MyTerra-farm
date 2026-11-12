@@ -423,10 +423,10 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   }, []);
 
   const isMobile = viewW < 768;
-  // Map-first home (spec 2026-11-12): a device switch while it is tried out. Phones first.
+  // Map-first home (spec 2026-11-12): a device switch while it is tried out. Phone and desktop.
   const homeV2 = useHomeV2();
-  const v2Phone = homeV2 && isMobile;
-  useEffect(() => { document.body.classList.toggle("mt-home-v2", v2Phone); return () => document.body.classList.remove("mt-home-v2"); }, [v2Phone]);
+  const noSide = isMobile || homeV2; // the new home has a dock on every screen size, so no sidebar
+  useEffect(() => { document.body.classList.toggle("mt-home-v2", homeV2); return () => document.body.classList.remove("mt-home-v2"); }, [homeV2]);
   const isTablet = viewW >= 768 && viewW < 1024;
 
   // Flush pending save on tab close / navigate away
@@ -640,8 +640,8 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   }
 
   const currentSection = sectionOf(page);
-  // The map is the whole screen on the new phone home (an empty space still gets the old page with its set-up prompt).
-  const mapHome = v2Phone && page === "home" && (data.zones || []).length > 0;
+  // The map is the whole screen on the new home (an empty space still gets the old page with its set-up prompt).
+  const mapHome = homeV2 && page === "home" && (data.zones || []).length > 0;
 
   const pg = () => {
     switch(page) {
@@ -658,7 +658,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       case "feedback": return <FeedbackSurvey setPage={setPage}/>;
       case "admin": return <AdminDashboard/>;
       default: return mapHome
-        ? <HomeV2 data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts} demo={demo} onDemoSignup={openUpgrade}/>
+        ? <HomeV2 wide={!isMobile} data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts} demo={demo} onDemoSignup={openUpgrade}/>
         : <GroveHome data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts}/>;
     }
   };
@@ -667,7 +667,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
     <>
       {/* Fonts loaded via system fallback for offline use */}
       <div className="mt-shell" style={{display:"flex",fontFamily:F.body,background:C.bg,color:C.text,overflow:"hidden",letterSpacing:"0.005em"}}>
-        <nav style={{width:isMobile?0:isTablet?64:220,minWidth:isMobile?0:isTablet?64:220,background:C.card,borderRight:isMobile?"none":`1px solid ${C.bdr}`,display:isMobile?"none":"flex",flexDirection:"column",padding:"0",overflow:"hidden",position:"relative",transition:"width .3s cubic-bezier(.25,.46,.45,.94)"}}>
+        <nav style={{width:noSide?0:isTablet?64:220,minWidth:noSide?0:isTablet?64:220,background:C.card,borderRight:noSide?"none":`1px solid ${C.bdr}`,display:noSide?"none":"flex",flexDirection:"column",padding:"0",overflow:"hidden",position:"relative",transition:"width .3s cubic-bezier(.25,.46,.45,.94)"}}>
           {/* Premium brand header */}
           <div style={{padding:isTablet?"16px 0":"24px 20px 20px",marginBottom:4,background:C.grdHero,borderRadius:isTablet?"0":"0 0 20px 0",display:"flex",flexDirection:"column",alignItems:isTablet?"center":"flex-start"}}>
             <div style={{fontSize:isTablet?22:21,fontFamily:F.head,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",display:"flex",alignItems:"center",gap:6}}><Leaf size={isTablet?22:20} strokeWidth={2}/>{!isTablet&&" MyTerra"}</div>
@@ -710,18 +710,18 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
             <Settings size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Settings</span>}
           </button>
         </nav>
-        <main style={{flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":isTablet?"24px":"32px 36px",background:C.bg}}>
+        <main style={{flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":homeV2?(isTablet?"24px 24px 104px":"32px 36px 104px"):isTablet?"24px":"32px 36px",background:C.bg}}>
           {/* Nothing renders under the first-run setup: the 3D map would otherwise
               animate behind it and drain a phone's battery for no one. */}
-          {!showOnboarding && !mapHome && viewW < 1024 && <SectionBar page={page} setPage={setPage} onAccount={isMobile ? () => setAccountOpen(true) : null}/>}
+          {!showOnboarding && !mapHome && (viewW < 1024 || homeV2) && <SectionBar page={page} setPage={setPage} onAccount={noSide ? () => setAccountOpen(true) : null}/>}
           {!showOnboarding && !mapHome && (demo ? <DemoBanner onSignup={openUpgrade} onSignin={onDemoSignin}/> : <TrialBanner ent={ent} onUpgrade={openUpgrade}/>)}
           {!showOnboarding && pg()}
         </main>
       </div>
-      {isMobile&&!showOnboarding&&(v2Phone
-        ? <GameDock page={page} setPage={setPage} data={data} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade} onAccount={function(){ setAccountOpen(true); }}/>
+      {noSide&&!showOnboarding&&(homeV2
+        ? <GameDock wide={!isMobile} page={page} setPage={setPage} data={data} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade} onAccount={function(){ setAccountOpen(true); }}/>
         : <BottomNav page={page} setPage={setPage} taskCount={taskCount} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade}/>)}
-      {isMobile&&accountOpen&&<AccountSheet page={page} setPage={setPage} isAdmin={isAdmin} title={spaceTitle(data)} plan={planText} onUpgrade={openUpgrade} onClose={()=>setAccountOpen(false)} onOpenSettings={()=>{setAccountOpen(false);setSettingsOpen(true);}}/>}
+      {noSide&&accountOpen&&<AccountSheet page={page} setPage={setPage} isAdmin={isAdmin} title={spaceTitle(data)} plan={planText} onUpgrade={openUpgrade} onClose={()=>setAccountOpen(false)} onOpenSettings={()=>{setAccountOpen(false);setSettingsOpen(true);}}/>}
       {showFeedbackPrompt && <FeedbackPrompt onOpen={() => { setShowFeedbackPrompt(false); setPage("feedback"); }} onDismiss={() => { setShowFeedbackPrompt(false); try { markFeedbackDismissed(); } catch(e) { console.warn("Could not save feedback dismissal state:", e); } }}/>}
       <BadgeCelebration queue={badgeQueue} onDismiss={dismissBadge}/>
       {!showOnboarding && (aiAllowed

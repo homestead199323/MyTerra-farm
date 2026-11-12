@@ -9,8 +9,9 @@ import { isPlantZone } from "../farm/living/visuals";
 import { fanTarget } from "./home-model";
 import "./home-v2.css";
 
-/* The phone's floating dock for the map-first home: Farm · Calendar · + · Ask · More.
-   + fans five round buttons out of itself (no sheet); More lists every other page. */
+/* The floating dock of the map-first home. Phone: Farm · Calendar · + · Ask · More.
+   Wider screens add Learn and Progress. + fans five round buttons out of itself (no sheet);
+   More lists every other page. */
 
 const FAN = [
   { id: "plant", l: "Plant", a: "Plant a crop", E: Sprout },
@@ -29,9 +30,8 @@ const MORE = [
   { page: "fin", l: "Money", s: "Costs and income", E: Wallet },
   { page: "insights", l: "Insights", s: "Yields and cost per kilo", E: Lightbulb },
 ];
-const TOP = ["home", "plan"];
 
-export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccount }) {
+export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccount, wide = false }) {
   const [fan, setFan] = useState(false), [more, setMore] = useState(false);
   useEffect(() => {
     if (!fan) return undefined;
@@ -41,13 +41,17 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
   }, [fan]);
   const canPlant = (data.zones || []).some((z) => isPlantZone(z.type));
   const go = (p, pd) => { setFan(false); setMore(false); setPage(p, pd); };
-  const inMore = !TOP.includes(page);
+  const top = wide ? ["home", "plan", "manuals", "progress"] : ["home", "plan"];
+  const rows = MORE.filter((r) => !top.includes(r.page));
+  const inMore = !top.includes(page);
   return (
     <>
-      <nav aria-label="Main navigation" className="hv2-dock">
+      <nav aria-label="Main navigation" className={`hv2-dock${wide ? " is-wide" : ""}`}>
         <button type="button" aria-current={page === "home" && !more ? "page" : undefined} onClick={() => go("home")}><Tractor size={22} strokeWidth={1.9} /><span>Farm</span></button>
-        <button type="button" aria-current={page === "plan" && !more ? "page" : undefined} onClick={() => go("plan")}><CalendarDays size={22} strokeWidth={1.9} /><span>Calendar</span></button>
+        <button type="button" aria-current={page === "plan" && !more ? "page" : undefined} onClick={() => go("plan")}><CalendarDays size={22} strokeWidth={1.9} /><span>{wide ? "Plan" : "Calendar"}</span></button>
+        {wide && <button type="button" aria-current={page === "manuals" && !more ? "page" : undefined} onClick={() => go("manuals")}><BookOpen size={22} strokeWidth={1.9} /><span>Learn</span></button>}
         <span className="hv2-dock-gap" aria-hidden="true" />
+        {wide && <button type="button" aria-current={page === "progress" && !more ? "page" : undefined} onClick={() => go("progress")}><TrendingUp size={22} strokeWidth={1.9} /><span>Progress</span></button>}
         <button type="button" onClick={() => { setFan(false); setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.9} /><span>Ask</span></button>
         <button type="button" aria-expanded={more} aria-current={more || inMore ? "page" : undefined} onClick={() => { setFan(false); setMore(!more); }}><Menu size={22} strokeWidth={1.9} /><span>More</span></button>
       </nav>
@@ -71,7 +75,7 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
       {more && (
         <Overlay title="More" onClose={() => setMore(false)}>
           <div className="mt-more">
-            {MORE.map(function (r) {
+            {rows.map(function (r) {
               return <button key={r.page} type="button" aria-current={page === r.page ? "page" : undefined} onClick={function () { go(r.page); }}><r.E size={22} strokeWidth={1.8} /><span><strong>{r.l}</strong><small>{r.s}</small></span><ChevronRight size={18} /></button>;
             })}
             <button type="button" onClick={() => { setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.8} /><span><strong>Ask the assistant</strong><small>{aiLocked ? "Part of Pro" : "Answers about your crops and animals"}</small></span><ChevronRight size={18} /></button>

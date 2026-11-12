@@ -88,6 +88,16 @@ body.g3-full-open .hv2-plus{display:none}
 .hv2-panel-foot button{width:100%;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:none;color:var(--hv2-green);font:700 14px/1 Inter,-apple-system,sans-serif;cursor:pointer}
 .hv2-week .mt-wx{margin:0;border:0;padding:0}
 
+/* wide screens: the list floats beside the map (no scrim), the dock gains Learn and Progress */
+.hv2-panel.is-docked{position:fixed;z-index:30;top:12px;right:12px;width:360px;max-height:calc(100% - 132px);animation-duration:.26s}
+.hv2-collapse{width:40px;height:40px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:20px;background:transparent;color:var(--hv2-ink2);cursor:pointer}
+.hv2-collapse:hover{background:var(--surface-soft,#eff3f0)}
+.hv2-dock.is-wide{left:calc(50% - 310px);right:calc(50% - 310px);height:68px}
+.hv2-dock.is-wide button{height:56px;font-size:12px}
+.hv2-dock.is-wide .hv2-dock-gap{flex-basis:84px}
+.hv2-dock button:hover{color:var(--hv2-ink)}
+body.mt-home-v2 .mt-fab{display:none!important} /* the assistant is the dock's Ask */
+
 /* ── day done ── */
 .hv2-done-scrim{position:fixed;inset:0;z-index:7300;display:grid;place-items:center;background:rgba(16,24,18,.45);animation:hv2-fade .2s ease both}
 .hv2-done{position:relative;width:min(300px,calc(100% - 48px));box-sizing:border-box;padding:28px 24px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;border-radius:28px;background:var(--color-card,#fff);color:var(--hv2-ink);box-shadow:0 20px 44px rgba(16,24,18,.45);text-align:center;animation:hv2-fan .4s cubic-bezier(.2,.8,.3,1) both}
