@@ -68,59 +68,101 @@
     }
   }
 
-  // ── Tour video: vertical on portrait screens, loaded only when it's near, plays while in view ──
-  var frame = document.getElementById("tourFrame");
-  var tour = document.getElementById("tourVideo");
-  var toggle = document.getElementById("tourToggle");
-  var tourBtn = document.getElementById("tourBtn");
-  var userPaused = reduceMotion, loadedFor = null;
-  function sync() {
-    if (!frame || !tour || !toggle) return;
-    frame.classList.toggle("paused", tour.paused);
-    toggle.setAttribute("aria-label", tour.paused ? "Play the tour video" : "Pause the tour video");
-  }
-  // The poster is set here, not in the HTML, so a phone downloads only the vertical one.
-  function setPoster(v) {
-    var src = tour.getAttribute(v === "v" ? "data-poster-v" : "data-poster-h");
-    if (src && tour.getAttribute("poster") !== src) tour.setAttribute("poster", src);
-  }
-  function load() {
-    var v = portrait.matches ? "v" : "h";
-    if (loadedFor === v) return;
-    loadedFor = v;
-    setPoster(v);
-    setSources(tour, v);
-  }
-  function play() { load(); var p = tour.play(); if (p && p.catch) p.catch(function () { sync(); }); }
-  if (tour) {
-    tour.muted = true;
-    tour.addEventListener("play", sync);
-    tour.addEventListener("pause", sync);
-    // show the right poster before anything loads
-    setPoster(portrait.matches ? "v" : "h");
-    sync();
-    if (toggle) toggle.addEventListener("click", function () {
-      if (tour.paused) { userPaused = false; play(); } else { userPaused = true; tour.pause(); }
+  // ── Demo videos: one portrait film per space. Each loads only when its tab is showing and near the
+  //    screen, plays while in view, and marks the chapter it is on. ──
+  var players = Array.prototype.slice.call(document.querySelectorAll(".demo-player"));
+  var demoPaused = reduceMotion || saveData; // one choice for all three: pausing one keeps the others still
+  function setupPlayer(box) {
+    var video = box.querySelector("video");
+    var toggle = box.querySelector(".demo-toggle");
+    var panel = box.parentNode.parentNode;
+    var chaps = Array.prototype.slice.call(panel.querySelectorAll(".chap"));
+    var times = chaps.map(function (c) { return parseFloat(c.getAttribute("data-t")) || 0; });
+    var loaded = false, inView = false, current = 0, pendingSeek = null;
+    if (!video) return null;
+    video.muted = true;
+    function sync() {
+      box.classList.toggle("paused", video.paused);
+      if (toggle) toggle.setAttribute("aria-label", (video.paused ? "Play the " : "Pause the ") + toggle.getAttribute("data-label") + " demo");
+    }
+    function poster() {
+      var src = video.getAttribute("data-poster");
+      if (src && video.getAttribute("poster") !== src) video.setAttribute("poster", src);
+    }
+    function load() {
+      poster();
+      if (loaded) return;
+      loaded = true;
+      [["data-mp4", "video/mp4"], ["data-webm", "video/webm"]].forEach(function (s) {
+        var src = video.getAttribute(s[0]);
+        if (!src) return;
+        var el = document.createElement("source");
+        el.src = src; el.type = s[1];
+        video.appendChild(el);
+      });
+      video.load();
+    }
+    function play() { load(); var p = video.play(); if (p && p.catch) p.catch(function () { sync(); }); }
+    function mark(i) {
+      if (i === current) return;
+      current = i;
+      chaps.forEach(function (c, k) { if (k === i) c.setAttribute("aria-current", "true"); else c.removeAttribute("aria-current"); });
+    }
+    function seek(t) {
+      if (video.readyState >= 1) { try { video.currentTime = t; } catch (e) { /* not seekable yet */ } }
+      else pendingSeek = t;
+    }
+    video.addEventListener("loadedmetadata", function () { if (pendingSeek != null) { try { video.currentTime = pendingSeek; } catch (e) { /* ignore */ } pendingSeek = null; } });
+    video.addEventListener("play", sync);
+    video.addEventListener("pause", sync);
+    video.addEventListener("timeupdate", function () {
+      var t = video.currentTime + 0.05, i = 0;
+      for (var k = 0; k < times.length; k++) if (t >= times[k]) i = k;
+      mark(i);
     });
-    if (portrait.addEventListener) portrait.addEventListener("change", function () { var was = !tour.paused; loadedFor = null; setPoster(portrait.matches ? "v" : "h"); if (was) play(); });
+    if (toggle) toggle.addEventListener("click", function () {
+      if (video.paused) { demoPaused = false; play(); } else { demoPaused = true; video.pause(); }
+    });
+    chaps.forEach(function (c, i) {
+      c.addEventListener("click", function () {
+        demoPaused = false; load(); seek(times[i]); mark(i);
+        // on a phone the list sits under the film: bring the film back on screen, where it plays
+        var r = box.getBoundingClientRect(), h = window.innerHeight || document.documentElement.clientHeight;
+        var seen = (Math.min(r.bottom, h) - Math.max(r.top, 0)) / (r.height || 1);
+        if (seen >= 0.5) play(); else box.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      });
+    });
+    sync();
     if (hasIO) {
+      // a hidden tab never intersects, so only the demo on screen is fetched and played
+      // the still picture a little ahead of time, the film itself only when it is about to be seen
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) { if (entry.isIntersecting) poster(); });
+      }, { rootMargin: "700px 0px" }).observe(box);
       new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) { if (entry.isIntersecting) load(); });
-      }, { rootMargin: "600px 0px" }).observe(tour);
+      }, { rootMargin: "200px 0px" }).observe(box);
       new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) { if (!userPaused && tour.paused) play(); }
-          else if (!tour.paused) tour.pause();
+          inView = entry.isIntersecting;
+          if (inView) { if (!demoPaused && video.paused) play(); }
+          else if (!video.paused) video.pause();
         });
-      }, { threshold: 0.45 }).observe(tour);
-    } else { load(); }
+      }, { threshold: 0.45 }).observe(box);
+    } else { poster(); }
+    return {
+      box: box,
+      restart: function () { demoPaused = false; load(); seek(0); mark(0); play(); },
+      stop: function () { if (!video.paused) video.pause(); }
+    };
   }
-  if (tourBtn && tour) tourBtn.addEventListener("click", function () {
-    userPaused = false;
-    load();
-    try { tour.currentTime = 0; } catch (e) { /* not seekable yet */ }
-    play();
-  });
+  var demos = players.map(setupPlayer).filter(Boolean);
+  function activeDemo() {
+    for (var i = 0; i < demos.length; i++) if (demos[i].box.offsetParent !== null) return demos[i];
+    return demos[0] || null;
+  }
+  var demoBtn = document.getElementById("demoBtn");
+  if (demoBtn) demoBtn.addEventListener("click", function () { var d = activeDemo(); if (d) d.restart(); });
 
   // ── In-page links: smooth scroll, close the menu ──
   document.querySelectorAll('a[href^="#"]').forEach(function (link) {
@@ -132,7 +174,7 @@
       event.preventDefault();
       setMenu(false);
       if (href === "#top") window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-      else target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: href === "#tour" ? "center" : "start" });
+      else (href === "#demo" && target.querySelector(".tabs") || target).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
       if (history.replaceState) history.replaceState(null, "", href === "#top" ? location.pathname : href);
     });
   });
@@ -147,6 +189,8 @@
       var panel = document.getElementById(t.getAttribute("aria-controls"));
       if (panel) panel.hidden = !on;
     });
+    // the demo that just went out of sight stops; the new one starts through its own observer
+    demos.forEach(function (d) { if (d.box.offsetParent === null) d.stop(); });
     if (focus) tab.focus();
   }
   tabs.forEach(function (tab, i) {
