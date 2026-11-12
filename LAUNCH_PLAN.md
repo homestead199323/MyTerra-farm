@@ -942,3 +942,26 @@
   Grove3D.jsx); pantry tiles for Honey, Chicken Eggs and Goat Milk have an empty icon (farm, chapter 5).
   Also found: `myterra-sigma.vercel.app` now answers DEPLOYMENT_NOT_FOUND; the Vercel project only has
   myterra.farm and www.myterra.farm attached. Not changed by this work.
+
+- [x] **Website: "Why MyTerra" section (2026-11-12, owner request; commit `bddde99`).** Owner: add a section that
+  explains each feature that makes the app special, what competitors do not have, why a customer would choose
+  us. Competitor re-check the same day: no single feature is exclusive (3D garden views: Plotera, GrowSimply,
+  Fincabout; weather-driven tasks: GrowSimply, EdenVatika, Agrum AI; garden + animals + pantry: Graith; crops +
+  livestock + finance: Fincabout), so the page makes no "only app" claim and names no competitor; it compares
+  by app type. Owner picked: four points, by type, cards with app pictures, old feature block merged in.
+  Section `#why` after the demos, nav link "Why MyTerra", headline "Most apps keep records. MyTerra tells you
+  what to do next." Cards: it tells you what to do today (vs farm apps: a record book); your real space alive
+  in 3D (vs garden planners: a flat grid); weather that knows what you grow (vs a bare forecast); plants,
+  animals, pantry and money together (vs planners without animals, livestock apps without a garden). Every
+  sentence checked against the code (task engine + task-time, growth preview, weather-alerts.js frost / rain
+  rules, pantry Sell to Money). Pictures `why-*.webp` are stills of the real app with demo gardens (frost week
+  mocked). The "More than a to-do list" block is gone, its four trust tiles moved into the new section;
+  `p4-progress.webp` removed. Section classes are `usp-*` because `.why` already styles the FAQ founder box.
+  Verified: 230 + 3 tests, ESLint, build; deployment `dpl_As6fCsk4fUo9QmhyD66B99rxFboV` READY; live HTML
+  byte-identical to the tested build; all 28 `/landing/` files identical to the repo, `p4-progress.webp` 404;
+  CSP, HSTS, X-Frame-Options present; Playwright (Chrome) on the live site at 1440, 1100, 920, 768, 390 and 320
+  px: four pictures load, no sideways overflow, no text under 11.5 px, nav link lands on the section, no failed
+  requests or console errors; the demo-video checks still pass.
+  NOT verified: a real phone, Safari, Firefox. Not done (owner dropped them from the section): the time-budget
+  and "built for beginners, Europe first" points. The comparison line is dated November 2026 and should be
+  re-checked when competitors ship (Seedtime has announced weather alerts; Plotera a paid 3D growth simulator).
