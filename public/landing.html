@@ -238,17 +238,21 @@
         .trio figcaption b { display: block; font-size: 18px; letter-spacing: -0.02em; }
         .trio figcaption span { display: block; margin-top: 4px; font-size: 15px; color: var(--ink-2); }
 
-        /* ═══ FEATURES ═══ */
-        .features { background: var(--paper); }
-        .bento { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-        .card { background: var(--bg); border-radius: var(--r-lg); padding: 26px; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
-        .card .ci { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 23px; background: var(--paper); box-shadow: 0 3px 0 var(--line), var(--sh-1); margin-bottom: 16px; }
-        .card h3 { font-size: 19px; letter-spacing: -0.02em; }
-        .card p { margin-top: 6px; font-size: 15px; color: var(--ink-2); line-height: 1.55; }
-        .card.wide { grid-column: span 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px; align-items: center; padding-bottom: 0; }
-        .card.wide .crop { align-self: end; }
-        .card.wide .crop .phone { width: min(100%, 250px); margin: 0 auto; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-        .card.wide .crop { height: 280px; overflow: hidden; }
+        /* ═══ WHY MYTERRA — four selling points, each with a real screen and what most other apps do instead ═══ */
+        .usp { background: var(--paper); }
+        .usp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .usp-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 210px); gap: 22px; align-items: stretch; background: var(--bg); border-radius: var(--r-lg); padding: 28px 26px 0 28px; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+        .usp-text { padding-bottom: 28px; display: flex; flex-direction: column; }
+        .usp-card h3 { font-size: 22px; letter-spacing: -0.025em; line-height: 1.2; }
+        .usp-card p { margin-top: 10px; font-size: 15.5px; color: var(--ink-2); line-height: 1.55; }
+        .usp-card .usp-vs { margin-top: auto; padding-top: 18px; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+        .usp-vs b { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8a5a12; margin-bottom: 3px; }
+        .usp-vs span { display: block; padding-left: 12px; border-left: 3px solid var(--line); }
+        .usp-shot { align-self: end; height: 300px; overflow: hidden; }
+        .usp-shot .screen { padding: 7px 7px 0; border-radius: 30px 30px 0 0; background: linear-gradient(145deg, #2a312d, #0d1210 60%); box-shadow: var(--sh-2); }
+        .usp-shot img { width: 100%; height: auto; border-radius: 23px 23px 0 0; background: #f4f6f4; }
+        .usp-foot { margin-top: 34px; text-align: center; }
+        .usp-foot p { margin-top: 16px; font-size: 13px; color: var(--ink-2); }
         .band { margin-top: 18px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
         .band .tile { display: flex; gap: 14px; align-items: flex-start; padding: 22px; border-radius: 20px; background: var(--forest); color: #fff; }
         .band .tile svg { width: 26px; height: 26px; color: var(--amber); flex-shrink: 0; margin-top: 2px; }
@@ -325,6 +329,8 @@
 
         /* ═══ RESPONSIVE ═══ */
         @media (max-width: 1080px) {
+            .usp-grid { grid-template-columns: minmax(0, 1fr); }
+            .usp-card { grid-template-columns: minmax(0, 1fr) minmax(0, 230px); }
             .nav-links { gap: 20px; }
             .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); gap: 32px; }
             .chip-1 { left: -60px; }
@@ -345,8 +351,6 @@
             .demo-grid { grid-template-columns: minmax(0, 1fr); gap: 30px; }
             .demo-player { max-width: min(100%, 372px, calc(78svh * 9 / 16)); margin: 0 auto; }
             .demo-copy { max-width: 520px; margin: 0 auto; width: 100%; }
-            .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .card.wide { grid-column: span 2; }
             .faq-grid { grid-template-columns: 1fr; gap: 28px; }
             .faq-grid .sec-head { text-align: center; }
         }
@@ -396,13 +400,15 @@
             .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 40px; }
             .stat { padding: 18px 12px; }
             .stat b { font-size: 34px; }
-            .bento { gap: 12px; }
-            .card { padding: 20px 18px; }
-            .card .ci { width: 40px; height: 40px; font-size: 20px; margin-bottom: 12px; }
-            .card h3 { font-size: 16.5px; }
-            .card p { font-size: 14px; }
-            .card.wide { grid-template-columns: 1fr; gap: 14px; }
-            .card.wide .crop { height: 230px; }
+            .usp-grid { gap: 12px; }
+            .usp-card { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 22px 18px 0; }
+            .usp-text { padding-bottom: 0; }
+            .usp-card h3 { font-size: 19.5px; }
+            .usp-card p { font-size: 15px; }
+            .usp-card .usp-vs { padding-top: 14px; }
+            .usp-shot { height: 250px; }
+            .usp-shot .screen { width: min(100%, 270px); margin: 0 auto; }
+            .usp-foot .btn { width: 100%; }
             .band { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
             .band .tile { flex-direction: column; gap: 10px; padding: 16px; }
             .band .tile b { font-size: 15px; }
@@ -439,6 +445,7 @@
         </a>
         <nav class="nav-links" aria-label="Page sections">
             <a href="#demo">Demos</a>
+            <a href="#why">Why MyTerra</a>
             <a href="#how">How it works</a>
             <a href="#knowhow">Know-how</a>
             <a href="#pricing">Pricing</a>
@@ -454,6 +461,7 @@
     </div>
     <nav class="mobile-menu" id="mobileMenu" aria-label="Menu">
         <a href="#demo">Demos</a>
+        <a href="#why">Why MyTerra</a>
         <a href="#how">How it works</a>
         <a href="#knowhow">Know-how</a>
         <a href="#pricing">Pricing</a>
@@ -593,6 +601,61 @@
     </div>
 </section>
 
+<!-- WHY -->
+<section class="sec usp" id="why" aria-labelledby="whyTitle">
+    <div class="container">
+        <div class="sec-head reveal">
+            <span class="eyebrow">Why MyTerra</span>
+            <h2 id="whyTitle">Most apps keep records. MyTerra tells you what to do next.</h2>
+            <p>Garden planners stop at the plan. Farm apps wait for you to type in what you did. MyTerra runs the whole season with you, from one balcony pot to a small farm.</p>
+        </div>
+        <div class="usp-grid">
+            <article class="usp-card reveal">
+                <div class="usp-text">
+                    <h3>It tells you what to do today</h3>
+                    <p>Your jobs are written for you every morning: what to water, feed, sow and pick, where it is and how many minutes it takes. Add your own jobs next to them.</p>
+                    <p class="usp-vs"><b>Most farm apps</b><span>A record book. You type in every task yourself.</span></p>
+                </div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/why-jobs.webp" width="720" height="997" loading="lazy" decoding="async" alt="Tasks screen of a demo garden: today's harvests of radish, zucchini and parsley, then the daily routine at the chicken coop (feed, water, collect eggs), each with a place and minutes"></div></div>
+            </article>
+            <article class="usp-card reveal">
+                <div class="usp-text">
+                    <h3>Your real space, alive in 3D</h3>
+                    <p>Your balcony, garden or farm drawn at real size. Plants grow on the map as they grow outside, badges show where a job is waiting, and you can look months ahead before you plant.</p>
+                    <p class="usp-vs"><b>Most garden planners</b><span>A flat grid of squares.</span></p>
+                </div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/why-map.webp" width="720" height="997" loading="lazy" decoding="async" alt="Full-screen 3D map of a demo backyard: house, greenhouse, raised beds, herb bed, veg patch, fruit trees and chicken coop, each with a badge counting its waiting jobs"></div></div>
+            </article>
+            <article class="usp-card reveal">
+                <div class="usp-text">
+                    <h3>Weather that knows what you grow</h3>
+                    <p>Frost on Saturday? MyTerra tells you which beds to cover and what to pick first, and holds back tender sowing. Rain today? Watering comes off your list.</p>
+                    <p class="usp-vs"><b>Most apps</b><span>A forecast. You work out the rest.</span></p>
+                </div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/why-frost.webp" width="720" height="997" loading="lazy" decoding="async" alt="Today screen in a frosty week: frost early Saturday at minus 1 and Sunday at 0 degrees, a job to protect 5 crops in the veg patch and herb bed, and a job to pick basil before the frost"></div></div>
+            </article>
+            <article class="usp-card reveal">
+                <div class="usp-text">
+                    <h3>Plants, animals, pantry and money together</h3>
+                    <p>Collect the eggs and they land in your pantry. Sell a dozen and it is logged under Money. Vegetables, fruit trees, hens, goats and bees, all in one place.</p>
+                    <p class="usp-vs"><b>Most other apps</b><span>Garden planners skip the animals. Livestock apps skip the garden.</span></p>
+                </div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/why-all.webp" width="720" height="997" loading="lazy" decoding="async" alt="Animals screen of a demo farm: a goat paddock with three goats and a Milk button, a hen house with a laying flock of eight and a Collect Eggs button, and beehives"></div></div>
+            </article>
+        </div>
+        <div class="band">
+            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 14 0M2 8.8a15 15 0 0 1 20 0"/></svg><div><b>Offline-first</b><span>Jobs, guides and your map work with no signal.</span></div></div>
+            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><path d="m8 17 4-4 4 4M12 13v8"/></svg><div><b>Backed up and synced</b><span>Phone, tablet and laptop stay in step.</span></div></div>
+            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><div><b>Yours to keep</b><span>Export your whole farm as a file any time.</span></div></div>
+            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div><b>Private by default</b><span>No ads, no selling data. Your town is only used for weather.</span></div></div>
+        </div>
+        <div class="usp-foot reveal">
+            <a href="/app" class="btn btn-amber" data-umami-event="cta-why">Try it now — no sign-up <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <p>Compared with widely used garden planners and farm record apps, November 2026. Real app screens, demo gardens.</p>
+        </div>
+    </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section class="sec" id="how" aria-labelledby="howTitle">
     <div class="container">
@@ -666,52 +729,6 @@
             </figure>
         </div>
         <p class="note">Guides are checked against RHS, FAO, USDA and university extension advice. Soil, weather and pests vary from place to place, so use your own judgement for high-risk decisions.</p>
-    </div>
-</section>
-
-<!-- FEATURES -->
-<section class="sec features" aria-labelledby="featTitle">
-    <div class="container">
-        <div class="sec-head reveal">
-            <span class="eyebrow">Everything in one place</span>
-            <h2 id="featTitle">More than a to-do list.</h2>
-        </div>
-        <div class="bento">
-            <article class="card wide reveal">
-                <div>
-                    <div class="ci" aria-hidden="true">🧺</div>
-                    <h3>Watch real food pile up</h3>
-                    <p>Harvests, eggs and milk land in your pantry, and Progress adds up what your space has given you, month by month. Sell some and it's logged under Money.</p>
-                </div>
-                <div class="crop"><div class="phone sm"><img src="/landing/p4-progress.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Progress screen of the demo farm: 144.3 kg harvested in 47 harvests, 936 eggs and 338 litres of milk collected, with harvest per month"></div></div>
-            </article>
-            <article class="card reveal">
-                <div class="ci" aria-hidden="true">🚶</div>
-                <h3>Morning walk</h3>
-                <p>A guided lap of your space, stop by stop, with notes and photos.</p>
-            </article>
-            <article class="card reveal">
-                <div class="ci" aria-hidden="true">🐓</div>
-                <h3>Animal care, scheduled</h3>
-                <p>Feeding, water, cleaning and collecting for hens, goats, bees and more.</p>
-            </article>
-            <article class="card reveal">
-                <div class="ci" aria-hidden="true">🌱</div>
-                <h3>Seedling nursery</h3>
-                <p>Tray sizes, sowing and planting-out dates timed to your local frosts.</p>
-            </article>
-            <article class="card reveal">
-                <div class="ci" aria-hidden="true">✏️</div>
-                <h3>Design your layout</h3>
-                <p>Draw beds, paths and fences. Drag, resize or add a coop whenever you like.</p>
-            </article>
-        </div>
-        <div class="band">
-            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 14 0M2 8.8a15 15 0 0 1 20 0"/></svg><div><b>Offline-first</b><span>Jobs, guides and your map work with no signal.</span></div></div>
-            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><path d="m8 17 4-4 4 4M12 13v8"/></svg><div><b>Backed up and synced</b><span>Phone, tablet and laptop stay in step.</span></div></div>
-            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><div><b>Yours to keep</b><span>Export your whole farm as a file any time.</span></div></div>
-            <div class="tile reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div><b>Private by default</b><span>No ads, no selling data. Your town is only used for weather.</span></div></div>
-        </div>
     </div>
 </section>
 

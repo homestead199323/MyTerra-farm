@@ -55,9 +55,9 @@ class Rec {
     for (let i = 0; i < 7; i++) { const d = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10); days.push(d); for (let h = 0; h < 24; h++) { hours.push(d + 'T' + String(h).padStart(2, '0') + ':00'); pp.push(i === 3 ? 70 : 5); rh.push(i === 3 ? 82 : 60); } }
     return {
       latitude: 51.46, longitude: -2.6, timezone: 'Europe/London', utc_offset_seconds: 3600,
-      current_weather: { temperature: 21, weathercode: 1, windspeed: 9, winddirection: 230, is_day: 1, time: days[0] + 'T09:00' },
+      current_weather: { temperature: variant === 'frost' ? 9 : 21, weathercode: 1, windspeed: 9, winddirection: 230, is_day: 1, time: days[0] + 'T09:00' },
       hourly: { time: hours, precipitation_probability: pp, relative_humidity_2m: rh },
-      daily: { time: days, weather_code: [1, 2, 1, 61, 3, 2, 1], temperature_2m_max: variant === 'heat' ? [24, 27, 31, 29, 23, 22, 24] : [23, 24, 22, 18, 20, 22, 24], temperature_2m_min: [12, 13, 12, 11, 11, 12, 13], precipitation_sum: [0, 0, 0, 6.5, 0.3, 0, 0], precipitation_probability_max: [5, 5, 10, 85, 30, 10, 5], wind_gusts_10m_max: [18, 20, 22, 34, 26, 20, 16] },
+      daily: { time: days, weather_code: [1, 2, 1, 61, 3, 2, 1], temperature_2m_max: variant === 'heat' ? [24, 27, 31, 29, 23, 22, 24] : variant === 'frost' ? [13, 11, 9, 10, 13, 15, 16] : [23, 24, 22, 18, 20, 22, 24], temperature_2m_min: variant === 'frost' ? [6, 3, -1, 0, 4, 7, 8] : [12, 13, 12, 11, 11, 12, 13], precipitation_sum: [0, 0, 0, 6.5, 0.3, 0, 0], precipitation_probability_max: [5, 5, 10, 85, 30, 10, 5], wind_gusts_10m_max: [18, 20, 22, 34, 26, 20, 16] },
     };
   }
   get t() { return this.n / this.fps; }

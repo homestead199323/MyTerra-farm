@@ -44,7 +44,13 @@ installed); set `CHROME` if Chrome is not at `/usr/bin/google-chrome`. `logo.png
    the page after that are NOT carried over. After a re-record, the safe route is
    to update the `data-t` chapter times (and the seconds in `.size`) in
    `public/landing.html` by hand from `out/<env>-chapters.json`.
-10. **`verify_site.js <url> <prefix>`** checks the page at desktop and phone size:
+10. **`stills.js <shot> [scroll]`** takes one phone-size still of the real app for the
+   "Why MyTerra" cards on the homepage (`jobs`, `map`, `frost`, `animals`, ...) into
+   `out/stills/`. The `frost` shot needs a May garden: `node mk.js backyard 2027-05-06`
+   and keep the result as `states/backyard_may.json` (mk.js writes `states/backyard.json`,
+   so copy the June one aside first). The cards use 780x1080 crops saved as
+   `public/landing/why-*.webp` at 720x997.
+11. **`verify_site.js <url> <prefix>`** checks the page at desktop and phone size:
    hero loop, each demo plays in view, the last-chapter jump, pause carries over
    between tabs, the hero button, reduced motion, failed requests, console errors.
    Use it on `vite preview` after `npm run build`, then on the live site.
