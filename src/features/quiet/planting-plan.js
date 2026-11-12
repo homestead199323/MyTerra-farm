@@ -8,6 +8,7 @@ export function editablePlanting(data, plot) {
   return laid && laid.layout ? { zone, plot: laid } : null;
 }
 import { crowdingFactor, spacingGuide } from "../../data/spacing.js";
+import { growsInPots } from "../../lib/suggest.js";
 const TREE_NAMES = new Set([
   "Apple",
   "Pear",
@@ -34,7 +35,7 @@ export const isTreeCrop = (c) =>
 export function cropFitsZone(c, z) {
   if (!c || !z) return false;
   if (z.type === "orchard") return ["Fruit", "Fruit Tree", "Nut Tree"].includes(c.cat);
-  if (isTreeCrop(c)) return z.type === "container";
+  if (isTreeCrop(c)) return z.type === "container" && growsInPots(c.name); // only patio trees (fig, citrus, olive) go in a pot
   if (z.type === "herbs") return c.cat === "Herb";
   return ["veg", "raised", "greenhouse", "container"].includes(z.type);
 }

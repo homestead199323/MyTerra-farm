@@ -37,6 +37,22 @@ const POT_ALSO = [
 ];
 const POT_SET = new Set(CONTAINER_FRIENDLY.concat(POT_ALSO));
 export function growsInPots(name) { return POT_SET.has(name); }
+// Trees that crop in a large patio pot (RHS: figs, citrus, olives). A patio has room for one; a balcony does not.
+const PATIO_TREES = new Set(["Fig", "Lemon", "Orange", "Olive"]);
+/**
+ * Can this crop be grown in this space at all? MyTerra never offers what cannot work:
+ * pots (a balcony, or a container area) take only crops that crop in a pot, and a balcony takes no trees.
+ * `zone` is the area being planted, when one is chosen.
+ */
+export function growsHere(name, data, zone) {
+  var balcony = !!(data && data.profile && data.profile.environment === "balcony");
+  var pots = balcony || (zone ? zone.type === "container" : potGrower(data));
+  if (!pots) return true;
+  if (!POT_SET.has(name)) return false;
+  return !(balcony && PATIO_TREES.has(name));
+}
+/** Animals need ground: a balcony keeps none. */
+export function keepsAnimals(data) { return !(data && data.profile && data.profile.environment === "balcony"); }
 /** Someone whose growing space is pots only: a balcony, or a map whose only growing areas are containers. */
 export function potGrower(data) {
   if (data && data.profile && data.profile.environment === "balcony") return true;

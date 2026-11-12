@@ -7,6 +7,7 @@ import { rCR } from "./regional.js";
 import { propagationOf, PERENNIALS } from "../data/propagation.js";
 import { frostDates, plantOutWindow, activeBatches } from "../features/nursery/nursery-model.js";
 import { localDateFromKey, addDaysToLocalKey } from "./utils.js";
+import { growsHere, potGrower } from "./suggest.js";
 
 const PLANTED_CATS = new Set(["Fruit Tree", "Nut Tree", "Fruit"]);
 const ALL_MONTHS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -79,6 +80,7 @@ export function monthPlan(data, month, todayKey) {
       mine = growing.has(crop.name),
       base = { name: crop.name, crop, diff: getCropDifficulty(crop.name), mine, waiting: mine && !started.has(crop.name) },
       season = `Harvest ${seasonText(crop.harvest)}`;
+    if (!mine && !growsHere(crop.name, data)) continue; // never list what this space cannot grow (a fig on a balcony)
     if (crop.tray) { // a windowsill tray: started indoors in any month, never planted out, cut within weeks
       plan.indoors.push({ ...base, note: `Windowsill · cut in ${crop.days} days` });
       continue;
@@ -118,7 +120,9 @@ export function monthTip(data, month) {
   const frostFree = last < first ? month > last && month < first : month > last || month < first;
   return frostFree
     ? `Frost-free until about ${dayMonth(f.first)}. Water in the evening and pick often.`
-    : `Frost likely until about ${dayMonth(f.last)}. Good time to plant bare-root trees and plan your beds.`;
+    : potGrower(data)
+      ? `Frost likely until about ${dayMonth(f.last)}. Start quick crops on a windowsill and get pots and compost ready.`
+      : `Frost likely until about ${dayMonth(f.last)}. Good time to plant bare-root trees and plan your beds.`;
 }
 
 /** The one-line tip under each job. */

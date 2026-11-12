@@ -24,7 +24,7 @@ import { usesSeedling } from "./planting-mode";
 import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
-import { sowTiming, growsInPots, potGrower } from "../../lib/suggest";
+import { sowTiming, growsHere } from "../../lib/suggest";
 import { CROP_MAP } from "../../data/crops";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -40,6 +40,7 @@ const empty = {
   plantCount: "",
   rowCount: "",
 };
+const NO_ROOM = "Won't grow here"; // crops this space cannot take: shown only when searched for, never selectable
 export default function PlantingForm({ data, setData, initial = {}, onClose, onSaved }) {
   // One growing area on the map: it is the answer, so it is already chosen.
   const [form, setForm] = useState(() => {
@@ -67,17 +68,17 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
   );
   // The list reads as an answer to "what can I plant?": in season first, then what comes later (with its month);
   // for someone growing in pots, crops that need open ground go last.
-  const pots = zone ? zone.type === "container" : potGrower(data);
   const groups = (() => {
     const now = [], later = [], ground = [], day = localDateFromKey(todayLocalKey());
     choices.forEach((c) => {
       const t = sowTiming(CROP_MAP.get(c.name) || c, data.region, day);
-      if (pots && !growsInPots(c.name)) ground.push({ c, t });
+      if (!growsHere(c.name, data, zone)) ground.push({ c, t });
       else if (t.status === "later") later.push({ c, t });
       else now.push({ c, t });
     });
     later.sort((a, b) => a.t.inMonths - b.t.inMonths);
-    return [["Plant now", now], ["Later", later], ["Needs open ground", ground]].filter((g) => g[1].length);
+    // what cannot grow here is never offered; a search for it by name gets a plain answer instead of an empty list
+    return [["Plant now", now], ["Later", later], [NO_ROOM, query.trim() ? ground : []]].filter((g) => g[1].length);
   })();
   const varieties = crop ? getRegionalVarieties(crop.name, data.region) : [],
     variety = varieties.find((v) => v.name === form.variety);
@@ -237,7 +238,9 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
                   <button
                     type="button"
                     key={c.name}
+                    disabled={g[0] === NO_ROOM}
                     onClick={() => {
+                      if (g[0] === NO_ROOM) return;
                       update({
                         ...form,
                         crop: c.name,
@@ -254,7 +257,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
                   >
                     <FarmIcon name={c.name} emoji={c.emoji} size={30} harvest />
                     <span className="q-crop-name">{c.name}</span>
-                    {t.status === "later" && <small>from {MONTHS[t.month]}</small>}
+                    {g[0] === NO_ROOM ? <small>needs open ground</small> : t.status === "later" && <small>from {MONTHS[t.month]}</small>}
                   </button>
                 ))}
               </div>
