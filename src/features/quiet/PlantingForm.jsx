@@ -24,6 +24,8 @@ import { usesSeedling } from "./planting-mode";
 import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
+import { toast } from "../../lib/toast";
+import { waitingLabel } from "../../lib/sowing";
 import { sowTiming, growsHere } from "../../lib/suggest";
 import { CROP_MAP } from "../../data/crops";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
@@ -35,6 +37,7 @@ const empty = {
   variety: "",
   name: "",
   plantDate: "",
+  when: "", // "now" = already in the ground (needs its date) · "plan" = for later
   cost: "",
   mode: "plants",
   plantCount: "",
@@ -45,7 +48,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
   // One growing area on the map: it is the answer, so it is already chosen.
   const [form, setForm] = useState(() => {
       const beds = (data.zones || []).filter((z) => PLANT_TYPES.includes(z.type));
-      return { ...empty, ...(beds.length === 1 ? { zone: beds[0].id } : {}), ...initial };
+      return { ...empty, ...(beds.length === 1 ? { zone: beds[0].id } : {}), ...initial, ...(initial.plantDate ? { when: "now" } : {}) };
     }),
     // The seedling batch this form plants out — consumed by the FIRST save only, so a
     // companion follow-up planting doesn't re-link the batch to the wrong bed.
@@ -126,8 +129,18 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
       setError(chosen.error);
       return;
     }
-    if (!fromSeed && form.plantDate && form.plantDate > todayLocalKey()) {
-      setError("The plant date can't be in the future — leave it blank to plan this planting.");
+    if (!fromSeed && !form.when) {
+      setError("Is it already in the ground, or a plan for later?");
+      return;
+    }
+    // Only "already in the ground" carries a date; a plan never starts the clock.
+    const pd = !fromSeed && form.when === "now" ? form.plantDate : "";
+    if (!fromSeed && form.when === "now" && !pd) {
+      setError("Add the date it went in.");
+      return;
+    }
+    if (pd && pd > todayLocalKey()) {
+      setError("That date is in the future — choose “Plan for later” instead.");
       return;
     }
     const name = form.name || (form.variety ? `${crop.name} (${form.variety})` : crop.name),
@@ -144,23 +157,22 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         qty: chosen.count,
         measureType: "plants",
         expectedYieldKg: force ? null : yieldKg,
-        plantDate: fromSeed ? "" : form.plantDate,
-        harvestDate:
-          !fromSeed && form.plantDate ? addDaysToLocalKey(form.plantDate, variety?.days || crop.days) : "",
-        status: !fromSeed && form.plantDate ? "planted" : "planned",
+        plantDate: pd,
+        harvestDate: pd ? addDaysToLocalKey(pd, variety?.days || crop.days) : "",
+        status: pd ? "planted" : "planned",
         growDays: variety?.days || crop.days,
         steps: crop.steps.map((s) => ({ ...s, done: false })),
       };
     if (fromSeed) plot.plannedDate = plantOutDate;
     // A plan with no date waits for its window: a job on Today now, or when its month comes (lib/sowing.js).
-    else if (!form.plantDate) Object.assign(plot, plannedFields(crop.name, data.region, todayLocalKey()));
+    else if (!pd) Object.assign(plot, plannedFields(crop.name, data.region, todayLocalKey()));
     let next = {
       ...data,
       garden: { ...data.garden, plots: [...data.garden.plots, plot] },
       log: appendLog(data.log, {
         text: fromSeed
           ? `Planned ${name} (${chosen.count} plants) from seed in the nursery`
-          : `🌱 ${form.plantDate ? "Planted" : "Planned"} ${name} (${chosen.count} plants)${force ? " — placed over other plantings" : ""}`,
+          : `🌱 ${pd ? "Planted" : "Planned"} ${name} (${chosen.count} plants)${force ? " — placed over other plantings" : ""}`,
       }),
     };
     if (fromSeed) {
@@ -205,8 +217,12 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         ],
       };
     setData(next);
+    // Say back exactly what was saved: a date that starts the clock, or a plan.
+    const saved = next.garden.plots[next.garden.plots.length - 1];
+    if (pd) toast(`${name}: in the ground since ${localDateFromKey(pd).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`);
+    else if (!fromSeed) toast(`${name}: saved as a plan`, { detail: waitingLabel(saved, todayLocalKey()) });
     if (companion) {
-      setForm({ ...empty, crop: companion, zone: form.zone, plantDate: form.plantDate });
+      setForm({ ...empty, crop: companion, zone: form.zone, plantDate: form.plantDate, when: form.when });
       setCompanion("");
       setQuery("");
       setBrowse(false);
@@ -412,8 +428,21 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         </section>
       )}
       {!fromSeed && (
+        <div className="q-when" role="group" aria-label="Is it in the ground yet?">
+          <span className="q-when-label">Is it in the ground yet?</span>
+          <div className="q-seg">
+            <button type="button" aria-pressed={form.when === "now"} onClick={() => update({ ...form, when: "now", plantDate: form.plantDate || todayLocalKey() })}>
+              Already {crop && /^plant/i.test(crop.steps?.[0]?.l || "") ? "planted" : "sown"}
+            </button>
+            <button type="button" aria-pressed={form.when === "plan"} onClick={() => update({ ...form, when: "plan" })}>
+              Plan for later
+            </button>
+          </div>
+        </div>
+      )}
+      {!fromSeed && form.when === "now" && (
         <Inp
-          label="Plant date"
+          label="Date it went in"
           type="date"
           max={todayLocalKey()}
           value={form.plantDate}
