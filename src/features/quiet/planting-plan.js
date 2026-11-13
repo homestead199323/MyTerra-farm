@@ -131,8 +131,11 @@ export function planPlanting(zone, plots, input, crop, excludeId) {
       count += capacity;
     }
     if (!byRows && count < value) return fail("This many plants would need more than 1000 rows.", "plantCount");
-    const rows = capacities.length,
-      height = spacing + (rows - 1) * rowGap;
+    const rows = capacities.length;
+    // A single row in a container is a line of pots: each plant needs its pot, not a bed strip as wide as its
+    // spacing (a tomato in a 30 cm pot on a balcony trough). Plants stay `spacing` apart along the row.
+    const potRow = zone.type === "container" && rows === 1 && spacing > cross - 0.2 + EPS && cross - 0.2 >= 0.15;
+    const height = potRow ? cross - 0.2 : spacing + (rows - 1) * rowGap;
     const rectAt = (c, a) =>
       vertical
         ? { x0: c, x1: c + height, y0: a, y1: a + length }
@@ -209,6 +212,7 @@ export function planPlanting(zone, plots, input, crop, excludeId) {
       lengthM: length,
       mode: byRows ? "rows" : "plants",
     };
+    if (potRow) layout.widthM = height;
     if (input.force) layout.forced = true;
     if (zone.type === "orchard") {
       const existing = layoutPlots(zone, plots)

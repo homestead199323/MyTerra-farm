@@ -83,7 +83,7 @@ export function modernRect(zone, l) {
     s = Number(l.spacingCM) / 100,
     g = Number(l.rowSpacingCM) / 100;
   const c0 = Number(l.startM) || 0,
-    c1 = c0 + s + (Math.max(1, l.rowCount) - 1) * g;
+    c1 = c0 + (Number(l.widthM) > 0 ? Number(l.widthM) : s + (Math.max(1, l.rowCount) - 1) * g); // widthM: a row of pots
   const a0 = Number(l.alongStartM) || 0,
     a1 = a0 + Number(l.lengthM);
   return vertical ? { x0: c0, x1: c1, y0: a0, y1: a1, vertical } : { x0: a0, x1: a1, y0: c0, y1: c1, vertical };
