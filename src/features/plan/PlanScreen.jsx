@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { C, F, SX } from "../../lib/theme";
-import { Btn, Card, Pill } from "../../components/ui";
+import { Btn, Card, Pill, PageHead } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 import MonthCalendar from "./MonthCalendar";
 import { waitingPlantings, sowNowSuggestions, comingUp, seasonTimeline, cropByName } from "../../lib/plan";
@@ -74,12 +74,7 @@ export default function PlanScreen({ data, setData, setPage }) {
 
   return (
     <div className="page-enter mt-plan" style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}>
-        <div>
-          <h2 className="pg-h2" style={SX.headerH2}>Plan</h2>
-          <p className="pg-sub" style={SX.pageSubHead}>What to grow next, and when</p>
-        </div>
-      </div>
+      <PageHead title="Plan" sub="What to grow next, and when"/>
       <div className="mt-seg" role="tablist" aria-label="Plan views">
         <button type="button" role="tab" aria-selected={view === "foryou"} onClick={function () { setView("foryou"); }}>For you</button>
         <button type="button" role="tab" aria-selected={view === "calendar"} onClick={function () { setView("calendar"); }}>Calendar</button>

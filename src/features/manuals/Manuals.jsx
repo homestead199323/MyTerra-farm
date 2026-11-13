@@ -33,7 +33,7 @@ import { REGION_MAP } from "../../data/regions";
 import { PRESERVATION } from "../../data/preservation";
 import { RECIPES } from "../../data/recipes";
 import { PROJECT_GUIDES, BLUEPRINT_IMAGES } from "../../data/projects";
-import { Btn, Card, Inp, Overlay, Pill } from "../../components/ui";
+import { Btn, Card, Inp, Overlay, Pill, PageHead } from "../../components/ui";
 import { guideStepNote } from "../../lib/plain-words";
 import FarmIcon from "../../components/FarmIcon";
 
@@ -51,9 +51,8 @@ function Manuals({data}) {
   const TABS=[{id:"crops",l:"Crops"},{id:"animals",l:"Animals"},{id:"preserving",l:"Preserving"},{id:"projects",l:"Projects"}];
   return (
     <div className="page-enter" style={{maxWidth:960}}>
-      <h2 className="pg-h2" style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>Learn</h2>
-      <p className="pg-sub" style={{color:C.t2,fontSize:13,margin:"0 0 16px",fontWeight:500}}>Everything you need to know — crops, animals, preservation, and DIY builds</p>
-      <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>{TABS.map(t=><button key={t.id} onClick={()=>{setTab(t.id);setSel(null);setS("");}} style={{padding:"8px 20px",borderRadius:20,border:"none",background:tab===t.id?C.green:C.card,color:tab===t.id?"#fff":C.t2,fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:tab===t.id?"none":C.sh}}>{t.l}</button>)}</div>
+      <PageHead title="Learn" sub="Guides for crops, animals, preserving and builds"/>
+      <div className="mt-seg" role="tablist" aria-label="Guides">{TABS.map(t=><button key={t.id} type="button" role="tab" aria-selected={tab===t.id} onClick={()=>{setTab(t.id);setSel(null);setS("");}}>{t.l}</button>)}</div>
 
       {tab==="crops"&&<>
         {/* 6.7.2 — sticky search bar */}
@@ -78,7 +77,7 @@ function Manuals({data}) {
           {sel.steps?.length>0&&<div style={SX.mb12}><div style={{fontSize:12,fontWeight:700,color:C.green,marginBottom:8}}>How to grow it</div>{sel.steps.map((s,i)=><Card key={i} style={{marginBottom:4,padding:10}}><div style={{display:"flex",justifyContent:"space-between"}}><strong style={SX.s13}>{i+1}. {s.l}</strong><span style={{fontSize:10,color:C.t2,fontFamily:F.mono}}>{s.d<0?`${-s.d} days before`:s.d===0?"Start":`Day ${s.d}`}</span></div><div style={SX.t2_12mt2}>{s.t}</div>{guideStepNote(sel.steps, i)&&<div style={{...SX.t2_12mt2,fontStyle:"italic"}}>{guideStepNote(sel.steps, i)}</div>}</Card>)}</div>}
           <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}><Pill c="#fff" bg={sel.color}>{sel.cat}</Pill><Pill>☀ {sel.sun}</Pill><Pill>💧 {sel.waterFreq}</Pill>{sel?.pH ? <Pill>pH {sel.pH}</Pill> : null}</div>
           <div style={{marginBottom:16}}><div style={{fontSize:11,fontFamily:F.mono,color:C.t2,marginBottom:4}}>CALENDAR</div><div style={{display:"flex",gap:2}}>{mn.map((m,mi)=>{const iS=parseSowMonths(sel.sowIn).includes(mi);const iH=parseHarvestMonths(sel.harvest).includes(mi);return <div key={m} style={{flex:1,textAlign:"center"}}><div style={{fontSize:8,color:C.t2,fontFamily:F.mono}}>{m}</div><div style={{height:14,borderRadius:3,background:iS&&iH?`linear-gradient(135deg,${C.green} 50%,${C.orange} 50%)`:iS?C.green:iH?C.orange:C.bdr,opacity:(iS||iH)?1:.25}}/></div>})}</div><div style={{display:"flex",gap:12,marginTop:4}}><span style={{fontSize:10,color:C.green}}>■ Sow</span><span style={{fontSize:10,color:C.orange}}>■ Harvest</span></div></div>
-          {sel.regionNote && <Card style={{marginBottom:12,background:C.tGreenBand,border:`1.5px solid ${C.tGreenBandBd}`}}><div style={SX.lblGreen}>{curRegion ? curRegion.emoji + " " : "🌍 "}Regional Note — {curRegion ? curRegion.name : "Your Region"}</div><div style={{fontSize:12,marginTop:4,lineHeight:1.5,color:C.text}}>{sel.regionNote}</div></Card>}
+          {sel.regionNote && <Card style={{marginBottom:12,background:C.tGreenBand,border:`1.5px solid ${C.tGreenBandBd}`}}><div style={SX.lblGreen}>{curRegion ? curRegion.emoji + " " : "🌍 "}Regional note — {curRegion ? curRegion.name : "your region"}</div><div style={{fontSize:12,marginTop:4,lineHeight:1.5,color:C.text}}>{sel.regionNote}</div></Card>}
           {COMP[sel.name]&&<Card style={{marginBottom:12,background:C.tGreen}}><div style={SX.lblGreen}>Companions</div><div style={{fontSize:12,marginTop:4}}>✓ {COMP[sel.name].good.join(", ")||"—"}{COMP[sel.name].bad.length>0?<span style={{color:C.red}}> · ✕ {COMP[sel.name].bad.join(", ")}</span>:""}</div></Card>}
           <Card style={{marginBottom:12,background:C.tBlue}}><div style={{fontSize:12,fontWeight:700,color:C.blue}}>Growing notes</div>{sel.waterFreq&&<div style={SX.s13mt4}><strong>Water:</strong> {sel.waterFreq.charAt(0).toLowerCase()+sel.waterFreq.slice(1)}.</div>}{sel.waterNote&&<div style={SX.s13mt4}>{sel.waterNote}</div>}</Card>
           {sel?.fert && <Card style={{marginBottom:12,background:C.tGreen}}><div style={SX.lblGreen}>Fertilizer</div><div style={{fontSize:12,marginTop:4,lineHeight:1.6}}>{sel.fert}</div></Card>}
@@ -93,7 +92,7 @@ function Manuals({data}) {
         {sel?.feed&&<Overlay title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={sel.name} emoji={sel.e} size={24}/>{sel.name}</span>} onClose={()=>setSel(null)} wide>
           {[{i:"🍽",t:"Feeding",v:sel.feed},{i:"🏠",t:"Housing",v:sel.house},{i:"😴",t:"Sleep",v:sel.sleep},{i:"💕",t:"Breeding",v:sel.breed}].map(s=><Card key={s.t} style={{marginBottom:8}}><div style={SX.lblGreen}>{s.i} {s.t}</div><div style={{fontSize:13,lineHeight:1.7,marginTop:4}}>{s.v}</div></Card>)}
           <Card style={{background:C.tPink,marginBottom:8}}><div style={{fontSize:12,fontWeight:700,color:C.red}}>Injuries</div>{sel.inj.map((j,i)=><div key={i} style={{marginTop:6}}><strong>{j.n}</strong><div style={SX.t2_12}>{j.t}</div></div>)}</Card>
-          {getRegionalCalendar(sel.name, data.region)&&<Card style={{marginBottom:8}}><div style={{fontSize:12,fontWeight:700,color:C.blue,marginBottom:8}}>Monthly Calendar</div>{Object.entries(getRegionalCalendar(sel.name, data.region)).map(([m,t])=><div key={m} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:`1px solid ${C.bdr}`}}><span style={{fontSize:11,fontWeight:700,color:C.green,width:28,flexShrink:0,fontFamily:F.mono}}>{m}</span><span style={{fontSize:11,color:C.t2,lineHeight:1.4}}>{t}</span></div>)}</Card>}
+          {getRegionalCalendar(sel.name, data.region)&&<Card style={{marginBottom:8}}><div style={{fontSize:12,fontWeight:700,color:C.blue,marginBottom:8}}>Month by month</div>{Object.entries(getRegionalCalendar(sel.name, data.region)).map(([m,t])=><div key={m} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:`1px solid ${C.bdr}`}}><span style={{fontSize:11,fontWeight:700,color:C.green,width:28,flexShrink:0,fontFamily:F.mono}}>{m}</span><span style={{fontSize:11,color:C.t2,lineHeight:1.4}}>{t}</span></div>)}</Card>}
         </Overlay>}
       </>}
 
@@ -154,7 +153,7 @@ function Preserving({embedded}) {
   return (
     <div className="mt-manual-detail" style={{ maxWidth: 960 }}>
       {!embedded && <>
-        <h2 style={{ fontFamily: F.head, fontSize: 28, margin: "0 0 4px" }}>Preservation Manual</h2>
+        <h2 style={{ fontFamily: F.head, fontSize: 28, margin: "0 0 4px" }}>Preserving guide</h2>
         <p style={{ color: C.t2, fontSize: 14, margin: "0 0 16px" }}>
           Complete guide to every preservation method — ratios, science, safety, and troubleshooting
         </p>
@@ -293,7 +292,7 @@ function Preserving({embedded}) {
 
             {/* What you need */}
             {sel.what_you_need && (
-              <InfoBlock label="What You Need" color={C.t2} bg={C.soft}>
+              <InfoBlock label="What you need" color={C.t2} bg={C.soft}>
                 {sel.what_you_need}
               </InfoBlock>
             )}
@@ -324,7 +323,7 @@ function Preserving({embedded}) {
 
             {/* Best for */}
             {sel.best_for && (
-              <InfoBlock label="Best For" color={C.green} bg={C.tGreen}>
+              <InfoBlock label="Best for" color={C.green} bg={C.tGreen}>
                 {sel.best_for}
               </InfoBlock>
             )}
@@ -343,7 +342,7 @@ function Preserving({embedded}) {
 
             {/* Science */}
             {sel.science && (
-              <InfoBlock label="The Science" color={C.blue} bg={C.tBlue}>
+              <InfoBlock label="The science" color={C.blue} bg={C.tBlue}>
                 {sel.science}
               </InfoBlock>
             )}
@@ -503,7 +502,7 @@ function Projects({embedded}) {
               ))}
             </div>
 
-            <InfoBlock label="Ongoing Maintenance" color={C.orange} bg={C.tOrange}>{sel.maintenance}</InfoBlock>
+            <InfoBlock label="Upkeep" color={C.orange} bg={C.tOrange}>{sel.maintenance}</InfoBlock>
 
             {sel.tip && (
               <div style={{ background: C.tGreen2, border: `1px solid ${C.gm}`, borderRadius: C.rs, padding: "12px 14px", marginBottom: 10 }}>

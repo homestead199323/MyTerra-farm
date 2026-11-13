@@ -1,13 +1,17 @@
 import { useState, useMemo } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowUpRight, ArrowDownLeft, ShoppingBasket, Package } from "lucide-react";
 import { uid } from "../../lib/storage";
-import { todayLocalKey } from "../../lib/utils";
+import { todayLocalKey, localDateFromKey } from "../../lib/utils";
 import { C, F, SX } from "../../lib/theme";
-import { Btn, Card, Inp, Sel, Overlay, Stat } from "../../components/ui";
+import { Btn, Card, Inp, Sel, Overlay, Stat, PageHead, Actions } from "../../components/ui";
 import { undoSale, markPaid, unpaidTotal } from "../../lib/inventory";
 import { currencySymbol, currencyCode, CURRENCIES, moneyAmount } from "../../lib/money";
 
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/; // local YYYY-MM-DD keys, as every other record in the app
+// "13 Nov" (and the year when it isn't this year), like dates everywhere else in the app.
+const shortDate=k=>{const d=DATE_RE.test(String(k||""))?localDateFromKey(k):null;if(!d)return String(k||"");return d.toLocaleDateString("en-GB",d.getFullYear()===new Date().getFullYear()?{day:"numeric",month:"short"}:{day:"numeric",month:"short",year:"numeric"});};
+// One icon per kind of entry (lucide, like every other icon in the app).
+const EntryIcon=({i})=>{const inc=i.type==="income";const Ic=i.source==="pantry"?(inc?ShoppingBasket:Package):inc?ArrowDownLeft:ArrowUpRight;return <Ic size={17} strokeWidth={2} color={inc?C.green:C.red} aria-hidden="true"/>;};
 
 const CAT_COLORS = {
   Seeds: "#27ae60", Tools: "#8d6e63", Feed: "#ffa726",
@@ -85,10 +89,9 @@ export default function Financials({data, setData}) {
 
   return (
     <div className="page-enter mt-money" style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}>
-        <div><h2 className="pg-h2" style={SX.headerH2}>Financials</h2><p className="pg-sub" style={SX.pageSubHead}>Income, expenses, and profitability</p></div>
-        <Btn onClick={openAdd}>+ Add Entry</Btn>
-      </div>
+      <PageHead title="Money" sub="Costs and income">
+        <Btn onClick={openAdd}>+ Add an entry</Btn>
+      </PageHead>
       {/* 6.6.1 — empty state replaces the body when there are zero entries */}
       {items.length === 0 ? (
         <Card style={{textAlign:"center",padding:"clamp(22px, 7vw, 64px) 24px",background:C.grdWarm,marginBottom:16}}>
@@ -103,14 +106,14 @@ export default function Financials({data, setData}) {
         </Card>
       ) : (
       <>
-      <div className="g3" style={{gap:10,marginBottom:20}}>
-        <Stat label="Spent" value={E+moneyAmount(exp)} color={C.red}/>
-        <Stat label="Revenue" value={E+moneyAmount(inc)} sub={unpaid>0?`${E}${unpaid.toFixed(2)} to collect`:undefined} color={C.green}/>
-        <Stat label="Net" value={E+moneyAmount(Math.abs(net))} sub={net>=0?"Profit":"Loss"} color={net>=0?C.green:C.red}/>
+      <div className="g3 mt-money-stats" style={{gap:10,marginBottom:20}}>
+        <Stat label="Spent" value={E+moneyAmount(exp)} sub="seeds, tools, feed…" color={C.t2}/>
+        <Stat label="Earned" value={E+moneyAmount(inc)} sub={unpaid>0?`${E}${unpaid.toFixed(2)} to collect`:"sales"} color={C.green}/>
+        <Stat label="Balance" value={(net<0?"−":"")+E+moneyAmount(Math.abs(net))} sub={net<0?"spent more than earned so far":"ahead"} color={net>=0?C.green:C.orange}/>
       </div>
       <Card style={{marginBottom:16}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div style={{fontSize:15,fontWeight:700,fontFamily:F.head}}>{chartMode==="monthly"?"Monthly Overview":mN[chartM]+" Daily"}</div>
+          <div style={{fontSize:15,fontWeight:700,fontFamily:F.head}}>{chartMode==="monthly"?"By month":mN[chartM]+" by day"}</div>
           <div style={{display:"flex",gap:6}}>
             {["monthly","daily"].map(m=><button key={m} onClick={()=>setChartMode(m)} style={{padding:"4px 12px",borderRadius:16,border:"none",background:chartMode===m?C.green:C.card,color:chartMode===m?"#fff":C.t2,fontSize:11,fontWeight:600,cursor:"pointer"}}>{m==="monthly"?"Monthly":"Daily"}</button>)}
           </div>
@@ -141,7 +144,7 @@ export default function Financials({data, setData}) {
       {/* 6.6.3 — categorized spending as a donut with a category legend */}
       {pieSlices.length>0 && (
         <Card style={{marginBottom:16}}>
-          <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,marginBottom:12}}>Expense Breakdown</div>
+          <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,marginBottom:12}}>Where it goes</div>
           <div style={{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
             <div style={{flexShrink:0,position:"relative"}}>
               <svg viewBox="0 0 120 120" style={{width:140,height:140,display:"block"}} role="img" aria-label="Expense category pie chart">
@@ -173,34 +176,34 @@ export default function Financials({data, setData}) {
           <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,marginBottom:10}}>To collect · {E}{unpaid.toFixed(2)}</div>
           {unpaidSales.map(i=>(
             <div key={i.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderTop:`1px solid ${C.bdr}`}}>
-              <div style={SX.flex1}><div style={{fontSize:13.5,fontWeight:600}}>{i.buyer||"No buyer named"}</div><div style={SX.t2_12}>{i.date} · {i.label}</div></div>
+              <div style={SX.flex1}><div style={{fontSize:13.5,fontWeight:600}}>{i.buyer||"No buyer named"}</div><div style={SX.t2_12}>{shortDate(i.date)} · {i.label}</div></div>
               <div style={{fontSize:15,fontWeight:700}}>{E}{i.amount.toFixed(2)}</div>
               <Btn sm v="secondary" onClick={()=>setData(markPaid(data,i.id))}>Mark paid</Btn>
             </div>
           ))}
         </Card>
       )}
-      <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,marginBottom:10}}>Recent Transactions</div>
+      <div style={{fontSize:15,fontWeight:700,fontFamily:F.head,marginBottom:10}}>Recent entries</div>
       {last5.length===0?<Card style={{textAlign:"center",padding:32}}><div style={{color:C.t2}}>No transactions yet</div></Card>:
       <div style={{display:"grid",gap:6}}>{last5.map(i=>(
         <Card key={i.id}><div style={SX.rowCenterG10}>
-          <div style={{width:36,height:36,borderRadius:18,background:"var(--surface-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{i.source==="pantry"?(i.type==="income"?"🧺":"📦"):i.type==="expense"?"📤":"📥"}</div>
-          <div style={SX.flex1}><div style={{fontSize:14,fontWeight:600}}>{i.label}</div><div style={SX.t2_12}>{i.date} · {i.cat}{forLabel(i.for)?` · for ${forLabel(i.for)}`:""}{i.paid===false?" · to be paid":""}</div></div>
+          <div style={{width:36,height:36,borderRadius:18,background:"var(--surface-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><EntryIcon i={i}/></div>
+          <div style={SX.flex1}><div style={{fontSize:14,fontWeight:600}}>{i.label}</div><div style={SX.t2_12}>{shortDate(i.date)} · {i.cat}{forLabel(i.for)?` · for ${forLabel(i.for)}`:""}{i.paid===false?" · to be paid":""}</div></div>
           <div style={{fontSize:16,fontWeight:700,color:i.type==="expense"?C.red:C.green,fontFamily:F.mono}}>{i.type==="expense"?"-":"+"}{E}{i.amount.toFixed(2)}</div>
           <Btn sm v="ghost" label={`Delete ${i.label}`} onClick={()=>del(i.id)}><Trash2 size={14} strokeWidth={1.8}/></Btn>
         </div></Card>
       ))}</div>}
       </>
       )}
-      {showAdd&&<Overlay title="Add Entry" onClose={()=>setShowAdd(false)}>
-        <div style={{display:"flex",gap:8,marginBottom:14}}>{["expense","income"].map(t=><Card key={t} onClick={()=>setForm({...form,type:t})} active={form.type===t} style={{flex:1,textAlign:"center",cursor:"pointer"}}><div style={SX.s20}>{t==="expense"?"📤":"📥"}</div><div style={{fontSize:13,fontWeight:600,marginTop:4}}>{t==="expense"?"Expense":"Income"}</div></Card>)}</div>
+      {showAdd&&<Overlay title="Add an entry" onClose={()=>setShowAdd(false)}>
+        <div style={{display:"flex",gap:8,marginBottom:14}}>{["expense","income"].map(t=><Card key={t} onClick={()=>setForm({...form,type:t})} active={form.type===t} style={{flex:1,textAlign:"center",cursor:"pointer"}}><div style={{display:"flex",justifyContent:"center"}}><EntryIcon i={{type:t}}/></div><div style={{fontSize:13,fontWeight:600,marginTop:4}}>{t==="expense"?"Expense":"Income"}</div></Card>)}</div>
         {!data.currency&&!(data.costs?.items||[]).length&&<Sel label="Currency" value={currencyCode(data)} onChange={e=>setData({...data,currency:e.target.value})} options={CURRENCIES.map(c=>({value:c.code,label:c.label}))}/>}
         <Inp label={`Amount (${E.trim()})`} type="number" min="0" step="0.01" value={form.amount} onChange={e=>{setAddErr("");setForm({...form,amount:e.target.value});}}/>
         <Inp label="Description" value={form.label} onChange={e=>{setAddErr("");setForm({...form,label:e.target.value});}}/>
         <div style={SX.grid2}><Sel label="Category" value={form.cat} onChange={e=>setForm({...form,cat:e.target.value})} options={["Seeds","Tools","Feed","Animals","Fuel","Infrastructure","Produce Sales","Stock purchases","Other"]}/><Inp label="Date" type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
         {form.type==="expense"&&forOptions.length>1&&<Sel label="For (optional)" value={form.for} onChange={e=>setForm({...form,for:e.target.value})} options={forOptions}/>}
         {addErr&&<p role="alert" style={{fontSize:12,color:C.red,margin:"0 0 10px"}}>{addErr}</p>}
-        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>{setAddErr("");setShowAdd(false);}}>Cancel</Btn><Btn onClick={add}>Add</Btn></div>
+        <Actions><Btn v="secondary" onClick={()=>{setAddErr("");setShowAdd(false);}}>Cancel</Btn><Btn onClick={add}>{form.type==="income"?"Add income":"Add expense"}</Btn></Actions>
       </Overlay>}
     </div>
   );

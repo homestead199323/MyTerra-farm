@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Overlay, Inp, Sel, Btn } from "../../components/ui";
+import { Overlay, Inp, Sel, Btn, Actions } from "../../components/ui";
 import { rCR, rCM, getRegionalVarieties } from "../../lib/regional";
 import { uid } from "../../lib/storage";
 import { appendLog, todayLocalKey, addDaysToLocalKey, localDateFromKey } from "../../lib/utils";
@@ -501,7 +501,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
           {error}
         </p>
       )}
-      <div className="q-row">
+      <Actions>
         <Btn v="secondary" onClick={onClose}>
           Cancel
         </Btn>
@@ -513,7 +513,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         <Btn onClick={() => save(false)} dis={!crop || !zone}>
           Save planting
         </Btn>
-      </div>
+      </Actions>
     </Overlay>
   );
 }

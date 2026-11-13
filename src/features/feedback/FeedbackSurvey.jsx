@@ -45,7 +45,7 @@ export default function FeedbackSurvey({ setPage }) {
   return (
     <div className="page-enter" style={{maxWidth:600,margin:"0 auto"}}>
       <div style={{marginBottom:28}}>
-        <h1 style={{fontFamily:F.head,fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>Help Us Improve</h1>
+        <h1 style={{fontFamily:F.head,fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>Help us improve</h1>
         <p style={{color:C.t2,fontSize:14,marginTop:4}}>4 quick questions — takes about 1 minute</p>
       </div>
 

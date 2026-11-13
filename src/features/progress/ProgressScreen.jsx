@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import { C, SX } from "../../lib/theme";
-import { Btn, Card, Stat } from "../../components/ui";
+import { Btn, Card, Stat, PageHead } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 import { produceTotals, moneyTotals, badgeList, nextHarvest, plantingCounts, produceEmoji, PORTION_G } from "../../lib/progress";
 import { cropByName } from "../../lib/plan";
 import { stockLines } from "../../lib/inventory";
-import { formatMoney, formatMoneyShort } from "../../lib/money";
+import { formatMoneyShort } from "../../lib/money";
 import { todayLocalKey, localDateFromKey } from "../../lib/utils";
 import "../plan/plan.css";
 
@@ -55,12 +55,7 @@ export default function ProgressScreen({ data, setPage }) {
 
   return (
     <div className="page-enter mt-progress" style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}>
-        <div>
-          <h2 className="pg-h2" style={SX.headerH2}>Progress</h2>
-          <p className="pg-sub" style={SX.pageSubHead}>What your space has given you so far</p>
-        </div>
-      </div>
+      <PageHead title="Progress" sub="What your space has given you so far"/>
 
       <Card style={{ marginBottom: 16, background: C.grdLight, display: "flex", alignItems: "center", gap: 14 }}>
         {next ? <FarmIcon name={next.crop} emoji={produceEmoji(next.crop, cropByName(next.crop))} size={48} harvest /> : null}
@@ -138,7 +133,7 @@ export default function ProgressScreen({ data, setPage }) {
           : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
               <Stat label="Spent" value={formatMoneyShort(money.spent, data)} sub="seeds, tools, feed…" color={C.t2} />
               <Stat label="Earned" value={formatMoneyShort(money.earned, data)} sub="sales" />
-              <Stat label="Balance" value={`${money.net < 0 ? "−" : ""}${formatMoney(Math.abs(money.net), data, 0)}`} sub={money.net < 0 ? "spent more than earned so far" : "ahead"} color={money.net < 0 ? C.orange : C.green} />
+              <Stat label="Balance" value={`${money.net < 0 ? "−" : ""}${formatMoneyShort(Math.abs(money.net), data)}`} sub={money.net < 0 ? "spent more than earned so far" : "ahead"} color={money.net < 0 ? C.orange : C.green} />
             </div>}
       </section>
 

@@ -5,7 +5,7 @@ import { C, F, SX } from "../lib/theme";
 import { localDateFromKey, addDaysToLocalKey } from "../lib/utils";
 import { useSwipe } from "../lib/use-swipe";
 
-// Re-export for consumers that want the spring config
+import "./ui.css";
 
 /* ═══════════════════════════════════════════
    UI COMPONENTS
@@ -24,6 +24,21 @@ export const Btn = React.memo(function Btn({children,onClick,v="primary",sm,dis,
   const b=st[v]||st.primary;
   return <button type="button" aria-label={label} disabled={dis} onClick={dis?undefined:onClick} style={{background:b.bg,color:b.c,border:b.border||"1px solid transparent",borderRadius:sm?12:14,fontFamily:F.body,fontWeight:600,fontSize:sm?13:14,minHeight:sm?40:46,padding:sm?"0 14px":"0 20px",boxSizing:"border-box",justifyContent:"center",cursor:dis?"not-allowed":"pointer",opacity:dis?0.4:1,display:"inline-flex",alignItems:"center",gap:7,transition:"background .2s, transform .08s",boxShadow:dis?"none":b.shadow,...s}}>{children}</button>;
 });
+
+/* One page header for every menu page: title (= the menu label), one short line, and the
+   page's actions on the right. Same size, spacing and wrapping everywhere. */
+export function PageHead({title, sub, children}) {
+  return <div className="pg-head mt-pagehead">
+    <div className="mt-pagehead-text"><h2 className="pg-h2">{title}</h2>{sub && <p className="pg-sub">{sub}</p>}</div>
+    {children && <div className="mt-pagehead-actions">{children}</div>}
+  </div>;
+}
+
+/* One footer for every popup form: Cancel (or other quiet buttons) first, the main action
+   last and widest. */
+export function Actions({children, className=""}) {
+  return <div className={`mt-actions ${className}`}>{children}</div>;
+}
 
 export const Card = React.memo(function Card({children,onClick,active,style:s,p=true,className=""}) {
   return <div onClick={onClick} role={onClick?"button":undefined} tabIndex={onClick?0:undefined} onKeyDown={onClick?e=>{if(e.target===e.currentTarget&&(e.key==="Enter"||e.key===" ")){e.preventDefault();onClick(e);}}:undefined} className={`${onClick?"card-hover":""} ${className}`} style={{background:C.card,borderRadius:C.r,boxShadow:active?`0 0 0 2px ${C.green}, ${C.sh}`:C.sh,padding:p?"18px":0,cursor:onClick?"pointer":"default",transition:"all .25s cubic-bezier(.25,.46,.45,.94)",border:`1px solid ${active?C.green:"rgba(0,0,0,.04)"}`,...s}}>{children}</div>;
@@ -289,7 +304,7 @@ export const Ring = React.memo(function Ring({pct,size=44,sw=3.5,color=C.green,c
 });
 
 export const Stat = React.memo(function Stat({label,value,sub,color=C.green}) {
-  return <Card><div style={{fontSize:11,fontWeight:600,color:C.t2,textTransform:"uppercase",letterSpacing:".03em"}}>{label}</div><div style={{fontSize:26,fontWeight:700,fontFamily:F.head,marginTop:4,lineHeight:1}}>{value}</div>{sub&&<div style={{fontSize:12,color,marginTop:4,fontWeight:500}}>{sub}</div>}</Card>;
+  return <Card className="mt-stat"><div className="mt-stat-l" style={{fontSize:11,fontWeight:600,color:C.t2,textTransform:"uppercase",letterSpacing:".03em"}}>{label}</div><div className="mt-stat-v" style={{fontSize:26,fontWeight:700,fontFamily:F.head,marginTop:4,lineHeight:1}}>{value}</div>{sub&&<div className="mt-stat-s" style={{fontSize:12,color,marginTop:4,fontWeight:500}}>{sub}</div>}</Card>;
 });
 
 /* ═══════════════════════════════════════════
@@ -300,7 +315,7 @@ export const StepChecklist = React.memo(function StepChecklist({steps, plantDate
   if (!steps || steps.length === 0) return null;
   return (
     <div style={SX.mb12}>
-      <div style={{fontSize:13,fontWeight:700,color:C.green,marginBottom:8}}>Growing Steps</div>
+      <div style={{fontSize:13,fontWeight:700,color:C.green,marginBottom:8}}>Growing steps</div>
       {steps.map((s, i) => {
         const stepDate = localDateFromKey(addDaysToLocalKey(plantDate, s.d));
         const sd = stepDate ? stepDate.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "";

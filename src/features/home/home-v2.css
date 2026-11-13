@@ -219,7 +219,7 @@ body.mt-home-v2 .g3-completion{bottom:calc(100px + env(safe-area-inset-bottom))}
   .hv2-page.is-wide .mt-progress>*,.hv2-page.is-wide .mt-tasks>*,.hv2-page.is-wide .mt-money>*{break-inside:avoid}
   .hv2-page.is-wide .mt-manual-detail{max-width:none!important}
   .hv2-page.is-wide .mt-progress>.pg-head,.hv2-page.is-wide .mt-progress>.pg-head+div:not(.mt-plan-sec),.hv2-page.is-wide .mt-money>.pg-head,
-  .hv2-page.is-wide .mt-tasks>h2,.hv2-page.is-wide .mt-tasks>h2+div,.hv2-page.is-wide .mt-tasks>h2+div+div{column-span:all}
+  .hv2-page.is-wide .mt-tasks>.pg-head,.hv2-page.is-wide .mt-tasks>.pg-head+div{column-span:all}
   .hv2-page.is-wide .mt-animals>.pg-head+div{grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:8px 28px;align-items:start}
   .hv2-page.is-wide .q-stock-page .q-stock-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:10px 20px}
   /* Crops: the list on the left, everything about the picked crop on the right */

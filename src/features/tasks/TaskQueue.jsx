@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown, MapPin, Clock, Timer } from "lucide-react";
 import { C, F, SX } from "../../lib/theme";
-import { Card, SwipeableRow, TaskCheckbox } from "../../components/ui";
+import { Btn, Card, SwipeableRow, TaskCheckbox, PageHead } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 import PlotOverlay from "../farm/PlotOverlay";
 import AnimalOverlay from "../animals/AnimalOverlay";
@@ -558,11 +558,9 @@ function TaskQueue({data, setData, setPage, tasks, forecast, pageData, clearPage
 
   return (
     <div className="page-enter mt-tasks" style={{maxWidth:1100}}>
-      <h2 className="pg-h2" style={{fontFamily:F.head,fontSize:30,margin:"0 0 4px",letterSpacing:"-0.03em",fontWeight:800}}>All tasks</h2>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",margin:"0 0 16px"}}>
-        <p className="pg-sub" style={{color:C.t2,fontSize:13,margin:0,fontWeight:500}}>Today's work first, then the week, then the month</p>
-        <button type="button" onClick={()=>setOwnForm({})} style={{border:`1px solid ${C.bdr}`,background:C.card,color:C.green,borderRadius:10,padding:"8px 12px",fontSize:13,fontWeight:700,cursor:"pointer",minHeight:40}}>+ Add your own job</button>
-      </div>
+      <PageHead title="All tasks" sub="Today first, then the week and the month">
+        <Btn onClick={()=>setOwnForm({})}>+ Add a job</Btn>
+      </PageHead>
 
       <TimeBudgetCard data={data} setData={setData} forecast={forecast}/>
 
@@ -613,7 +611,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast, pageData, clearPage
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               
-              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Daily Routine</div>
+              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Daily routine</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{fontSize:12,color:C.t2,fontFamily:F.mono,fontWeight:600}}>
@@ -670,7 +668,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast, pageData, clearPage
           <div style={{textAlign:"left"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               
-              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Farm — This Week</div>
+              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Farm this week</div>
             </div>
             <div style={{fontSize:12,color:C.t2,marginTop:3}}>
               {thisWeekFarm.length === 0 ? "Nothing this week" : `${thisWeekFarm.length} task${thisWeekFarm.length === 1 ? "" : "s"} · harvests, transplants, pinching, pruning`}
@@ -708,7 +706,7 @@ function TaskQueue({data, setData, setPage, tasks, forecast, pageData, clearPage
           <div style={{textAlign:"left"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               
-              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Animals — This Week</div>
+              <div style={{fontSize:16,fontWeight:800,fontFamily:F.head,color:C.text,letterSpacing:"-0.01em"}}>Animals this week</div>
             </div>
             <div style={{fontSize:12,color:C.t2,marginTop:3}}>
               {thisWeekAnimals.length === 0 ? "Nothing this week" : `${thisWeekAnimals.length} task${thisWeekAnimals.length === 1 ? "" : "s"} · cleaning, health, bedding, paddock rotation`}

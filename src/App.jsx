@@ -180,12 +180,15 @@ const BottomNav = React.memo(function BottomNav({page, setPage, taskCount, onAsk
    plus the account button on phones (Settings, feedback, plan). */
 const SectionBar = React.memo(function SectionBar({page, setPage, onAccount, onClose}) {
   const sec = sectionOf(page);
-  const pages = sec ? sec.pages : [];
+  // Over the farm map (onClose): the map itself is "home", so it is never a tab, and every
+  // page shows the same row of tabs — a single one when its area has only that page.
+  const pages = sec ? (onClose ? sec.pages.filter(function(p){ return p.id !== "home"; }) : sec.pages) : [];
+  const tabs = onClose ? (pages.length ? (sec.pages.length === 1 ? [{ id: pages[0].id, l: sec.l }] : pages) : [{ id: page, l: page === "feedback" ? "Feedback" : page === "admin" ? "Admin" : "MyTerra" }]) : pages;
   return (
     <div className="mt-secbar">
-      {pages.length > 1 && !(onAccount && sec.id === "today") /* on a phone Today and Tasks are tabs at the bottom */
-        ? <div className="mt-secbar-tabs" role="tablist" aria-label={sec.l}>
-            {pages.map(function(p) {
+      {(onClose || pages.length > 1) && !(onAccount && sec && sec.id === "today") /* on a phone Today and Tasks are tabs at the bottom */
+        ? <div className="mt-secbar-tabs" role="tablist" aria-label={sec ? sec.l : "Page"}>
+            {tabs.map(function(p) {
               return <button key={p.id} type="button" role="tab" aria-selected={page===p.id} onClick={function(){ setPage(p.id); }}>{p.l}</button>;
             })}
           </div>
@@ -712,7 +715,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
           <div style={SX.flex1}/>
           <div style={{borderTop:`1px solid ${C.bdr}`,margin:isTablet?"0 8px":"0 10px"}}/>
           <button onClick={()=>setPage("feedback")} style={{display:"flex",alignItems:"center",gap:isTablet?0:8,padding:isTablet?"10px 0":"10px 20px 6px",border:"none",background:"transparent",color:C.t2,cursor:"pointer",fontSize:12,fontFamily:F.body,fontWeight:500,width:"100%",justifyContent:isTablet?"center":"flex-start"}} title="Give feedback">
-            <MessageSquare size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Give Feedback</span>}
+            <MessageSquare size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Give feedback</span>}
           </button>
           <button onClick={()=>setSettingsOpen(true)} style={{display:"flex",alignItems:"center",gap:isTablet?0:8,padding:isTablet?"10px 0":"6px 20px 14px",border:"none",background:"transparent",color:C.t2,cursor:"pointer",fontSize:12,fontFamily:F.body,fontWeight:500,width:"100%",justifyContent:isTablet?"center":"flex-start"}} title="Settings">
             <Settings size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Settings</span>}
@@ -725,7 +728,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
           {stage && isMobile && <span className="hv2-page-grab" aria-hidden="true"/>}
           {/* Nothing renders under the first-run setup: the 3D map would otherwise
               animate behind it and drain a phone's battery for no one. */}
-          {!showOnboarding && !mapHome && (viewW < 1024 || homeV2) && <SectionBar page={page} setPage={setPage} onAccount={noSide ? () => setAccountOpen(true) : null} onClose={stage ? goFarm : null}/>}
+          {!showOnboarding && !mapHome && (viewW < 1024 || homeV2) && <SectionBar page={page} setPage={setPage} onAccount={noSide && !stage ? () => setAccountOpen(true) : null} onClose={stage ? goFarm : null}/>}
           {!showOnboarding && !mapHome && (demo ? <DemoBanner onSignup={openUpgrade} onSignin={onDemoSignin}/> : <TrialBanner ent={ent} onUpgrade={openUpgrade}/>)}
           {!showOnboarding && pg()}
         </main>

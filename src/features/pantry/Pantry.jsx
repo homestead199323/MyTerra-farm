@@ -5,7 +5,8 @@ import { rCM } from "../../lib/regional";
 import { addBoughtStock, takeStock, sellStock, stockLines, stockValue, unpaidTotal, UNITS } from "../../lib/inventory";
 import { harvestablePlots, logHarvest } from "../../lib/harvest-log";
 import FarmIcon from "../../components/FarmIcon";
-import { Overlay } from "../../components/ui";
+import { produceEmoji } from "../../lib/progress";
+import { Overlay, PageHead } from "../../components/ui";
 import "./pantry.css";
 import { currencySymbol, formatMoney } from "../../lib/money";
 
@@ -95,10 +96,10 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
   const moves = [...(data.pantry?.moves || [])].reverse().slice(0, 25);
 
   const icon = (name, category, size = 26) => {
-    if (category === "Eggs" || /\beggs?\b/i.test(name)) return ;
-    if (/\bmilk\b/i.test(name)) return ;
-    if (/\bhoney\b/i.test(name)) return ;
-    if (/\bwool\b/i.test(name)) return ;
+    // Eggs, milk, honey and wool use the same pictures as Progress (they went blank when emoji were stripped).
+    if (category === "Eggs" || /\beggs?\b/i.test(name)) return <FarmIcon name={name} emoji={produceEmoji(name)} size={size} harvest />;
+    if (/\b(milk|honey|cheese)\b/i.test(name)) return <FarmIcon name={name} emoji={produceEmoji(name)} size={size} harvest />;
+    if (/\bwool\b/i.test(name)) return <span className="q-stock-emoji">🧶</span>;
     const crop = cropMap.get(name);
     if (crop) return <FarmIcon name={crop.name} emoji={crop.emoji} size={size} harvest />;
     const e = { Meat: "🥩", Dairy: "🧀", Preserved: "🫙", Grain: "🌾", "Fresh Produce": "🥬" }[category] || "📦";
@@ -141,18 +142,14 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
 
   return (
     <div className="page-enter q-stock-page">
-      <header className="q-stock-head">
-        <div>
-          <h2>Pantry &amp; stock</h2>
-          <p className="pg-sub">Everything your farm produces. Use it, sell it, and see what it’s worth.</p>
-        </div>
-        <button className="q-secondary" onClick={openHarvest}>
-          <ShoppingBasket size={17} /> Log a harvest
-        </button>
+      <PageHead title="Pantry" sub="What your space produces — use it or sell it">
         <button className="q-secondary" onClick={() => setAdd({ name: "", category: "Fresh Produce", qty: "", unit: "kg", cost: "" })}>
           <PackagePlus size={17} /> Add stock
         </button>
-      </header>
+        <button className="q-button" onClick={openHarvest}>
+          <ShoppingBasket size={17} /> Log a harvest
+        </button>
+      </PageHead>
 
       <section className="q-stock-stats">
         <div>
@@ -194,7 +191,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
               <div className="q-stock-body">
                 <div className="q-stock-title">
                   <strong>{l.name}</strong>
-                  <span className="q-stock-cat">{l.category}</span>
+                  {l.category && <span className="q-stock-cat">{l.category}</span>}
                 </div>
                 <div className="q-stock-qty">
                   {fmtQty(l.qty)} <small>{unitWord(l, l.qty)}</small>
@@ -297,7 +294,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
               <span>Total</span>
               <strong>{money(sellTotal)}</strong>
             </div>
-            <p className="q-stock-note">Recorded as income in Financials{sell.paid === "later" ? " and listed as money to collect" : ""}.</p>
+            <p className="q-stock-note">Recorded as income in Money{sell.paid === "later" ? " and listed as money to collect" : ""}.</p>
             <div className="q-stock-buttons">
               <button type="button" className="q-secondary" onClick={() => setSell(null)}>
                 Cancel

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PlantingControls from "./PlantingControls";
+import { Actions } from "../../components/ui";
 import { planPlanting, plantingInput } from "./planting-plan";
 import { axisOf } from "./farm-model";
 import { rCM, getRegionalVarieties } from "../../lib/regional";
@@ -62,14 +63,14 @@ export default function PlantingLayoutEditor({ data, setData, zone, plot, onDone
         crops={crops}
         editId={plot.id}
       />
-      <div className="q-row">
-        <button className="q-button" disabled={!!plan.error} onClick={save}>
-          Save layout
-        </button>
+      <Actions>
         <button className="q-secondary" onClick={onDone}>
           Cancel
         </button>
-      </div>
+        <button className="q-button" disabled={!!plan.error} onClick={save}>
+          Save layout
+        </button>
+      </Actions>
     </div>
   );
 }

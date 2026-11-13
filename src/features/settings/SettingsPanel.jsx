@@ -108,7 +108,7 @@ export default function SettingsPanel({
       {onSignOut && email && <ChangePassword email={email} methods={methods} rowBtn={rowBtn} ico={ico} />}
 
       {/* My Space (Stage 4c) */}
-      <div style={sectionLabel}>My Space</div>
+      <div style={sectionLabel}>My space</div>
       <Card style={{ marginBottom: 18, padding: "14px 16px" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: C.t2, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Environment</div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -146,7 +146,7 @@ export default function SettingsPanel({
       <div style={sectionLabel}>Appearance</div>
       <button type="button" onClick={() => setDarkMode(!darkMode)} style={rowBtn}>
         <span style={ico}>{darkMode ? <Sun size={17} strokeWidth={1.8} /> : <Moon size={17} strokeWidth={1.8} />}</span>
-        {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        {darkMode ? "Switch to light mode" : "Switch to dark mode"}
       </button>
       <button type="button" role="switch" aria-checked={homeV2} onClick={() => setHomeV2(!homeV2)} style={rowBtn}>
         <span style={ico}><MapIcon size={17} strokeWidth={1.8} /></span>
@@ -163,7 +163,7 @@ export default function SettingsPanel({
       </button>
       {!pendingImport && (
         <label style={{ ...rowBtn, opacity: importBusy ? 0.6 : 1 }}>
-          <span style={ico}><Upload size={17} strokeWidth={1.8} /></span> {importBusy ? "Reading backup…" : "Import Backup"}
+          <span style={ico}><Upload size={17} strokeWidth={1.8} /></span> {importBusy ? "Reading backup…" : "Import backup"}
           <input type="file" accept=".json,application/json" disabled={importBusy} onChange={(e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) pickBackup(f); }} style={{ display: "none" }} />
         </label>
       )}

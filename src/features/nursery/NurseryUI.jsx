@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Overlay, Inp, Sel, Btn } from "../../components/ui";
+import { Overlay, Inp, Sel, Btn, Actions } from "../../components/ui";
 import { uid } from "../../lib/storage";
 import { todayLocalKey, appendLog, addDaysToLocalKey, localDateFromKey } from "../../lib/utils";
 import { applySeedlingStage } from "../../lib/seedling-stage";
@@ -407,14 +407,14 @@ export function StartSeedsForm({ data, setData, onClose, zoneId = "" }) {
       {plan && seasonNote(crop, plantOutDate, frost) && (
         <p className="q-warning">{seasonNote(crop, plantOutDate, frost)}</p>
       )}
-      <div className="q-row">
+      <Actions>
         <Btn v="secondary" onClick={onClose}>
           Cancel
         </Btn>
         <Btn onClick={save} dis={!plan}>
           Add to nursery
         </Btn>
-      </div>
+      </Actions>
     </Overlay>
   );
 }

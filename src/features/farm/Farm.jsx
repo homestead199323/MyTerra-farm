@@ -3,7 +3,7 @@ import BedDirectionPicker from "../quiet/BedDirectionPicker";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { C, F, SX } from "../../lib/theme";
-import { Btn, Card, Pill, Ring, Stat } from "../../components/ui";
+import { Btn, Card, Pill, Ring, Stat, PageHead } from "../../components/ui";
 import {bedRows, growthOf} from "../quiet/farm-model";
 import {ChevronDown, ChevronRight} from "lucide-react";
 import { NurseryList } from "../nursery/NurseryUI";
@@ -802,7 +802,7 @@ function Setup({data, setData:saveData, onPlantInZone, onBack}) {
               </div>
               <div style={{display:"flex",gap:12,alignItems:"flex-start",flexWrap:"wrap", marginBottom:4}}>
                 <div style={{position:"relative",flex:"1 1 200px",minWidth:180}} ref={cityRef}>
-                  <label style={{fontSize:11,fontWeight:600,color:C.t2,display:"block",marginBottom:3}}>Your City</label>
+                  <label style={{fontSize:11,fontWeight:600,color:C.t2,display:"block",marginBottom:3}}>Your town</label>
                   <input type="text" placeholder="Type your city (e.g. London, Berlin, Chicago...)" value={cityQuery}
                     onChange={function(e) {
                       const v = e.target.value;
@@ -974,10 +974,9 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
   }
   return (
     <div className={`page-enter mt-crops${dock&&sp?" has-detail":""}`} style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}>
-        <div><h2 className="pg-h2" style={SX.headerH2}>Your crops</h2><p className="pg-sub" style={SX.pageSubHead}>Track your crops from seed to harvest</p></div>
-        {_canPlant&&<Btn onClick={()=>setShowAdd(true)}>+ Plant Crop</Btn>}
-      </div>
+      <PageHead title="Crops" sub="From seed to harvest">
+        {_canPlant&&<Btn onClick={()=>setShowAdd(true)}>+ Plant a crop</Btn>}
+      </PageHead>
       {(_seedlings.length>0||data.zones.some(function(z){return z.type==="nursery";}))&&(
         <section style={{marginBottom:18}}>
           <button type="button" aria-expanded={openSec.seedlings??true} onClick={function(){setOpenSec({...openSec,seedlings:!(openSec.seedlings??true)});}}
@@ -999,13 +998,13 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
         return (
         <section key={sec.key} style={{marginBottom:18}}>
           <button type="button" aria-expanded={open} onClick={function(){setOpenSec({...openSec,[sec.key]:!open});}}
-            style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,width:"100%",padding:"8px 2px",margin:"0 0 6px",background:"none",border:0,borderBottom:`1px solid ${C.bdr}`,cursor:"pointer",color:C.text,textAlign:"left"}}>
+            style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"2px 10px",width:"100%",padding:"8px 2px",margin:"0 0 6px",background:"none",border:0,borderBottom:`1px solid ${C.bdr}`,cursor:"pointer",color:C.text,textAlign:"left"}}>
             <span style={{display:"flex",alignItems:"center",gap:8}}>
               {open?<ChevronDown size={18}/>:<ChevronRight size={18}/>}
-              <span style={{fontSize:17,fontWeight:650}}>{sec.title}</span>
+              <span style={{fontSize:17,fontWeight:650,whiteSpace:"nowrap"}}>{sec.title}</span>
               {sec.ready>0&&<Pill c={C.orange} bg={C.harvestBg}>{sec.ready} ready</Pill>}
             </span>
-            <small style={{color:C.t2,fontSize:12}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${fmtWeight(sec.kg)}`:""}</small>
+            <small style={{color:C.t2,fontSize:12,marginLeft:"auto",whiteSpace:"nowrap"}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${fmtWeight(sec.kg)}`:""}</small>
           </button>
           {open&&<div style={{display:"grid",gap:8}}>{shown.map(function(p){return renderCrop(p,sec.unit);})}</div>}
           {open&&sec.plots.length>_PREVIEW+1&&(

@@ -21,6 +21,13 @@ export default function AIAssistant({data, lift }) {
   }, []);
   // the phone tab bar's "Ask" item opens the chat
   useEffect(() => { const openIt = () => setOpen(true); window.addEventListener("mt-assistant", openIt); return () => window.removeEventListener("mt-assistant", openIt); }, []);
+  // Escape closes the chat, like every other popup (the input's own Escape only hides suggestions).
+  useEffect(() => {
+    if (!open) return undefined;
+    const key = (e) => { if (e.key === "Escape" && !e.defaultPrevented && !(e.target && e.target.tagName === "INPUT" && e.target.value)) setOpen(false); };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [open]);
   const [msgs, setMsgs] = useState([
     {role:"assistant", content:`Hi! I'm your farm assistant. I know everything about the ${rCR(data.region).length} crops and ${Object.keys(LDB).length} animals in your database — and I work offline!\n\nStart typing a crop or animal name and pick from the dropdown, or tap a quick prompt below.`}
   ]);
@@ -221,7 +228,7 @@ export default function AIAssistant({data, lift }) {
                 <div style={{fontSize:15,fontWeight:700,color:"#fff",fontFamily:F.head}}>Farm Assistant</div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>Offline · {rCR(data.region).length} crops · {Object.keys(LDB).length} animals</div>
               </div>
-              <button onClick={()=>setOpen(false)} style={{marginLeft:"auto",background:"rgba(255,255,255,.2)",border:"none",borderRadius:16,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button type="button" aria-label="Close the assistant" onClick={()=>setOpen(false)} style={{marginLeft:"auto",background:"rgba(255,255,255,.2)",border:"none",borderRadius:22,width:44,height:44,cursor:"pointer",color:"#fff",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
           </div>
 

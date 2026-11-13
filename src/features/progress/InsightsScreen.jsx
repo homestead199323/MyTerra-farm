@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Download, Lock } from "lucide-react";
 import { C, SX } from "../../lib/theme";
-import { Btn, Card } from "../../components/ui";
+import { Btn, Card, PageHead } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 import AnimalArt from "../quiet/AnimalArt";
 import { cropByName } from "../../lib/plan";
@@ -72,12 +72,7 @@ export default function InsightsScreen({ data, setPage, locked, onUpgrade }) {
 
   return (
     <div className="page-enter mt-progress" style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}>
-        <div>
-          <h2 className="pg-h2" style={SX.headerH2}>Insights</h2>
-          <p className="pg-sub" style={SX.pageSubHead}>What your space really gives, and what it costs</p>
-        </div>
-      </div>
+      <PageHead title="Insights" sub="What your space really gives, and what it costs"/>
 
       {locked ? <Locked onUpgrade={onUpgrade} /> : (
         <>

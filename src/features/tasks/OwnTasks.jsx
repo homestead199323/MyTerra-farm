@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Overlay, Inp, Sel, Btn } from "../../components/ui";
+import { Overlay, Inp, Sel, Btn, Actions } from "../../components/ui";
 import { C } from "../../lib/theme";
 import { uid } from "../../lib/storage";
 import { todayLocalKey } from "../../lib/utils";
@@ -76,11 +76,11 @@ export function OwnTaskForm({ data, setData, initial, onClose }) {
       <Inp label="Note (optional)" value={f.note} maxLength={300} placeholder="Anything to remember" onChange={(e) => setF({ ...f, note: e.target.value })} />
       <p style={{ fontSize: 12, color: C.t2, margin: "-4px 0 12px" }}>{f.start ? repeatText({ ...f, every: Number(f.every) }) : ""}{f.zoneId ? " · shows on your map and walk" : ""}</p>
       {err && <p role="alert" style={{ color: C.red, fontSize: 13, margin: "0 0 10px" }}>{err}</p>}
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-        {editing && <Btn v="danger" sm onClick={function () { setData(deleteOwnTask(data, f.id)); onClose(); }}>Delete</Btn>}
-        <Btn v="secondary" sm onClick={onClose}>Cancel</Btn>
-        <Btn sm onClick={save}>{editing ? "Save" : "Add job"}</Btn>
-      </div>
+      <Actions>
+        {editing && <button type="button" className="mt-danger-link" onClick={function () { setData(deleteOwnTask(data, f.id)); onClose(); }}>Delete</button>}
+        <Btn v="secondary" onClick={onClose}>Cancel</Btn>
+        <Btn onClick={save}>{editing ? "Save" : "Add job"}</Btn>
+      </Actions>
     </Overlay>
   );
 }

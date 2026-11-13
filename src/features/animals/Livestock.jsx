@@ -9,7 +9,7 @@ import { toast } from "../../lib/toast";
 import { LDB, POULTRY_SPECIES } from "../../data/livestock";
 import { keepsAnimals } from "../../lib/suggest";
 import { BREEDS } from "../../data/breeds";
-import { Btn, Card, Inp, Sel, Overlay } from "../../components/ui";
+import { Btn, Card, Inp, Sel, Overlay, PageHead, Actions } from "../../components/ui";
 import AnimalOverlay from "./AnimalOverlay";
 import { currencySymbol } from "../../lib/money";
 import AnimalArt from "../quiet/AnimalArt";
@@ -75,7 +75,7 @@ function Livestock({data, setData, pageData, clearPageData, setPage}) {
 
   return (
     <div className="page-enter mt-animals" style={SX.mw800}>
-      <div className="pg-head" style={SX.pageHead}><div><h2 className="pg-h2" style={SX.headerH2}>Your animals</h2><p className="pg-sub" style={SX.pageSubHead}>Manage your animals, collect produce, track care</p></div>{keepsAnimals(data)&&<Btn onClick={()=>setShowAdd(true)}>+ Add</Btn>}</div>
+      <PageHead title="Animals" sub="Care, produce and where they live">{keepsAnimals(data)&&<Btn onClick={()=>setShowAdd(true)}>+ Add an animal</Btn>}</PageHead>
       <div style={{marginTop:16,display:"grid",gap:8}}>{data.livestock.animals.length===0?<Card style={{textAlign:"center",padding:"56px 24px",background:C.grdLight}}><div style={SX.s15Bold}>{keepsAnimals(data)?"No animals yet":"No room for animals on a balcony"}</div><div style={{color:C.t2,marginTop:6,fontSize:12.5}}>{keepsAnimals(data)?"Add chickens, goats, or any livestock to track them":"Animals need ground. If your space becomes a garden or a farm, change it in Settings and they show up here."}</div></Card>:groups.map(function(g){const open=openSec[g.key]??true;return (
         <section key={g.key} style={{marginBottom:10}}>
           <button type="button" aria-expanded={open} onClick={function(){setOpenSec({...openSec,[g.key]:!open});}}
@@ -94,7 +94,7 @@ function Livestock({data, setData, pageData, clearPageData, setPage}) {
           </button>
           <div className="q-animal-actions">
             <select aria-label={`Area for ${a.name||a.type}`} value={a.zone||""} onChange={e=>setData({...data,livestock:{...data.livestock,animals:data.livestock.animals.map(x=>x.id===a.id?{...x,zone:e.target.value}:x)}})}><option value="">Automatic area</option>{data.zones.filter(z=>['pasture','barn','coop','beehive'].includes(z.type)).map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select>
-            {db?.prod.includes("Eggs")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Eggs"});setCollectQty(String(Math.round(a.count*(db.out?.Eggs?.p||0.7))))}}>Collect Eggs</Btn>}
+            {db?.prod.includes("Eggs")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Eggs"});setCollectQty(String(Math.round(a.count*(db.out?.Eggs?.p||0.7))))}}>Collect eggs</Btn>}
             {db?.prod.includes("Milk")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Milk"});setCollectQty(String(Math.round(a.count*(db.out?.Milk?.p||2.5)*10)/10))}}>Milk</Btn>}
             {db?.prod.includes("Honey")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Honey"});setCollectQty(String(Math.round(a.count*0.5*10)/10))}}>Honey</Btn>}
             {db?.prod.includes("Wool")&&<Btn sm v="secondary" onClick={()=>{setShowCollect({animal:a,produce:"Wool"});setCollectQty(String(a.count*3))}}>Wool</Btn>}
@@ -113,10 +113,10 @@ function Livestock({data, setData, pageData, clearPageData, setPage}) {
         </div>
         <Inp label={`Quantity (${showCollect.produce==="Eggs"?"eggs":showCollect.produce==="Milk"?"litres":"kg"})`} type="number" min="0" step={showCollect.produce==="Eggs"?"1":"0.1"} value={collectQty} onChange={e=>setCollectQty(e.target.value)} />
         <div style={{fontSize:12,color:C.t2,marginBottom:12}}>Suggested daily: ~{LDB[showCollect.animal.type]?.out[showCollect.produce]?.p||0} {LDB[showCollect.animal.type]?.out[showCollect.produce]?.u||""} per animal</div>
-        <div style={SX.btnRowEnd}>
+        <Actions>
           <Btn v="secondary" onClick={()=>setShowCollect(null)}>Cancel</Btn>
-          <Btn v="success" dis={!(+collectQty>0)&&showCollect.produce!=="Eggs"&&showCollect.produce!=="Milk"} onClick={()=>doCollect(showCollect.animal,showCollect.produce,+collectQty||0)}>Collect → Pantry</Btn>
-        </div>
+          <Btn v="success" dis={!(+collectQty>0)&&showCollect.produce!=="Eggs"&&showCollect.produce!=="Milk"} onClick={()=>doCollect(showCollect.animal,showCollect.produce,+collectQty||0)}>Add to Pantry</Btn>
+        </Actions>
       </Overlay>}
 
       {/* Care Guide */}
@@ -127,24 +127,24 @@ function Livestock({data, setData, pageData, clearPageData, setPage}) {
         <Inp label={`Qty (max ${showK.count})`} type="number" min="1" max={showK.count} value={kQ} onChange={e=>setKQ(e.target.value)}/>
         {!killQ(showK)&&<p role="alert" style={{fontSize:12,color:C.red,margin:"-6px 0 10px"}}>Enter a whole number from 1 to {showK.count}.</p>}
         {LDB[showK.type]?.out.Meat&&killQ(showK)>0&&<div style={{fontSize:13,marginBottom:12}}>Estimated: <strong>{Math.round(LDB[showK.type].out.Meat.p*killQ(showK)*10)/10}kg</strong> meat</div>}
-        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowK(null)}>Cancel</Btn><Btn v="danger" disabled={!killQ(showK)} onClick={()=>kill(showK)}>Process</Btn></div>
+        <Actions><Btn v="secondary" onClick={()=>setShowK(null)}>Cancel</Btn><Btn v="danger" disabled={!killQ(showK)} onClick={()=>kill(showK)}>Process</Btn></Actions>
       </Overlay>}
 
       {/* Add Animal Modal — with breed dropdown */}
       {showAdd&&<Overlay title="Add animal" onClose={()=>setShowAdd(false)}>
-        <Sel label="Animal Type" value={form.type} onChange={e=>setForm({...form,type:e.target.value,breed:""})} options={Object.entries(LDB).map(([k,v])=>({value:k,label:`${v.e} ${k} — ${v.prod.join(", ")}`}))}/>
+        <Sel label="Animal" value={form.type} onChange={e=>setForm({...form,type:e.target.value,breed:""})} options={Object.entries(LDB).map(([k,v])=>({value:k,label:`${v.e} ${k} — ${v.prod.join(", ")}`}))}/>
         {breedOptions.length > 0 && (
           <Sel label="Breed" value={form.breed} onChange={e=>setForm({...form,breed:e.target.value})} options={[{value:"",label:"— Select breed —"},...breedOptions.map(b=>({value:b.name,label:b.name}))]}/>
         )}
         {selectedBreed && <Card style={{marginBottom:12,background:C.tGreen,padding:12}}><div style={SX.lblGreen}>🧬 {selectedBreed.name}</div><div style={{fontSize:12,marginTop:4}}>{selectedBreed.note}</div></Card>}
         <Sel label="Area" value={form.zone||""} onChange={e=>setForm({...form,zone:e.target.value})} options={[{value:"",label:"Automatic area"},...data.zones.filter(z=>["barn","coop","pasture","beehive"].includes(z.type)).map(z=>({value:z.id,label:z.name}))]}/>
-        <Inp label="Name / Label" placeholder="e.g. Layer Flock A" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+        <Inp label="Name (optional)" placeholder="e.g. Layer Flock A" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
         <div style={SX.grid2}>
           <Inp label="Count" type="number" min="1" value={form.count} onChange={e=>setForm({...form,count:e.target.value})}/>
           <Inp label={`Cost (${currencySymbol(data).trim()})`} type="number" value={form.cost} onChange={e=>setForm({...form,cost:e.target.value})}/>
         </div>
         {addErr&&form.count!==""&&<p role="alert" style={{fontSize:12,color:C.red,margin:"-4px 0 10px"}}>{addErr}</p>}
-        <div style={SX.btnRowEnd}><Btn v="secondary" onClick={()=>setShowAdd(false)}>Cancel</Btn><Btn onClick={add} disabled={!!addErr}>Add</Btn></div>
+        <Actions><Btn v="secondary" onClick={()=>setShowAdd(false)}>Cancel</Btn><Btn onClick={add} disabled={!!addErr}>Add animal</Btn></Actions>
       </Overlay>}
     </div>
   );

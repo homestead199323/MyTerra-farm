@@ -77,7 +77,7 @@ export function buildTaskPlan(data, opts = {}) {
 
     // Harvest ready
     if (dSince >= days) {
-      tasks.push({ key: `plot-${p.id}-harvest`, pri: 0, type: "harvest", emoji: crop.emoji, cropName: p.crop, title: `Harvest ${p.name || p.crop}`, desc: `Ready! Est. yield available.`, loc, plotId: p.id, daysOut: 0 });
+      tasks.push({ key: `plot-${p.id}-harvest`, pri: 0, type: "harvest", emoji: crop.emoji, cropName: p.crop, title: `Harvest ${p.name || p.crop}`, desc: p.expectedYieldKg > 0 ? `Ready to pick · about ${p.expectedYieldKg >= 1 ? Math.round(p.expectedYieldKg * 10) / 10 + " kg" : Math.round(p.expectedYieldKg * 1000) + " g"}` : "Ready to pick", loc, plotId: p.id, daysOut: 0 });
     }
 
     // Steps due — tracked via p.steps[i].done (persistent), NOT completions map
