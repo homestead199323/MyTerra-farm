@@ -61,8 +61,8 @@ function Manuals({data}) {
         </div>
         {/* 6.7.1 — visual card grid (replaces admin-style rows) */}
         <div className="lr-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))",gap:10,marginTop:8}}>{fil.map(c=>(
-          <div key={c.name} {...press(()=>setSel(c))} style={{background:C.card,borderRadius:C.r,boxShadow:C.sh,cursor:"pointer",padding:"14px 12px 12px",borderTop:`4px solid ${c.color}`,display:"flex",flexDirection:"column",gap:6}}>
-            <div style={{display:"flex",justifyContent:"center"}}><FarmIcon name={c.name} emoji={c.emoji} size={38}/></div>
+          <div key={c.name} {...press(()=>setSel(c))} style={{background:C.card,borderRadius:C.r,boxShadow:C.sh,cursor:"pointer",padding:"10px 10px 12px",borderTop:`4px solid ${c.color}`,display:"flex",flexDirection:"column",gap:6}}>
+            <div className="lr-art" style={{display:"flex",justifyContent:"center",alignItems:"center",height:"clamp(96px, 9vw, 112px)"}}><FarmIcon name={c.name} emoji={c.emoji} size={96} harvest style={{width:"100%",height:"100%",fontSize:64}}/></div>
             <div style={{fontSize:13,fontWeight:700,textAlign:"center",letterSpacing:"-0.01em"}}>{c.name}</div>
             <div style={{display:"flex",justifyContent:"center"}}>
               <Pill sm c={c.color} bg={c.color+"22"}>{c.cat}</Pill>
@@ -73,7 +73,7 @@ function Manuals({data}) {
           </div>
         ))}</div>
         {fil.length===0 && <Card style={{textAlign:"center",padding:"40px 24px",marginTop:12}}><div style={SX.s15Bold}>No crops match "{s.trim()}"</div><div style={{color:C.t2,marginTop:4,fontSize:12}}>Try a different name or browse the full list</div></Card>}
-        {sel&&<Overlay ariaLabel={sel.name} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={sel.name} emoji={sel.emoji} size={24}/>{sel.name}</span>} onClose={()=>setSel(null)} wide>
+        {sel&&<Overlay ariaLabel={sel.name} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={sel.name} emoji={sel.emoji} size={32} harvest/>{sel.name}</span>} onClose={()=>setSel(null)} wide>
           {sel.steps?.length>0&&<div style={SX.mb12}><div style={{fontSize:12,fontWeight:700,color:C.green,marginBottom:8}}>How to grow it</div>{sel.steps.map((s,i)=><Card key={i} style={{marginBottom:4,padding:10}}><div style={{display:"flex",justifyContent:"space-between"}}><strong style={SX.s13}>{i+1}. {s.l}</strong><span style={{fontSize:10,color:C.t2,fontFamily:F.mono}}>{s.d<0?`${-s.d} days before`:s.d===0?"Start":`Day ${s.d}`}</span></div><div style={SX.t2_12mt2}>{s.t}</div>{guideStepNote(sel.steps, i)&&<div style={{...SX.t2_12mt2,fontStyle:"italic"}}>{guideStepNote(sel.steps, i)}</div>}</Card>)}</div>}
           <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}><Pill c="#fff" bg={sel.color}>{sel.cat}</Pill><Pill>☀ {sel.sun}</Pill><Pill>💧 {sel.waterFreq}</Pill>{sel?.pH ? <Pill>pH {sel.pH}</Pill> : null}</div>
           <div style={{marginBottom:16}}><div style={{fontSize:11,fontFamily:F.mono,color:C.t2,marginBottom:4}}>CALENDAR</div><div style={{display:"flex",gap:2}}>{mn.map((m,mi)=>{const iS=parseSowMonths(sel.sowIn).includes(mi);const iH=parseHarvestMonths(sel.harvest).includes(mi);return <div key={m} style={{flex:1,textAlign:"center"}}><div style={{fontSize:8,color:C.t2,fontFamily:F.mono}}>{m}</div><div style={{height:14,borderRadius:3,background:iS&&iH?`linear-gradient(135deg,${C.green} 50%,${C.orange} 50%)`:iS?C.green:iH?C.orange:C.bdr,opacity:(iS||iH)?1:.25}}/></div>})}</div><div style={{display:"flex",gap:12,marginTop:4}}><span style={{fontSize:10,color:C.green}}>■ Sow</span><span style={{fontSize:10,color:C.orange}}>■ Harvest</span></div></div>
