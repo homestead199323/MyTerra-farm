@@ -93,13 +93,11 @@ function WalkStop({ stop, session, data, setData, onAdvance, last }) {
     }
   }
   const amountTypes = ["harvest", "eggs", "milk"];
-  // Routine care you do on every walk (feed, water, collect, clean…) starts ticked: finishing the
-  // stop completes it. Harvests, care steps and seedling moves change your records, so they stay a tap.
+  // Nothing starts ticked: a job is only recorded when you tick it (review 2026-11-12).
+  // Routine care (feed, water, collect, clean…) can be ticked in one go with "Mark all done".
   const doneToday = data.completions?.[todayLocalKey()] || [];
-  const defaultChecked = stop.tasks
-    .filter((t) => ROUTINE.has(t.type) && !doneToday.includes(t.key) && !taskAction(t, data).open)
-    .map((t) => t.key);
-  const checked = draft.checked ?? defaultChecked;
+  const routineOpen = stop.tasks.filter((t) => ROUTINE.has(t.type) && !doneToday.includes(t.key) && !taskAction(t, data).open);
+  const checked = draft.checked ?? [];
   const amountOf = (t) => {
     if (draft.amounts?.[t.key] != null) return draft.amounts[t.key];
     const a = amountTypes.includes(t.type) && taskAction(t, data).amount;
@@ -115,6 +113,14 @@ function WalkStop({ stop, session, data, setData, onAdvance, last }) {
           ? { ...draft.amounts, [t.key]: String(amount.value) }
           : draft.amounts,
     });
+  }
+  function markAll() {
+    const amounts = { ...draft.amounts };
+    routineOpen.forEach((t) => {
+      const amount = taskAction(t, data).amount;
+      if (amount && amounts[t.key] == null) amounts[t.key] = String(amount.value);
+    });
+    update({ checked: [...new Set([...checked, ...routineOpen.map((t) => t.key)])], amounts });
   }
   function nudge(t, dir) {
     const step = taskAction(t, data).amount?.step || 1;
@@ -250,6 +256,11 @@ function WalkStop({ stop, session, data, setData, onAdvance, last }) {
               );
             })}
           </ul>
+        )}
+        {routineOpen.length > 1 && routineOpen.some((t) => !checked.includes(t.key)) && (
+          <button type="button" className="q-text-button q-walk-markall" onClick={markAll}>
+            <Check size={15} /> Mark {routineOpen.every((t) => !checked.includes(t.key)) ? (routineOpen.length === 2 ? "both" : `all ${routineOpen.length}`) : "the rest"} done
+          </button>
         )}
         <div className="q-walk-quick">
           <button type="button" className="q-secondary" onClick={() => setShowNote(!showNote)} aria-expanded={showNote}>
@@ -439,9 +450,11 @@ export default function WalkOverlay({ tasks, data, setData, onClose }) {
     if (lock.current || !stop) return;
     lock.current = true;
     let next = data;
+    let recorded = 0;
     const draft = { ...(session.draft || {}), ...(override || {}), status: status || session.draft?.status };
     if (save) {
       const selected = stop.tasks.filter((t) => (draft.checked || []).includes(t.key));
+      recorded = selected.length;
       selected.forEach((t) => {
         next = applyTaskCompletion(next, t, draft.amounts?.[t.key]);
       });
@@ -477,6 +490,7 @@ export default function WalkOverlay({ tasks, data, setData, onClose }) {
       status: end ? "complete" : "active",
       draft: {},
       visited: save ? [...session.visited, stop.id] : session.visited,
+      jobs: (session.jobs || 0) + recorded,
       deferred: save ? session.deferred : [...session.deferred, stop.id],
       finishedAt: end ? new Date().toISOString() : null,
     };
@@ -618,7 +632,7 @@ export default function WalkOverlay({ tasks, data, setData, onClose }) {
             </span>
             <h2>Walk done</h2>
             <p>
-              {session.visited.length} checked
+              {(session.jobs || 0) === 1 ? "1 job" : `${session.jobs || 0} jobs`} recorded in {session.visited.length === 1 ? "1 area" : `${session.visited.length} areas`}
               {session.deferred.length ? ` · ${session.deferred.length} skipped` : ""}
             </p>
             <button

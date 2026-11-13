@@ -86,3 +86,4 @@
 .q-walk-map .q-walk-map-live{overflow:hidden;border-radius:18px}
 .q-walk-map .q-walk-map-live{position:relative}
 .q-walk-next{position:absolute;left:14px;bottom:14px;z-index:2;max-width:calc(100% - 28px);padding:6px 12px;border-radius:999px;background:rgba(20,30,24,.78);color:#fff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.q-walk-markall{display:inline-flex;align-items:center;gap:6px;margin:4px 0 10px;min-height:40px}
