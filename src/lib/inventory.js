@@ -34,6 +34,19 @@ export function normalizeUnit(unit, qty = 0, name = "") {
 
 export const productKey = (item) => `${item.name}|${item.unit}`;
 
+// Storage notes are copied onto stock when it is added. Notes we have since withdrawn as unsafe
+// (water-glassing eggs, months-long oil storage) are swapped for the current advice when shown.
+const RETIRED_NOTES = {
+  "Unwashed 2-3wk. Water glass 12+mo.": "Fridge: about 4 weeks. Freeze cracked: 12 months.",
+  "Fresh 3-5 days. Grill+freeze. Preserve in oil.": "Fresh 3-5 days. Grill+freeze. In oil: fridge, 4 days max.",
+  "Fresh 1-2wk. Hearts in oil 3-6mo. Freeze hearts. Italian: preserved in brine.": "Fresh 1-2wk. Blanch+freeze hearts. In oil: fridge, 4 days max.",
+};
+export function currentStorageNote(note) {
+  if (!note) return "";
+  if (RETIRED_NOTES[note]) return RETIRED_NOTES[note];
+  return /water.?glass/i.test(note) ? "" : note;
+}
+
 /** One line per product: total quantity, lots oldest first. */
 export function stockLines(items) {
   const lines = new Map();
@@ -44,7 +57,7 @@ export function stockLines(items) {
     const line = lines.get(key);
     line.qty = r3(line.qty + (Number(it.qty) || 0));
     line.lots.push(it);
-    if (!line.storageNote && it.storageNote) line.storageNote = it.storageNote;
+    if (!line.storageNote && it.storageNote) line.storageNote = currentStorageNote(it.storageNote);
   });
   lines.forEach((l) => l.lots.sort((a, b) => String(a.addedDate || "").localeCompare(String(b.addedDate || ""))));
   return [...lines.values()];

@@ -179,7 +179,7 @@ export const CROPS = [
     pests:[{n:"Aphids",t:"Aphids: soap spray, check shoot tips and leaf undersides"},{n:"Glasshouse whitefly",t:"Whitefly: yellow sticky traps, Encarsia formosa parasitic wasp"},{n:"Spider mites",t:"Spider mites: mist undersides, neem"},{n:"Verticillium wilt",t:"Verticillium: rotate 4yr, resistant rootstocks, solarize soil"}],
     stages:["🟤","🌱","🌿","🍃","🌸","🍆"],
     steps:[{d:0,l:"Transplant",t:"Soil 20°C+. 50-60cm apart. Stake."},{d:14,l:"Mulch+feed",t:"Compost tea. Thick mulch."},{d:45,l:"Support",t:"Stake heavy fruit."},{d:65,l:"Harvest",t:"Glossy skin = ready. Dull = overripe."}],
-    storage:"Fresh 3-5 days. Grill+freeze. Preserve in oil."
+    storage:"Fresh 3-5 days. Grill+freeze. In oil: fridge, 4 days max."
   },
   { name:"Watermelon",pH:"6.0-7.0",fert:"NPK 10-10-10 at planting. High-K at fruit set. Stop nitrogen after fruit forms.",emoji:"🍉",cat:"Vegetable",days:90,sowIn:"May-Jun",harvest:"Aug-Sep",spacing:100,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Greenhouse or polytunnel essential. Small/icebox varieties work best. Heavy water during fruit swell.",color:"#27ae60",yld:2.5,
     pests:[{n:"Fusarium wilt",t:"Fusarium: rotate 5+ years, resistant varieties, grafted seedlings"},{n:"Aphids",t:"Aphids: soap spray"},{n:"Powdery mildew",t:"Powdery mildew: milk spray"}],
@@ -417,7 +417,7 @@ export const CROPS = [
     pests:[{n:"Aphids (blackfly)",t:"Blackfly: squash colonies on stems and buds, soap spray, encourage ladybirds"},{n:"Slugs on young plants",t:"Slugs: beer traps, copper. Only young plants"},{n:"Botrytis in wet springs",t:"Botrytis: spacing, don't overhead water"}],
     stages:["🌱","🌿","🌿","🌿","🌿","🌿"],
     steps:[{d:0,l:"Plant offsets",t:"Root divisions from established plant. 90cm apart. Or seed Imperial Star for first-year crop."},{d:30,l:"Establish",t:"Water weekly first season. Mulch heavily."},{d:365,l:"Year 2+",t:"Harvest globes when scales are tight. Cut 10cm below head. Remove dead stalks in autumn. Divide every 3-4yr."}],
-    storage:"Fresh 1-2wk. Hearts in oil 3-6mo. Freeze hearts. Italian: preserved in brine."
+    storage:"Fresh 1-2wk. Blanch+freeze hearts. In oil: fridge, 4 days max."
   },
   { name:"Rhubarb",pH:"6.0-7.0",fert:"Annual heavy compost mulch in autumn. NPK 10-10-10 in spring. Perennial — feed the crown.",emoji:"🟥",cat:"Vegetable",days:365,sowIn:"Nov-Mar",harvest:"Mar-Jul",spacing:90,sun:"Full-Partial",waterFreq:"Every 5-7 days",waterNote:"Loves cool wet UK climate. Water deeply during dry spring spells. Mulch heavily annually.",color:"#c0392b",yld:1.5,
     pests:[{n:"Crown rot (overwatering/poor drainage)",t:"Crown rot: improve drainage. Never waterlog. Raised bed ideal"},{n:"Slugs on young shoots",t:"Slugs: copper rings around crown in spring"}],
