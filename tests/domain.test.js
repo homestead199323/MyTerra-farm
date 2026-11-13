@@ -1035,3 +1035,4 @@ test('calendar: tips come from the frost dates and the crop data',()=>{
   const nx=nextMonthPreview(farm,0,'2026-11-11');assert.equal(nx.name,'February');assert.equal(nx.year,2027);assert.ok(nx.indoors>0);assert.match(nx.tip,/seed compost/);
 });
 import './review-fixes.test.js';
+import './plain-words.test.js';

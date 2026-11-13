@@ -10,6 +10,7 @@
    MARKER: GROVE_3D_ENGINE_V4_TOY
    ═══════════════════════════════════════════ */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { guideStepNote } from "../../lib/plain-words";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -2574,7 +2575,7 @@ export default function Grove3D(props) {
               {pickInfo.c.fert && <section className="g3-crop-sec"><h4>Feeding</h4><p>{pickInfo.c.fert}</p></section>}
               {(pickInfo.c.steps || []).length > 0 && (
                 <section className="g3-crop-sec"><h4>What to do, and when</h4>
-                  <ol className="g3-crop-steps">{pickInfo.c.steps.map((s, i) => <li key={i} className={i === pickInfo.step ? "is-now" : ""}><b>Day {s.d}</b><span><strong>{s.l}</strong>{s.t}</span></li>)}</ol>
+                  <ol className="g3-crop-steps">{pickInfo.c.steps.map((s, i) => <li key={i} className={i === pickInfo.step ? "is-now" : ""}><b>Day {s.d}</b><span><strong>{s.l}</strong>{s.t}{guideStepNote(pickInfo.c.steps, i) && <em> {guideStepNote(pickInfo.c.steps, i)}</em>}</span></li>)}</ol>
                 </section>
               )}
               {(pickInfo.friends.good.length > 0 || pickInfo.friends.bad.length > 0) && (

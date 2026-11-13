@@ -5,6 +5,7 @@ import { nurseryTasks } from "../features/nursery/nursery-model.js";
 import { animalZone as zoneOfAnimal } from "../features/quiet/farm-model.js";
 import { applyWeather, isWeatherDone } from "./weather-alerts.js";
 import { ownTasks } from "./own-tasks.js";
+import { stepText, waterJobText } from "./plain-words.js";
 import { LDB, POULTRY_SPECIES, HOOFED_SPECIES, GRAZER_SPECIES, animalPlural } from "../data/livestock";
 
 /**
@@ -66,7 +67,7 @@ export function buildTaskPlan(data, opts = {}) {
     if (waiting) {
       [...prepStepIdxs(p.steps), firstStepIdx(p.steps)].forEach((i) => {
         const s = p.steps[i];
-        tasks.push({ key: `plot-${p.id}-step-${i}`, pri: 1, type: "step", emoji: crop.emoji, cropName: p.crop, title: `${p.name || p.crop}: ${s.l}`, desc: s.t, loc, plotId: p.id, stepIdx: i, daysOut: 0, sowing: true });
+        tasks.push({ key: `plot-${p.id}-step-${i}`, pri: 1, type: "step", emoji: crop.emoji, cropName: p.crop, title: `${p.name || p.crop}: ${s.l}`, desc: stepText(s), loc, plotId: p.id, stepIdx: i, daysOut: 0, sowing: true });
       });
       return;
     }
@@ -84,9 +85,9 @@ export function buildTaskPlan(data, opts = {}) {
       if (s.done) return;
       const due = dSince - s.d;
       if (due >= 0 && due <= 3) {
-        tasks.push({ key: `plot-${p.id}-step-${i}`, pri: 1, type: "step", emoji: crop.emoji, cropName: p.crop, title: `${p.name || p.crop}: ${s.l}`, desc: s.t, loc, plotId: p.id, stepIdx: i, daysOut: 0 });
+        tasks.push({ key: `plot-${p.id}-step-${i}`, pri: 1, type: "step", emoji: crop.emoji, cropName: p.crop, title: `${p.name || p.crop}: ${s.l}`, desc: stepText(s), loc, plotId: p.id, stepIdx: i, daysOut: 0 });
       } else if (due >= -3 && due < 0) {
-        tasks.push({ key: `plot-${p.id}-step-${i}`, pri: 3, type: "upcoming", emoji: crop.emoji, cropName: p.crop, title: `${p.name || p.crop}: ${s.l}`, desc: s.t, loc, plotId: p.id, stepIdx: i, daysOut: Math.abs(due) });
+        tasks.push({ key: `plot-${p.id}-step-${i}`, pri: 3, type: "upcoming", emoji: crop.emoji, cropName: p.crop, title: `${p.name || p.crop}: ${s.l}`, desc: stepText(s), loc, plotId: p.id, stepIdx: i, daysOut: Math.abs(due) });
       }
     });
 
@@ -94,7 +95,7 @@ export function buildTaskPlan(data, opts = {}) {
     if (crop.waterFreq) {
       const m = crop.waterFreq.match(/(\d+)/);
       if (m && dSince > 0 && dSince % parseInt(m[1]) === 0) {
-        tasks.push({ key: `plot-${p.id}-water`, pri: 2, type: "water", emoji: "💧", title: `Water ${p.name || p.crop}`, desc: crop.waterNote, loc, plotId: p.id, daysOut: 0, routine: true });
+        tasks.push({ key: `plot-${p.id}-water`, pri: 2, type: "water", emoji: "💧", title: `Water ${p.name || p.crop}`, desc: waterJobText(crop), loc, plotId: p.id, daysOut: 0, routine: true });
       }
     }
 

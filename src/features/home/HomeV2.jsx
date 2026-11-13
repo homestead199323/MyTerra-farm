@@ -245,7 +245,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         </button>}
       </div>}
 
-      {!wide && !quiet && upNext && !modal && !walk && !celebrate && <button type="button" className="hv2-next" onClick={() => setPanel(true)}>
+      {!wide && !quiet && upNext && !modal && !walk && !celebrate && <button type="button" className="hv2-next" onClick={() => (upNext.when ? setPanel(true) : openJob(upNext.t))}>
         <small>{upNext.when ? `Next ${upNext.when}` : "Next job"}</small>
         <strong>{upNext.t.title}</strong>
         {upNext.t.loc && <span>{upNext.t.loc}</span>}

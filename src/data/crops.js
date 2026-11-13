@@ -52,7 +52,7 @@ export const CROPS = [
   { name:"Carrot",pH:"6.0-6.8",fert:"Low nitrogen (causes forking). NPK 5-10-10 worked in before sowing. No fresh manure.",emoji:"🥕",cat:"Vegetable",days:75,sowIn:"Mar-Jun, Aug-Sep",harvest:"Jun-Oct",spacing:4,sun:"Full",waterFreq:"Every 2-3 days",waterNote:"Succession sow every 2-3 weeks. Maincrop stores well in clamp or sand.",color:"#e67e22",yld:0.025,
     pests:[{n:"Carrot fly (Psila rosae)",t:"Carrot fly: companion plant with onion, 60cm barrier around bed (fly flies low), fleece"},{n:"Aphids",t:"Aphids: soap spray"},{n:"Nematodes",t:"Nematodes: rotate, marigold interplant"}],
     stages:["🟤","🌱","🌿","🌿","🥕","🥕"],
-    steps:[{d:0,l:"Sow thin",t:"1cm deep, loose stone-free soil."},{d:14,l:"Germinate",t:"14-21 days. Keep moist."},{d:28,l:"Thin",t:"3-5cm. Evening."},{d:70,l:"Harvest",t:"Can leave in ground."}],
+    steps:[{d:0,l:"Sow thin",t:"1cm deep, loose stone-free soil."},{d:14,l:"Germinate",t:"14-21 days. Keep moist."},{d:28,l:"Thin",t:"Leave 3-5cm between plants. Do it on a still evening: carrot fly finds the crop by the smell of bruised leaves."},{d:70,l:"Harvest",t:"Can leave in ground."}],
     storage:"Damp sand 4-6mo. Freeze blanched."
   },
   { name:"Spinach",pH:"6.5-7.5",fert:"Nitrogen-rich. NPK 20-10-10 or compost tea. Quick crop, light feeder overall.",emoji:"🥬",cat:"Vegetable",days:40,sowIn:"Mar-May, Aug-Oct",harvest:"Apr-Nov",spacing:12,sun:"Partial",waterFreq:"Every 2 days",waterNote:"Loves cool maritime climate. Less bolting than warmer regions. Succession sow.",color:"#196f3d",yld:0.06,
