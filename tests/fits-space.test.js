@@ -11,7 +11,20 @@ const garden = { profile: { environment: 'backyard' }, zones: [{ id: 'v', type: 
 test('fits: a balcony is never offered a tree, or a crop that needs open ground', () => {
   for (const name of ['Fig', 'Lemon', 'Olive', 'Apple', 'Pumpkin', 'Corn', 'Wheat']) assert.equal(growsHere(name, balcony), false, name);
   assert.equal(growsHere('Fig', balcony, balcony.zones[1]), false); // not in a balcony planter box either
-  for (const name of ['Tomato', 'Basil', 'Lettuce', 'Strawberry', 'Cress']) assert.equal(growsHere(name, balcony), true, name);
+  for (const name of ['Tomato', 'Basil', 'Lettuce', 'Strawberry', 'Pepper (Hot)']) assert.equal(growsHere(name, balcony), true, name);
+});
+
+test('fits: a balcony is offered what people really grow there, nothing else', () => {
+  for (const name of ['Potato', 'Onion', 'Turnip', 'Cabbage', 'Cress', 'Microgreens', 'Pea Shoots']) assert.equal(growsHere(name, balcony), false, name);
+  for (const name of ['Pepper (Sweet)', 'Eggplant', 'Cucumber', 'Rosemary', 'Thyme', 'Parsley', 'Mint', 'Radish']) assert.equal(growsHere(name, balcony), true, name);
+  const feb = suggestCrops({ environment: 'balcony', experience: 'beginner' }, 'western_europe', { month: 1, limit: 3 }).map((c) => c.name);
+  assert.ok(feb.includes('Tomato'), feb.join()); // the balcony classic leads, even for a beginner
+});
+
+test('fits: a back garden gets no field crops, forest trees or windowsill trays', () => {
+  for (const name of ['Wheat', 'Lentil', 'Chickpea', 'Walnut', 'Chestnut', 'Cress']) assert.equal(growsHere(name, garden), false, name);
+  for (const name of ['Apple', 'Potato', 'Pumpkin', 'Corn', 'Rhubarb']) assert.equal(growsHere(name, garden), true, name);
+  for (let m = 0; m < 12; m++) suggestCrops(garden.profile, 'western_europe', { month: m, limit: 30 }).forEach((c) => assert.ok(growsHere(c.name, garden), `${c.name} in month ${m}`));
 });
 
 test('fits: a garden grows anything in the ground, and a patio tree in a pot', () => {

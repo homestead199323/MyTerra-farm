@@ -37,19 +37,44 @@ const POT_ALSO = [
 ];
 const POT_SET = new Set(CONTAINER_FRIENDLY.concat(POT_ALSO));
 export function growsInPots(name) { return POT_SET.has(name); }
-// Trees that crop in a large patio pot (RHS: figs, citrus, olives). A patio has room for one; a balcony does not.
-const PATIO_TREES = new Set(["Fig", "Lemon", "Orange", "Olive"]);
+/* What people actually grow, by space (research 2026-11-13). A balcony is herbs, fruiting veg in pots
+   (tomatoes, sweet and hot peppers, aubergines, cucumbers, courgettes), salad leaves, strawberries and a few
+   small roots and peas: RHS "Vegetables in containers" list; US surveys (NGA 2008, YouGov 2020, Axiom 2023)
+   put tomatoes, peppers, cucumbers, herbs (basil, rosemary, mint, thyme, parsley) and lettuce at the top;
+   German balcony advice (Bundesverband Deutscher Gartenfreunde, Apotheken Umschau) adds aubergines,
+   courgettes, chard and radishes. Garlic stays: it is the one crop a balcony pot takes in autumn.
+   Left out on purpose: potatoes, onions, turnips (a whole pot for a small crop), trees, and the windowsill
+   trays below. */
+export const BALCONY_CROPS = [
+  "Basil","Mint","Parsley","Thyme","Oregano","Rosemary","Sage","Dill","Chamomile","Lavender",
+  "Tomato","Pepper (Sweet)","Pepper (Hot)","Eggplant","Cucumber","Zucchini","Strawberry",
+  "Lettuce","Spinach","Swiss Chard","Kale",
+  "Radish","Carrot","Beetroot","Pea","Garlic",
+];
+const BALCONY_SET = new Set(BALCONY_CROPS);
+// The balcony classics, in the order the surveys rank them. They lead a balcony's suggestions, and a beginner is
+// offered them even where the crop counts as "some care" (a tomato from a bought young plant is a first-year crop).
+const BALCONY_FAVOURITES = ["Tomato","Pepper (Sweet)","Pepper (Hot)","Basil","Cucumber","Lettuce","Strawberry","Mint","Parsley","Rosemary","Thyme"];
+// A back garden has room for beds and dwarf fruit trees, not for field crops grown by the hectare or forest-size
+// nut trees (walnut and sweet chestnut grow 20 m+ wide and tall).
+export const NOT_IN_BACKYARD = ["Wheat","Lentil","Chickpea","Walnut","Chestnut"];
+const NOT_IN_BACKYARD_SET = new Set(NOT_IN_BACKYARD);
+// Windowsill tray crops (cress, pea shoots, microgreens) are kitchen extras, not what anyone grows in a balcony,
+// garden or farm: no space offers them. Plantings already made keep working.
+const TRAY_CROPS = new Set(CROPS.filter(function (c) { return c.tray; }).map(function (c) { return c.name; }));
 /**
- * Can this crop be grown in this space at all? MyTerra never offers what cannot work:
- * pots (a balcony, or a container area) take only crops that crop in a pot, and a balcony takes no trees.
- * `zone` is the area being planted, when one is chosen.
+ * Can this crop be grown in this space at all? MyTerra never offers what does not fit: a balcony takes only what
+ * people really grow there, a back garden no field crops or forest trees, and a container area only crops that
+ * crop in a pot. `zone` is the area being planted, when one is chosen.
  */
 export function growsHere(name, data, zone) {
-  var balcony = !!(data && data.profile && data.profile.environment === "balcony");
-  var pots = balcony || (zone ? zone.type === "container" : potGrower(data));
+  if (TRAY_CROPS.has(name)) return false;
+  var env = data && data.profile && data.profile.environment;
+  if (env === "balcony") return BALCONY_SET.has(name);
+  if (env === "backyard" && NOT_IN_BACKYARD_SET.has(name)) return false;
+  var pots = zone ? zone.type === "container" : potGrower(data);
   if (!pots) return true;
-  if (!POT_SET.has(name)) return false;
-  return !(balcony && PATIO_TREES.has(name));
+  return POT_SET.has(name);
 }
 /** Animals need ground: a balcony keeps none. */
 export function keepsAnimals(data) { return !(data && data.profile && data.profile.environment === "balcony"); }
@@ -126,7 +151,7 @@ export function suggestCrops(profile, region, opts) {
   var p = profile || {};
   var dislikes = (p.household && p.household.dislikes) || [];
   var exp = p.experience || "beginner";
-  var containersOnly = p.environment === "balcony";
+  var balcony = p.environment === "balcony";
 
   var allowedDifficulty;
   if (exp === "beginner") allowedDifficulty = ["easy"];
@@ -140,8 +165,9 @@ export function suggestCrops(profile, region, opts) {
       var rcs = getRegionalCrop(c, region) || c;
       if ((Number(rcs.spacing) || Number(c.spacing) || 0) > maxSpacing) return false;
     }
-    if (containersOnly && !CONTAINER_FRIENDLY.includes(c.name) && !c.tray) return false; // a windowsill tray suits any home
+    if (!growsHere(c.name, { profile: p })) return false; // only what this space really takes
     var dr = difficultyRank(c.name);
+    if (balcony && dr === 1 && BALCONY_FAVOURITES.includes(c.name)) dr = 0;
     if (dr === 0 && !allowedDifficulty.includes("easy")) return false;
     if (dr === 1 && !allowedDifficulty.includes("medium")) return false;
     if (dr === 2 && !allowedDifficulty.includes("hard")) return false;
@@ -149,6 +175,11 @@ export function suggestCrops(profile, region, opts) {
   }
 
   function rank(a, b) {
+    if (balcony) {
+      var fa = BALCONY_FAVOURITES.indexOf(a.name), fb = BALCONY_FAVOURITES.indexOf(b.name);
+      fa = fa === -1 ? 99 : fa; fb = fb === -1 ? 99 : fb;
+      if (fa !== fb) return fa - fb;
+    }
     var da = difficultyRank(a.name), db = difficultyRank(b.name);
     if (da !== db) return da - db;
     var ai = BEGINNER_PRIORITY.indexOf(a.name), bi = BEGINNER_PRIORITY.indexOf(b.name);
@@ -205,13 +236,13 @@ export function describeSuggestion(crop, profile, region, date) {
   var when = now ? t.verb + " now" : t.month != null ? t.verb + " from " + MN_ABR[t.month] : t.verb;
   var days = rc.days || crop.days || 60;
   var recurring = isRecurringCrop(rc);
-  var ready = days >= 300 ? "first crop next year" : days > 70 ? "food in ~" + Math.round(days / 30) + " months" : "food in ~" + Math.max(1, Math.round(days / 7)) + " weeks";
+  var ready = days >= 300 ? "first crop next year" : days > 70 ? "ready in ~" + Math.round(days / 30) + " months" : "ready in ~" + Math.max(1, Math.round(days / 7)) + " weeks";
   var dr = difficultyRank(crop.name);
   var effort = dr === 0 ? "Easy" : dr === 1 ? "Some care" : "Advanced";
   var shady = p.sunlight === "lt3" || p.sunlight === "3to5";
   var reason;
   if (!sunOk(rc, p.sunlight)) reason = "Wants more sun than you have — expect a smaller crop";
-  else if (p.environment === "balcony" && CONTAINER_FRIENDLY.includes(crop.name)) reason = "Happy in a pot";
+  else if (p.environment === "balcony" && BALCONY_SET.has(crop.name)) reason = "Happy in a pot";
   else if (shady && rc.sun !== "Full") reason = "Copes with part shade";
   else if (days <= 45) reason = "Quick win";
   else if (recurring) reason = "Comes back every year";
