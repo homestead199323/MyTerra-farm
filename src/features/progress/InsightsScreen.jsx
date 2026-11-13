@@ -6,7 +6,7 @@ import FarmIcon from "../../components/FarmIcon";
 import AnimalArt from "../quiet/AnimalArt";
 import { cropByName } from "../../lib/plan";
 import { produceEmoji } from "../../lib/progress";
-import { formatMoney } from "../../lib/money";
+import { formatMoney, formatMoneyShort } from "../../lib/money";
 import { todayLocalKey } from "../../lib/utils";
 import { MN_ABR } from "../../lib/calendar";
 import { familyInfo, ROTATE } from "../../data/families";
@@ -184,16 +184,16 @@ export default function InsightsScreen({ data, setPage, locked, onUpgrade }) {
                     return (
                       <Card key={s.species} style={{ padding: "12px 14px" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: C.t2, textTransform: "uppercase", letterSpacing: ".03em" }}>{s.species}</div>
-                        <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4, color: C.text }}>{v || formatMoney(s.spent, data, 0)}</div>
-                        <div style={{ fontSize: 12, color: C.t2, marginTop: 3 }}>{v ? `${formatMoney(s.spent, data, 0)} spent${s.estimated ? " · mostly default counts" : ""}` : "spent — nothing collected yet"}</div>
+                        <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4, color: C.text }}>{v || formatMoneyShort(s.spent, data)}</div>
+                        <div style={{ fontSize: 12, color: C.t2, marginTop: 3 }}>{v ? `${formatMoneyShort(s.spent, data)} spent${s.estimated ? " · mostly default counts" : ""}` : "spent — nothing collected yet"}</div>
                       </Card>
                     );
                   })}
                   {costs.garden.spent > 0 && (
                     <Card style={{ padding: "12px 14px" }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: C.t2, textTransform: "uppercase", letterSpacing: ".03em" }}>Garden</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4, color: C.text }}>{costs.garden.perKg != null ? `${formatMoney(costs.garden.perKg, data, 2)} / kg` : formatMoney(costs.garden.spent, data, 0)}</div>
-                      <div style={{ fontSize: 12, color: C.t2, marginTop: 3 }}>{formatMoney(costs.garden.spent, data, 0)} on seeds and beds{costs.garden.kg ? ` · ${fmt(costs.garden.kg)} kg picked` : ""}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4, color: C.text }}>{costs.garden.perKg != null ? `${formatMoney(costs.garden.perKg, data, 2)} / kg` : formatMoneyShort(costs.garden.spent, data)}</div>
+                      <div style={{ fontSize: 12, color: C.t2, marginTop: 3 }}>{formatMoneyShort(costs.garden.spent, data)} on seeds and beds{costs.garden.kg ? ` · ${fmt(costs.garden.kg)} kg picked` : ""}</div>
                     </Card>
                   )}
                 </div>}

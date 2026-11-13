@@ -40,6 +40,17 @@ export function currencySymbol(data) {
   return SYMBOLS[currencyCode(data)] || "€";
 }
 
+/** "12" for whole amounts, "12.50" otherwise — totals never round 0.50 up to 1. */
+export function moneyAmount(n) {
+  const v = Math.round((Number(n) || 0) * 100) / 100;
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+}
+
+/** "£12" or "£12.50" — whole amounts drop the decimals, cents are never rounded away. */
+export function formatMoneyShort(n, data) {
+  return currencySymbol(data) + moneyAmount(n);
+}
+
 /** "£12.50" — decimals default 2. */
 export function formatMoney(n, data, decimals) {
   const d = typeof decimals === "number" ? decimals : 2;

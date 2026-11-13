@@ -5,7 +5,7 @@ import FarmIcon from "../../components/FarmIcon";
 import { produceTotals, moneyTotals, badgeList, nextHarvest, plantingCounts, produceEmoji, PORTION_G } from "../../lib/progress";
 import { cropByName } from "../../lib/plan";
 import { stockLines } from "../../lib/inventory";
-import { formatMoney } from "../../lib/money";
+import { formatMoney, formatMoneyShort } from "../../lib/money";
 import { todayLocalKey, localDateFromKey } from "../../lib/utils";
 import "../plan/plan.css";
 
@@ -136,8 +136,8 @@ export default function ProgressScreen({ data, setPage }) {
         {money.entries === 0
           ? <Card p={false}><div className="mt-plan-row"><span className="mt-plan-grow"><strong>Nothing tracked yet</strong><small>Add seed, compost and tool costs (and any sales) to see what your food really costs.</small></span><Btn sm v="secondary" onClick={function () { setPage("fin"); }}>Open Money</Btn></div></Card>
           : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
-              <Stat label="Spent" value={formatMoney(money.spent, data, 0)} sub="seeds, tools, feed…" color={C.t2} />
-              <Stat label="Earned" value={formatMoney(money.earned, data, 0)} sub="sales" />
+              <Stat label="Spent" value={formatMoneyShort(money.spent, data)} sub="seeds, tools, feed…" color={C.t2} />
+              <Stat label="Earned" value={formatMoneyShort(money.earned, data)} sub="sales" />
               <Stat label="Balance" value={`${money.net < 0 ? "−" : ""}${formatMoney(Math.abs(money.net), data, 0)}`} sub={money.net < 0 ? "spent more than earned so far" : "ahead"} color={money.net < 0 ? C.orange : C.green} />
             </div>}
       </section>

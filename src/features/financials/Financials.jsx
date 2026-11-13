@@ -5,7 +5,7 @@ import { todayLocalKey } from "../../lib/utils";
 import { C, F, SX } from "../../lib/theme";
 import { Btn, Card, Inp, Sel, Overlay, Stat } from "../../components/ui";
 import { undoSale, markPaid, unpaidTotal } from "../../lib/inventory";
-import { currencySymbol } from "../../lib/money";
+import { currencySymbol, moneyAmount } from "../../lib/money";
 
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/; // local YYYY-MM-DD keys, as every other record in the app
 
@@ -104,9 +104,9 @@ export default function Financials({data, setData}) {
       ) : (
       <>
       <div className="g3" style={{gap:10,marginBottom:20}}>
-        <Stat label="Spent" value={E+exp.toFixed(0)} color={C.red}/>
-        <Stat label="Revenue" value={E+inc.toFixed(0)} sub={unpaid>0?`${E}${unpaid.toFixed(2)} to collect`:undefined} color={C.green}/>
-        <Stat label="Net" value={E+Math.abs(net).toFixed(0)} sub={net>=0?"Profit":"Loss"} color={net>=0?C.green:C.red}/>
+        <Stat label="Spent" value={E+moneyAmount(exp)} color={C.red}/>
+        <Stat label="Revenue" value={E+moneyAmount(inc)} sub={unpaid>0?`${E}${unpaid.toFixed(2)} to collect`:undefined} color={C.green}/>
+        <Stat label="Net" value={E+moneyAmount(Math.abs(net))} sub={net>=0?"Profit":"Loss"} color={net>=0?C.green:C.red}/>
       </div>
       <Card style={{marginBottom:16}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -152,7 +152,7 @@ export default function Financials({data, setData}) {
                 {/* donut hole */}
                 <circle cx="60" cy="60" r="28" fill={C.card}/>
                 <text x="60" y="58" textAnchor="middle" fontSize="9" fill={C.t2} fontFamily={F.body}>Total</text>
-                <text x="60" y="72" textAnchor="middle" fontSize="13" fontWeight="700" fill={C.text} fontFamily={F.mono}>{E}{exp.toFixed(0)}</text>
+                <text x="60" y="72" textAnchor="middle" fontSize="13" fontWeight="700" fill={C.text} fontFamily={F.mono}>{E}{moneyAmount(exp)}</text>
               </svg>
             </div>
             <div style={{flex:1,minWidth:180}}>
@@ -161,7 +161,7 @@ export default function Financials({data, setData}) {
                   <span style={{display:"inline-block",width:12,height:12,borderRadius:3,background:s.color,flexShrink:0}}/>
                   <div style={{flex:1,fontSize:13}}>{s.cat}</div>
                   <div style={{fontSize:12,color:C.t2,fontFamily:F.mono,width:48,textAlign:"right"}}>{Math.round(s.frac*100)}%</div>
-                  <div style={{fontSize:13,fontWeight:600,fontFamily:F.mono,width:56,textAlign:"right"}}>{E}{s.amt.toFixed(0)}</div>
+                  <div style={{fontSize:13,fontWeight:600,fontFamily:F.mono,width:56,textAlign:"right"}}>{E}{moneyAmount(s.amt)}</div>
                 </div>
               ))}
             </div>

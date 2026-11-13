@@ -42,3 +42,13 @@ test('storage notes fit the pantry card (70 chars)', () => {
   assert.ok(LIVESTOCK_DB.Chicken.out.Eggs.s.length <= 70);
   CROPS.forEach((c) => { if (c.storage && /\bin oil\b/i.test(c.storage)) assert.ok(c.storage.length <= 70, c.name); });
 });
+
+test('money summaries keep cents: one 0.50 sale is 0.50, not 1', async () => {
+  const { moneyAmount, formatMoneyShort } = await import('../src/lib/money.js');
+  assert.equal(moneyAmount(0.5), '0.50');
+  assert.equal(moneyAmount(1), '1');
+  assert.equal(moneyAmount(0.5 + 0.5), '1');
+  assert.equal(moneyAmount(12.499), '12.50');
+  assert.equal(moneyAmount(0.1 + 0.2), '0.30');
+  assert.equal(formatMoneyShort(0.5, { currency: 'EUR' }), '€0.50');
+});

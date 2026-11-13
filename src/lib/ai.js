@@ -10,6 +10,7 @@ import { LDB } from "../data/livestock";
 import { PRESERVATION } from "../data/preservation";
 import { VARIETIES } from "../data/varieties";
 import { buildTaskQueue } from "./task-queue";
+import { formatMoneyShort } from "./money";
 import { getCropDifficulty } from "./calendar";
 import { daysBetweenLocalKeys } from "./utils";
 import { rCR, rCM, getRegionalCalendar, getRegionalVarieties } from "./regional";
@@ -295,7 +296,7 @@ function farmKnowledgeEngine(query, data) {
     const costs = data.costs?.items || [];
     const exp = costs.filter(i => i.type === "expense").reduce((s, i) => s + i.amount, 0);
     const inc = costs.filter(i => i.type !== "expense").reduce((s, i) => s + i.amount, 0);
-    if (costs.length > 0) r += `\nFinancials: Spent \u20ac${exp.toFixed(0)} | Revenue \u20ac${inc.toFixed(0)} | Net \u20ac${(inc - exp).toFixed(0)}`;
+    if (costs.length > 0) r += `\nFinancials: Spent ${formatMoneyShort(exp, data)} | Revenue ${formatMoneyShort(inc, data)} | Net ${formatMoneyShort(inc - exp, data)}`;
     return r;
   }
 
