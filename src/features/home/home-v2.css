@@ -72,7 +72,7 @@ body.g3-full-open .hv2-plus{display:none}
 .hv2-panel-head{flex:none;min-height:56px;display:flex;align-items:center;gap:10px;padding:0 8px 0 12px}
 .hv2-panel-head h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
 .hv2-panel-head b{flex:1;font-size:15px;font-weight:700;color:var(--hv2-ink2)}
-.hv2-walk{height:40px;padding:0 16px;border:0;border-radius:20px;background:var(--hv2-green);color:var(--hv2-on-green);font:700 14px/1 Inter,-apple-system,sans-serif;cursor:pointer;white-space:nowrap}
+.hv2-walk{height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:20px;background:var(--hv2-green);color:var(--hv2-on-green);font:700 14px/1 Inter,-apple-system,sans-serif;cursor:pointer;white-space:nowrap}
 .hv2-panel-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 6px 0 12px}
 .hv2-row{width:100%;min-height:54px;display:flex;align-items:center;gap:10px;padding:4px 0;border:0;border-top:1px solid var(--color-border,#e4e9e5);background:none;color:inherit;text-align:left;cursor:pointer;font:inherit}
 .hv2-row:first-child{border-top:0}

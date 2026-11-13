@@ -7,7 +7,7 @@ import { animalZone } from "../quiet/farm-model";
 import AnimalArt from "../quiet/AnimalArt";
 import PlantArt from "../quiet/PlantArt";
 import FarmIcon from "../../components/FarmIcon";
-import { taskAction, rewardText, taskGlyph, checkAmount, parseAmount } from "./zone-tasks";
+import { taskAction, rewardText, taskGlyph, checkAmount, parseAmount, buzz } from "./zone-tasks";
 import "./zone-tasks.css";
 
 const BURST = Array.from({ length: 14 }, (_, i) => ({
@@ -15,15 +15,6 @@ const BURST = Array.from({ length: 14 }, (_, i) => ({
   dist: 60 + (i % 3) * 22,
   hue: ["#f2b33d", "#6aa66f", "#e0714f", "#5b9bd5"][i % 4],
 }));
-
-function buzz(ms) {
-  try {
-    // Chrome refuses (and logs an error) before the first tap on the page.
-    if (navigator.vibrate && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate(ms);
-  } catch {
-    /* haptics are optional */
-  }
-}
 
 function TaskArt({ task, data }) {
   if (task.speciesType) return <AnimalArt species={task.speciesType} size={44} />;
@@ -34,7 +25,7 @@ function TaskArt({ task, data }) {
   return <span className="q-tp-emoji">{taskGlyph(task)}</span>;
 }
 
-function TaskTile({ task, data, index, done, onDone, onOpen }) {
+export function TaskTile({ task, data, index, done, onDone, onOpen }) {
   const action = taskAction(task, data);
   const [value, setValue] = useState(action.amount ? String(action.amount.value) : "");
   // A second tap confirms an amount far above the estimate; an invalid one shows why.

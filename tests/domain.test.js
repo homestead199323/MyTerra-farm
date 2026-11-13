@@ -20,6 +20,7 @@ import './crowns.test.js';
 import './planned.test.js';
 import './diary.test.js';
 import './home-model.test.js';
+import './check-model.test.js';
 import './setup-model.test.js';
 import './build-model.test.js';
 import './fits-space.test.js';

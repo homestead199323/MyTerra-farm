@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Sun, Flame, ListChecks, ChevronRight, ChevronUp, ArrowRight, Check, Sprout } from "lucide-react";
+import { Sun, Flame, ListChecks, Footprints, ChevronRight, ChevronUp, ArrowRight, Check, Sprout } from "lucide-react";
 import { fetchWeather } from "../../lib/weather";
 import { todayLocalKey } from "../../lib/utils";
 import { Overlay } from "../../components/ui";
@@ -9,7 +9,10 @@ import GroveScene from "../grove/GroveScene";
 import WeatherWeek from "../grove/WeatherWeek";
 import { StarterKit } from "../grove/GroveHome";
 import { tasksByZone, taskGlyph } from "../grove/zone-tasks";
-import WalkOverlay from "../today/WalkOverlay";
+import FarmCheck from "./FarmCheck";
+import { planRound } from "../quiet/walk-model";
+import { startCheck, canResume, unplacedPlot } from "./check-model";
+import { uid } from "../../lib/storage";
 import PlantArt from "../quiet/PlantArt";
 import AnimalArt from "../quiet/AnimalArt";
 import { RemindersPrompt } from "../settings/Reminders";
@@ -24,7 +27,8 @@ import "./home-v2.css";
    dock (GameDock, rendered by App). Area markers and their job popup come from GroveScene. */
 
 const DAY_KEY = "mt_day", DONE_KEY = "mt_day_done", OPEN_KEY = "mt_jobs_open";
-const PANEL_W = 384; // the docked jobs list on a wide screen: the map keeps its farm clear of it
+const PANEL_W = 384;
+const NO_MARKERS = {}; // the docked jobs list on a wide screen: the map keeps its farm clear of it
 function stored(key, json) {
   try {
     const raw = localStorage.getItem(key);
@@ -112,22 +116,24 @@ function Bar({ done, total }) {
 }
 
 export default function HomeV2({ data, setData, setPage, tasks, forecast, forecastState, alerts, demo, onDemoSignup, wide = false, covered = false }) {
-  const [walk, setWalk] = useState(false), [weather, setWeather] = useState(null), [taskZone, setTaskZone] = useState(null);
+  const [check, setCheck] = useState(false), [visit, setVisit] = useState(null), [weather, setWeather] = useState(null), [taskZone, setTaskZone] = useState(null);
   // Phone: the jobs list is a card over the map, closed until the chip is tapped. Wide screen: it floats
   // beside the map, open unless it was collapsed on this device.
   const [open, setOpen] = useState(() => stored(OPEN_KEY) !== "0"), [modal, setModal] = useState(false), [week, setWeek] = useState(false);
   const [build, setBuild] = useState(false), [engine, setEngine] = useState(null);
   const panel = wide ? open : modal;
   // A page opened over the farm: the map waits underneath with nothing floating on it.
-  useEffect(() => { if (covered) { setModal(false); setWeek(false); setTaskZone(null); setBuild(false); } }, [covered]);
+  useEffect(() => { if (covered) { setModal(false); setWeek(false); setTaskZone(null); setBuild(false); setCheck(false); setVisit(null); } }, [covered]);
   // The dock's Build button starts build mode here, on the map.
   useEffect(() => {
-    const start = () => { setModal(false); setWeek(false); setTaskZone(null); setBuild(true); };
+    const start = () => { setModal(false); setWeek(false); setTaskZone(null); setCheck(false); setVisit(null); setBuild(true); };
     window.addEventListener("mt-build", start);
     return () => window.removeEventListener("mt-build", start);
   }, []);
   useEffect(() => { document.body.classList.toggle("mt-building", build); return () => document.body.classList.remove("mt-building"); }, [build]);
   const quiet = covered || build; // nothing but the map (and build mode's own controls)
+  const busy = check || !!visit; // the farm check (or one job's visit) owns the screen: the map shows where to go
+  useEffect(() => { document.body.classList.toggle("mt-checking", busy); return () => document.body.classList.remove("mt-checking"); }, [busy]);
   const setPanel = (on) => { if (wide) { setOpen(on); store(OPEN_KEY, on ? "1" : "0"); } else setModal(on); };
   useEffect(() => {
     let active = true;
@@ -154,7 +160,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   }, [due, tasks]);
 
   const [shown, setShown] = useState(() => stored(DONE_KEY));
-  const celebrate = showDayDone(progress, shown, today) && !taskZone && !walk && !modal && !quiet;
+  const celebrate = showDayDone(progress, shown, today) && !taskZone && !busy && !modal && !quiet;
   const dismissDone = () => { setShown(today); store(DONE_KEY, today); };
 
   const firstBed = (data.zones || []).find((z) => isPlantZone(z.type));
@@ -169,12 +175,37 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
     return () => window.removeEventListener("keydown", key);
   }, [modal]);
 
+  // A job tapped in the list: the camera goes to where it is done and its jobs open there.
+  // A planting whose bed was deleted asks which bed it is in first (it had no marker, so it used to open All tasks).
   function openJob(task) {
-    const zone = Object.keys(markers).find((id) => markers[id].some((x) => x.key === task.key));
     setModal(false);
-    if (zone) setTaskZone(zone);
-    else setPage("tasks");
+    setTaskZone(null);
+    const zones = data.zones || [], plot = unplacedPlot(task, data);
+    let stop = null;
+    if (plot) stop = { id: `plot-${plot.id}`, zoneId: null, plotId: plot.id, plotIds: [plot.id], label: plot.name || plot.crop, sub: "", type: "veg", tasks: due.filter((t) => t.plotId === plot.id) };
+    else stop = planRound(tasks, data, "quick", "").find((s) => s.tasks.some((t) => t.key === task.key)) || null;
+    if (!stop) stop = { id: `job-${task.key}`, zoneId: zones.some((z) => z.id === task.zoneId) ? task.zoneId : null, plotId: null, plotIds: [], label: task.loc || "Around your space", sub: "", type: "", tasks: [task] };
+    if (!stop.tasks.length) stop = { ...stop, tasks: [task] };
+    setVisit({ id: "visit", kind: "visit", status: "active", date: today, startedAt: new Date().toISOString(), stops: [stop], index: 0, ticked: {}, points: 0, jobs: 0, visited: [], deferred: [] });
   }
+
+  // The daily farm check: picks up where it was left today, otherwise starts a new round.
+  const resumable = canResume(data.walkSession, today);
+  function beginCheck() {
+    setModal(false); setTaskZone(null); setVisit(null);
+    if (!resumable) {
+      const s = startCheck(tasks, data, today, uid(), new Date().toISOString());
+      if (!s) return;
+      setData({ ...data, walkSession: s });
+    }
+    setCheck(true);
+  }
+  const commitCheck = (next, s) => { const merged = { ...next, walkSession: s }; setData(merged); return merged; };
+  const commitVisit = (next, s) => { setData(next); setVisit(s); return next; };
+  const endCheck = () => {
+    if (data.walkSession && data.walkSession.status === "complete") setData({ ...data, walkSession: null });
+    setCheck(false);
+  };
 
   // Jobs due today for the crop picked on the map: shown in the crop panel beside it.
   const cropJobs = (cropName) => {
@@ -197,7 +228,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
         <h2>Today’s jobs</h2>
         <b>{progress.done}/{progress.total}</b>
-        {!wide && due.length > 0 && <button type="button" className="hv2-walk" onClick={() => { setModal(false); setWalk(true); }}>{data.walkSession?.status === "active" ? "Resume walk" : "Start walk"}</button>}
+        {due.length > 0 && <button type="button" className="hv2-walk" onClick={beginCheck}><Footprints size={15} strokeWidth={2.4} />{resumable ? "Resume check" : "Farm check"}</button>}
         {wide && <button type="button" className="hv2-collapse" aria-label="Hide today's jobs" onClick={() => setPanel(false)}><ChevronUp size={20} /></button>}
       </header>
       <div className="hv2-panel-list">
@@ -223,12 +254,12 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
 
   return (
     <div className={`hv2${wide ? " is-wide" : ""}${covered ? " is-covered" : ""}${build ? " is-build" : ""}`}>
-      <GroveScene home homeRight={wide && open && !build ? PANEL_W : 0} paused={covered} rich={wide} building={build} onEngine={setEngine} cropExtra={cropJobs}
-        guideZoneId={!quiet && cue && cue.current === "plant" && firstBed ? firstBed.id : null} data={data} setData={setData} weather={weather} tasksByZone={markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
+      <GroveScene home homeRight={wide && (open || busy) && !build ? PANEL_W : 0} paused={covered} rich={wide} building={build} onEngine={setEngine} cropExtra={cropJobs}
+        guideZoneId={!quiet && !busy && cue && cue.current === "plant" && firstBed ? firstBed.id : null} data={data} setData={setData} weather={weather} tasksByZone={busy ? NO_MARKERS : markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
         showEditButton={false} showHelperText={false} noBorder onPlantInZone={(zone) => setPage("crops", { zone })} onShowCrops={() => setPage("crops")}
         onEditLayout={() => setPage("map", { edit: true })} onStartGuide={() => setData({ ...data, setupDone: false })} />
 
-      {!quiet && <div className="hv2-hud">
+      {!quiet && !busy && <div className="hv2-hud">
         <button type="button" className="hv2-cap" aria-label={`${weather?.ok ? `${weather.temp} degrees. ` : data.city ? "" : "No town set. "}${streak} day streak. Open this week's weather`} onClick={() => setWeek(true)}>
           <span className="hv2-sun"><Sun size={17} strokeWidth={2.2} /></span>
           <b>{weather?.ok ? `${weather.temp}°` : data.city ? "Weather" : "Add your town"}</b>
@@ -245,18 +276,18 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         </button>}
       </div>}
 
-      {!wide && !quiet && upNext && !modal && !walk && !celebrate && <button type="button" className="hv2-next" onClick={() => (upNext.when ? setPanel(true) : openJob(upNext.t))}>
+      {!wide && !quiet && upNext && !modal && !busy && !celebrate && <button type="button" className="hv2-next" onClick={() => (upNext.when ? setPanel(true) : openJob(upNext.t))}>
         <small>{upNext.when ? `Next ${upNext.when}` : "Next job"}</small>
         <strong>{upNext.t.title}</strong>
         {upNext.t.loc && <span>{upNext.t.loc}</span>}
       </button>}
-      {demo && onDemoSignup && !quiet && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Save my demo <ArrowRight size={14} /></button>}
+      {demo && onDemoSignup && !quiet && !busy && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Save my demo <ArrowRight size={14} /></button>}
 
-      {cue && firstBed && !taskZone && !walk && !modal && !celebrate && !quiet && (
+      {cue && firstBed && !taskZone && !busy && !modal && !celebrate && !quiet && (
         <Cue cue={cue} bedId={firstBed.id} onPlant={() => setPage("crops", { zone: firstBed.id, returnHome: true })} onSkip={() => setData(endCues(data))} />
       )}
 
-      {fresh && due.length === 0 && !cue && !quiet && (
+      {fresh && due.length === 0 && !cue && !quiet && !busy && (
         <button type="button" className="hv2-first" onClick={() => setPage("crops", { zone: firstBed.id, returnHome: true })}><Sprout size={18} />Plant your first crop<ArrowRight size={16} /></button>
       )}
 
@@ -264,7 +295,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         <div className="hv2-scrim" onClick={function (e) { if (e.target === e.currentTarget) setModal(false); }}>{jobsList}</div>,
         document.body,
       )}
-      {panel && wide && !quiet && jobsList}
+      {panel && wide && !quiet && !busy && jobsList}
 
       {build && !covered && <BuildMode data={data} setData={setData} engine={engine} wide={wide} onDone={() => setBuild(false)} onDesigner={() => { setBuild(false); setPage("map", { edit: true }); }} />}
 
@@ -290,7 +321,14 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         document.body,
       )}
 
-      {walk && createPortal(<WalkOverlay tasks={tasks} data={data} setData={setData} onClose={() => setWalk(false)} />, document.body)}
+      {check && !quiet && data.walkSession && (
+        <FarmCheck mode="round" session={data.walkSession} data={data} engine={engine} wide={wide} streak={streak} commit={commitCheck}
+          onExit={endCheck} onAllTasks={() => { setCheck(false); setPage("tasks"); }} onOpenStop={() => { setCheck(false); setPage("crops"); }} />
+      )}
+      {visit && !check && !quiet && (
+        <FarmCheck mode="visit" session={visit} data={data} engine={engine} wide={wide} streak={streak} commit={commitVisit}
+          onExit={() => setVisit(null)} onAllTasks={() => { setVisit(null); setPage("tasks"); }} onOpenStop={() => { setVisit(null); setPage("crops"); }} />
+      )}
     </div>
   );
 }

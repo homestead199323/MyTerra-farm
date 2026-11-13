@@ -143,3 +143,13 @@ export function rewardText(task, action, value) {
   const n = parseAmount(value) > 0 ? parseAmount(value) : action.amount.value;
   return `+${n} ${action.amount.unit === "eggs" ? "" : action.amount.unit + " "}${action.amount.icon}`.replace("  ", " ");
 }
+
+/** A short vibration on phones that allow it. */
+export function buzz(ms) {
+  try {
+    // Chrome refuses (and logs an error) before the first tap on the page.
+    if (navigator.vibrate && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate(ms);
+  } catch {
+    /* haptics are optional */
+  }
+}

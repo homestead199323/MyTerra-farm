@@ -1863,6 +1863,7 @@ class FarmControls {
   }
   zoomBy(factor, ms = 300) { this.zoomAt(this.size.w / 2, this.size.h / 2, factor, ms); }
   focusZone(zone, ms = 550, wide = 1) { // wide > 1 steps back from the area, to show where on the farm it is
+    this.focusWide = wide; // a card opening or resizing over the map reframes the same area at the same distance
     const bounds = this.hooks.focusBounds?.(zone) || new THREE.Box3(
       new THREE.Vector3(zone.xM, 0, zone.yM),
       new THREE.Vector3(zone.xM + zone.wM, .6, zone.yM + zone.hM));
@@ -2199,7 +2200,14 @@ export default function Grove3D(props) {
         st.requestRender();
       },
       view: () => ({ x: controls.target.x, z: controls.target.z }),
-      onView: (f) => { st.viewSubs.add(f); return () => st.viewSubs.delete(f); },
+      // fly the camera to an area (a job tapped in the list, the farm check): false when it isn't on the map
+      focusZone: (zoneId, ms = 900, wide = 1.35) => { // wide: a step back, so you still see where on the farm it is
+        const zone = latest.current.zones.find((z) => String(z.id) === String(zoneId)); if (!zone) return false;
+        setFocusId(String(zone.id)); latest.current.focusId = String(zone.id); // a card resizing before the next render reframes this area, not the last one
+        controls.focusZone(zone, ms, wide); st.reactToZone?.(zone); st.requestRender(); return true;
+      },
+      showAll: () => { setFocusId(""); st.reset(true); },
+      onView:(f) => { st.viewSubs.add(f); return () => st.viewSubs.delete(f); },
       canvas: renderer.domElement,
     };
     st.viewSubs = new Set();
@@ -2402,7 +2410,7 @@ export default function Grove3D(props) {
     const box = canvas.getBoundingClientRect();
     st.controls.cover = rect ? coverInset({ left: box.left, top: box.top, right: box.right, bottom: box.bottom }, rect) : null;
     const P = latest.current, id = P.cardZoneId ?? P.focusId, zone = id == null || id === "" ? null : P.zones.find((z) => String(z.id) === String(id));
-    if (zone && !P.preview) { setFocusId(String(zone.id)); st.controls.focusZone(zone); st.requestRender(); }
+    if (zone && !P.preview) { setFocusId(String(zone.id)); st.controls.focusZone(zone, 550, P.cardZoneId == null ? st.controls.focusWide || 1 : 1); st.requestRender(); }
   }), []);
   // the area menu closes on a tap outside it
   useEffect(() => {
