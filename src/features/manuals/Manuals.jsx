@@ -3,6 +3,14 @@ import { C, F, SX } from "../../lib/theme";
 
 /* Jump links for a long guide: one chip per section found on the page after it renders (built straight in the
    DOM, the sections are not known up front). Fewer than four sections: no bar. */
+/** A card that opens something: reachable with Tab, opened with Enter or Space. */
+const press = (open) => ({
+  role: "button",
+  tabIndex: 0,
+  onClick: open,
+  onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } },
+});
+
 function JumpBar({ k }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -53,7 +61,7 @@ function Manuals({data}) {
         </div>
         {/* 6.7.1 — visual card grid (replaces admin-style rows) */}
         <div className="lr-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))",gap:10,marginTop:8}}>{fil.map(c=>(
-          <div key={c.name} onClick={()=>setSel(c)} style={{background:C.card,borderRadius:C.r,boxShadow:C.sh,cursor:"pointer",padding:"14px 12px 12px",borderTop:`4px solid ${c.color}`,display:"flex",flexDirection:"column",gap:6}}>
+          <div key={c.name} {...press(()=>setSel(c))} style={{background:C.card,borderRadius:C.r,boxShadow:C.sh,cursor:"pointer",padding:"14px 12px 12px",borderTop:`4px solid ${c.color}`,display:"flex",flexDirection:"column",gap:6}}>
             <div style={{display:"flex",justifyContent:"center"}}><FarmIcon name={c.name} emoji={c.emoji} size={38}/></div>
             <div style={{fontSize:13,fontWeight:700,textAlign:"center",letterSpacing:"-0.01em"}}>{c.name}</div>
             <div style={{display:"flex",justifyContent:"center"}}>
@@ -76,7 +84,7 @@ function Manuals({data}) {
           {sel?.fert && <Card style={{marginBottom:12,background:C.tGreen}}><div style={SX.lblGreen}>Fertilizer</div><div style={{fontSize:12,marginTop:4,lineHeight:1.6}}>{sel.fert}</div></Card>}
           {sel?.pests&&sel.pests.length>0 && <Card style={{marginBottom:12,background:C.tOrange}}><div style={{fontSize:12,fontWeight:700,color:C.orange}}>Pests & Disease</div>{sel.pests.map(function(p,i){return <div key={i} style={{fontSize:12,marginTop:6}}><strong>{p.n}</strong>{p.t&&<div style={SX.t2_11mt2}>→ {p.t}</div>}</div>;})}</Card>}
           {sel.storage&&<Card style={{marginBottom:12,background:C.tYellow}}><div style={{fontSize:12,fontWeight:700,color:C.yellow}}>Storage</div><div style={SX.s13mt4}>{sel.storage}</div></Card>}
-          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(sel.name+" growing guide complete")}`} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12,color:C.red,textDecoration:"none",fontWeight:600,padding:"8px 14px",background:C.tPink,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:12}}>▶ Watch: Complete {sel.name} Growing Guide</a>
+          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(sel.name+" growing guide complete")}`} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12,color:C.red,textDecoration:"none",fontWeight:600,padding:"8px 14px",background:C.tPink,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:12}}>▶ Search YouTube for {sel.name.toLowerCase()} growing guides</a>
         </Overlay>}
       </>}
 
@@ -174,7 +182,7 @@ function Preserving({embedded}) {
           const cc = CAT_COLOR[r.cat] || { bg: "#f5f5f5", c: C.t2, accent: C.t3 };
           const dc = DIFF_COLOR[r.difficulty] || C.t2;
           return (
-            <div key={key} onClick={() => setSel(r)} style={{
+            <div key={key} {...press(() => setSel(r))} style={{
               background: C.card, borderRadius: C.r, boxShadow: C.sh, cursor: "pointer",
               borderLeft: `5px solid ${cc.accent}`, overflow: "hidden", transition: "box-shadow .15s",
               padding: "16px 16px 14px"
@@ -440,7 +448,7 @@ function Projects({embedded}) {
           const cc = CAT_COLOR[r.cat] || { bg: "#f5f5f5", c: C.t2, accent: C.t3 };
           const dc = DIFF_COLOR[r.difficulty] || C.t2;
           return (
-            <div key={key} onClick={() => setSelKey(key)} style={{ background: C.card, borderRadius: C.r, boxShadow: C.sh, cursor: "pointer", borderLeft: `5px solid ${cc.accent}`, padding: "16px 16px 14px" }}>
+            <div key={key} {...press(() => setSelKey(key))} style={{ background: C.card, borderRadius: C.r, boxShadow: C.sh, cursor: "pointer", borderLeft: `5px solid ${cc.accent}`, padding: "16px 16px 14px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
                 <span style={{ fontSize: 28, flexShrink: 0 }}>{r.icon}</span>
                 <div style={{ flex: 1 }}>

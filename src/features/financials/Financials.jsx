@@ -5,7 +5,7 @@ import { todayLocalKey } from "../../lib/utils";
 import { C, F, SX } from "../../lib/theme";
 import { Btn, Card, Inp, Sel, Overlay, Stat } from "../../components/ui";
 import { undoSale, markPaid, unpaidTotal } from "../../lib/inventory";
-import { currencySymbol, moneyAmount } from "../../lib/money";
+import { currencySymbol, currencyCode, CURRENCIES, moneyAmount } from "../../lib/money";
 
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/; // local YYYY-MM-DD keys, as every other record in the app
 
@@ -115,7 +115,7 @@ export default function Financials({data, setData}) {
             {["monthly","daily"].map(m=><button key={m} onClick={()=>setChartMode(m)} style={{padding:"4px 12px",borderRadius:16,border:"none",background:chartMode===m?C.green:C.card,color:chartMode===m?"#fff":C.t2,fontSize:11,fontWeight:600,cursor:"pointer"}}>{m==="monthly"?"Monthly":"Daily"}</button>)}
           </div>
         </div>
-        {chartMode==="daily"&&<div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:12}}><button onClick={()=>setChartM(Math.max(0,chartM-1))} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:C.t2}}>{"<"}</button><span style={{fontSize:13,fontWeight:600}}>{mN[chartM]}</span><button onClick={()=>setChartM(Math.min(11,chartM+1))} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:C.t2}}>{">"}</button></div>}
+        {chartMode==="daily"&&<div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:12}}><button onClick={()=>setChartM(Math.max(0,chartM-1))} aria-label="Previous month" style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:C.t2}}>{"<"}</button><span style={{fontSize:13,fontWeight:600}}>{mN[chartM]}</span><button onClick={()=>setChartM(Math.min(11,chartM+1))} aria-label="Next month" style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:C.t2}}>{">"}</button></div>}
         {/* 6.6.2 — only render the chart when we have at least 2 data points in the active view */}
         {!chartHasEnough ? (
           <div style={{textAlign:"center",padding:"36px 16px",color:C.t2,fontSize:13,lineHeight:1.5}}>
@@ -187,14 +187,15 @@ export default function Financials({data, setData}) {
           <div style={{width:36,height:36,borderRadius:18,background:"var(--surface-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{i.source==="pantry"?(i.type==="income"?"🧺":"📦"):i.type==="expense"?"📤":"📥"}</div>
           <div style={SX.flex1}><div style={{fontSize:14,fontWeight:600}}>{i.label}</div><div style={SX.t2_12}>{i.date} · {i.cat}{forLabel(i.for)?` · for ${forLabel(i.for)}`:""}{i.paid===false?" · to be paid":""}</div></div>
           <div style={{fontSize:16,fontWeight:700,color:i.type==="expense"?C.red:C.green,fontFamily:F.mono}}>{i.type==="expense"?"-":"+"}{E}{i.amount.toFixed(2)}</div>
-          <Btn sm v="ghost" onClick={()=>del(i.id)}><Trash2 size={14} strokeWidth={1.8}/></Btn>
+          <Btn sm v="ghost" label={`Delete ${i.label}`} onClick={()=>del(i.id)}><Trash2 size={14} strokeWidth={1.8}/></Btn>
         </div></Card>
       ))}</div>}
       </>
       )}
       {showAdd&&<Overlay title="Add Entry" onClose={()=>setShowAdd(false)}>
         <div style={{display:"flex",gap:8,marginBottom:14}}>{["expense","income"].map(t=><Card key={t} onClick={()=>setForm({...form,type:t})} active={form.type===t} style={{flex:1,textAlign:"center",cursor:"pointer"}}><div style={SX.s20}>{t==="expense"?"📤":"📥"}</div><div style={{fontSize:13,fontWeight:600,marginTop:4}}>{t==="expense"?"Expense":"Income"}</div></Card>)}</div>
-        <Inp label="Amount" type="number" min="0" step="0.01" value={form.amount} onChange={e=>{setAddErr("");setForm({...form,amount:e.target.value});}}/>
+        {!data.currency&&!(data.costs?.items||[]).length&&<Sel label="Currency" value={currencyCode(data)} onChange={e=>setData({...data,currency:e.target.value})} options={CURRENCIES.map(c=>({value:c.code,label:c.label}))}/>}
+        <Inp label={`Amount (${E.trim()})`} type="number" min="0" step="0.01" value={form.amount} onChange={e=>{setAddErr("");setForm({...form,amount:e.target.value});}}/>
         <Inp label="Description" value={form.label} onChange={e=>{setAddErr("");setForm({...form,label:e.target.value});}}/>
         <div style={SX.grid2}><Sel label="Category" value={form.cat} onChange={e=>setForm({...form,cat:e.target.value})} options={["Seeds","Tools","Feed","Animals","Fuel","Infrastructure","Produce Sales","Stock purchases","Other"]}/><Inp label="Date" type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
         {form.type==="expense"&&forOptions.length>1&&<Sel label="For (optional)" value={form.for} onChange={e=>setForm({...form,for:e.target.value})} options={forOptions}/>}

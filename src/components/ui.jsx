@@ -10,7 +10,7 @@ import { useSwipe } from "../lib/use-swipe";
 /* ═══════════════════════════════════════════
    UI COMPONENTS
    ═══════════════════════════════════════════ */
-export const Btn = React.memo(function Btn({children,onClick,v="primary",sm,dis,disabled,style:s}) {
+export const Btn = React.memo(function Btn({children,onClick,v="primary",sm,dis,disabled,style:s,label}) {
   dis = dis || disabled;
   // Same look as the popup buttons (.q-button / .q-secondary) so every screen matches.
   const st={
@@ -22,7 +22,7 @@ export const Btn = React.memo(function Btn({children,onClick,v="primary",sm,dis,
     orange:{bg:"#966a32",c:"#fff",shadow:"0 2px 0 #6f4e24"}
   };
   const b=st[v]||st.primary;
-  return <button type="button" disabled={dis} onClick={dis?undefined:onClick} style={{background:b.bg,color:b.c,border:b.border||"1px solid transparent",borderRadius:sm?12:14,fontFamily:F.body,fontWeight:600,fontSize:sm?13:14,minHeight:sm?40:46,padding:sm?"0 14px":"0 20px",boxSizing:"border-box",justifyContent:"center",cursor:dis?"not-allowed":"pointer",opacity:dis?0.4:1,display:"inline-flex",alignItems:"center",gap:7,transition:"background .2s, transform .08s",boxShadow:dis?"none":b.shadow,...s}}>{children}</button>;
+  return <button type="button" aria-label={label} disabled={dis} onClick={dis?undefined:onClick} style={{background:b.bg,color:b.c,border:b.border||"1px solid transparent",borderRadius:sm?12:14,fontFamily:F.body,fontWeight:600,fontSize:sm?13:14,minHeight:sm?40:46,padding:sm?"0 14px":"0 20px",boxSizing:"border-box",justifyContent:"center",cursor:dis?"not-allowed":"pointer",opacity:dis?0.4:1,display:"inline-flex",alignItems:"center",gap:7,transition:"background .2s, transform .08s",boxShadow:dis?"none":b.shadow,...s}}>{children}</button>;
 });
 
 export const Card = React.memo(function Card({children,onClick,active,style:s,p=true,className=""}) {
