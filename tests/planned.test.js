@@ -18,9 +18,10 @@ test('A dateless plan waits: window open → job now, window later → the month
   assert.deepEqual(waitingFields({ status: 'soon', month: 11 }, NOV), { sowPending: true });
   assert.deepEqual(waitingFields({ status: 'later', month: 2 }, NOV), { sowFrom: '2027-03' });
   assert.deepEqual(waitingFields({ status: 'later', month: 11 }, '2026-10-02'), { sowFrom: '2026-12' });
-  // garlic goes in Oct–Nov in Western Europe; tomato waits for late winter
+  // garlic goes in Oct–Nov in Western Europe; a tomato planting starts with a young plant, so it waits for
+  // the plant-out window after the last frost (May), not the seed months (Feb–Apr)
   assert.deepEqual(plannedFields('Garlic', 'western_europe', NOV), { sowPending: true });
-  assert.match(plannedFields('Tomato', 'western_europe', NOV).sowFrom, /^2027-0[1-4]$/);
+  assert.deepEqual(plannedFields('Tomato', 'western_europe', NOV), { sowFrom: '2027-05' });
 });
 
 test('A plan made in season puts its first job on Today; out of season it stays quiet until its month', () => {

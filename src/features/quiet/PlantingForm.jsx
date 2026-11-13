@@ -26,7 +26,7 @@ import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
 import { toast } from "../../lib/toast";
-import { waitingLabel } from "../../lib/sowing";
+import { waitingLabel, sowVerb } from "../../lib/sowing";
 import { sowTiming, growsHere, describeSuggestion } from "../../lib/suggest";
 import { CROP_MAP } from "../../data/crops";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
@@ -45,6 +45,7 @@ const empty = {
   rowCount: "",
 };
 const NO_ROOM = "Not for this space";
+const dayMonth = (key) => localDateFromKey(key).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 const SUN_WORD = { Full: "Full sun", Partial: "Part shade", "Full-Partial": "Sun or part shade" }; // crops this space cannot take: shown only when searched for, never selectable
 export default function PlantingForm({ data, setData, initial = {}, onClose, onSaved }) {
   // One growing area on the map: it is the answer, so it is already chosen.
@@ -82,7 +83,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
       else {
         // what a newcomer compares before choosing: effort, light, time to food (review 2026-11-13)
         const d = describeSuggestion(base, data.profile, data.region, day);
-        const meta = `${d.effort} · ${SUN_WORD[c.sun] || "Full sun"} · ${d.ready}`;
+        const meta = `${t.young ? "Young plants · " : ""}${d.effort} · ${SUN_WORD[c.sun] || "Full sun"} · ${d.ready}`;
         (t.status === "later" ? later : now).push({ c, t, meta });
       }
     });
@@ -90,6 +91,10 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
     // what cannot grow here is never offered; a search for it by name gets a plain answer instead of an empty list
     return [["Plant now", now], ["Later", later], [NO_ROOM, query.trim() ? ground : []]].filter((g) => g[1].length);
   })();
+  // a crop that starts as a young plant: say when plants can go in (lib/suggest.js youngPlantTiming)
+  const youngT = crop ? sowTiming(CROP_MAP.get(crop.name) || crop, data.region, localDateFromKey(todayLocalKey())) : null,
+    young = !!youngT?.young,
+    planting = crop ? sowVerb(crop.steps) === "Plant" : false;
   const varieties = crop ? getRegionalVarieties(crop.name, data.region) : [],
     variety = varieties.find((v) => v.name === form.variety);
   const input = crop && zone ? plantingInput(form, crop, zone) : form;
@@ -288,7 +293,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
                   >
                     <FarmIcon name={c.name} emoji={c.emoji} size={30} harvest />
                     <span className="q-crop-name">{c.name}{meta && <small className="q-crop-meta">{meta}</small>}</span>
-                    {g[0] !== NO_ROOM && t.status === "later" && <small>from {MONTHS[t.month]}</small>}
+                    {g[0] !== NO_ROOM && t.status === "later" && <small>from {t.from ? dayMonth(t.from) : MONTHS[t.month]}</small>}
                   </button>
                 ))}
               </div>
@@ -327,6 +332,12 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
               <p style={{ margin: 0, fontSize: 12 }}>
                 Harvest estimate: {variety?.days || crop.days} days · {crop.sun} sun
               </p>
+              {young && youngT.from && !fromSeed && (
+                <p className="q-young-window">
+                  Young plants go in {dayMonth(youngT.from)} – {dayMonth(youngT.until)}
+                  {youngT.status === "now" ? " · now is a good time" : ""}
+                </p>
+              )}
             </div>
           </div>
           {varieties.length > 0 && (
@@ -449,7 +460,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
           <span className="q-when-label">Is it in the ground yet?</span>
           <div className="q-seg">
             <button type="button" aria-pressed={form.when === "now"} onClick={() => update({ ...form, when: "now", plantDate: form.plantDate || todayLocalKey() })}>
-              Already {crop && /^plant/i.test(crop.steps?.[0]?.l || "") ? "planted" : "sown"}
+              Already {planting ? "planted" : "sown"}
             </button>
             <button type="button" aria-pressed={form.when === "plan"} onClick={() => update({ ...form, when: "plan" })}>
               Plan for later
@@ -467,7 +478,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         />
       )}
       <Inp
-        label={`Seed cost (${currencySymbol(data).trim()})`}
+        label={`${planting && !fromSeed ? "Plants" : "Seed"} cost (${currencySymbol(data).trim()})`}
         type="number"
         min="0"
         value={form.cost}

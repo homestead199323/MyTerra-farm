@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { growsHere, keepsAnimals, suggestCrops } from '../src/lib/suggest.js';
-import { cropFitsZone } from '../src/features/quiet/planting-plan.js';
+import { growsHere, keepsAnimals, suggestCrops, sowTiming, startsAsYoungPlant } from '../src/lib/suggest.js';
+import { cropFitsZone, planPlanting } from '../src/features/quiet/planting-plan.js';
 import { monthPlan, monthTip } from '../src/lib/month-plan.js';
 import { CROP_MAP } from '../src/data/crops.js';
 
@@ -17,8 +17,8 @@ test('fits: a balcony is never offered a tree, or a crop that needs open ground'
 test('fits: a balcony is offered what people really grow there, nothing else', () => {
   for (const name of ['Potato', 'Onion', 'Turnip', 'Cabbage', 'Cress', 'Microgreens', 'Pea Shoots']) assert.equal(growsHere(name, balcony), false, name);
   for (const name of ['Pepper (Sweet)', 'Eggplant', 'Cucumber', 'Rosemary', 'Thyme', 'Parsley', 'Mint', 'Radish']) assert.equal(growsHere(name, balcony), true, name);
-  const feb = suggestCrops({ environment: 'balcony', experience: 'beginner' }, 'western_europe', { month: 1, limit: 3 }).map((c) => c.name);
-  assert.ok(feb.includes('Tomato'), feb.join()); // the balcony classic leads, even for a beginner
+  const may = suggestCrops({ environment: 'balcony', experience: 'beginner' }, 'western_europe', { date: new Date(2026, 4, 20), limit: 3 }).map((c) => c.name);
+  assert.deepEqual(may, ['Tomato', 'Pepper (Sweet)', 'Basil']); // the balcony classics lead, even for a beginner
 });
 
 test('fits: a back garden gets no field crops, forest trees or windowsill trays', () => {
@@ -58,4 +58,32 @@ test('fits: what is already growing stays on the calendar, and a balcony keeps n
   assert.equal(keepsAnimals(balcony), false);
   assert.equal(keepsAnimals(garden), true);
   assert.equal(keepsAnimals({}), true);
+});
+
+test('young plants: tomatoes, peppers and potted herbs go in after the last frost, not in their seed months', () => {
+  const tomato = CROP_MAP.get('Tomato');
+  const at = (m, d) => sowTiming(tomato, 'western_europe', new Date(2026, m, d));
+  assert.equal(at(2, 10).status, 'later'); // March: seed time indoors, far too cold for a plant outside
+  assert.equal(at(2, 10).month, 4);
+  assert.equal(at(4, 5).status, 'soon'); // early May: two weeks before the plant-out date
+  assert.equal(at(5, 10).status, 'now'); // June
+  assert.equal(at(5, 10).verb, 'Plant');
+  assert.equal(at(5, 10).young, true);
+  assert.equal(at(8, 10).status, 'later'); // September: too late for a fruiting crop
+  assert.equal(sowTiming(tomato, 'mediterranean', new Date(2026, 3, 10)).status, 'now'); // April in the south
+  assert.equal(sowTiming(CROP_MAP.get('Thyme'), 'western_europe', new Date(2026, 2, 10)).status, 'now'); // hardy herb: its spring months too
+  assert.equal(startsAsYoungPlant(CROP_MAP.get('Onion')), false); // onion sets keep their listed months
+  assert.equal(startsAsYoungPlant(CROP_MAP.get('Lettuce')), false); // sown, not planted
+});
+
+test('balcony pots: a tomato goes in a pot on a narrow trough, plants still keep their spacing along it', () => {
+  const tomato = CROP_MAP.get('Tomato');
+  const trough = { id: 't', type: 'container', wM: 1.5, hM: 0.5, xM: 0, yM: 0, rowAxis: 'horizontal' };
+  const two = planPlanting(trough, [], { plantCount: 2 }, tomato);
+  assert.equal(two.error, '', two.error);
+  assert.equal(two.count, 2);
+  assert.ok(two.layout.widthM <= 0.3 + 1e-9, 'the pots use the trough, not a 50 cm strip');
+  assert.ok(planPlanting(trough, [], { plantCount: 4 }, tomato).error, 'four tomatoes need more than 1.5 m');
+  // a bed is still a bed: the same row in a raised bed needs its full width
+  assert.ok(planPlanting({ ...trough, type: 'raised' }, [], { plantCount: 2 }, tomato).error);
 });

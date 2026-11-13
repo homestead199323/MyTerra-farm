@@ -18,6 +18,10 @@ import { CROP_DIFFICULTY, parseSowMonths, MN_ABR } from "./calendar";
 import { getRegionalCrop } from "./regional";
 import { isRecurringCrop } from "./perennial";
 import { sowVerb } from "./sowing";
+import { propagationOf, PERENNIALS } from "../data/propagation.js";
+import { REGION_MAP } from "../data/regions.js";
+import { plantOutWindow } from "../features/nursery/nursery-model.js";
+import { toLocalDateKey, addDaysToLocalKey, localDateFromKey } from "./utils.js";
 
 // Crops that thrive in pots/planters — used when environment is "balcony"
 // or the grower's only asset is containers.
@@ -123,6 +127,7 @@ export function sowTiming(crop, region, date) {
   var regional = getRegionalCrop(crop, region);
   if (!regional) return { status: "na", verb: "Sow", month: null, inMonths: null };
   var verb = sowVerb(regional.steps || crop.steps);
+  if (startsAsYoungPlant(crop, regional)) return youngPlantTiming(crop, regional, region, d);
   var months = parseSowMonths(regional.sowIn || crop.sowIn);
   var m = d.getMonth();
   if (!months.length || months.includes(m)) return { status: "now", verb: verb, month: m, inMonths: 0 };
@@ -133,6 +138,39 @@ export function sowTiming(crop, region, date) {
     if (months.includes(mm)) return { status: "later", verb: verb, month: mm, inMonths: k };
   }
   return { status: "now", verb: verb, month: m, inMonths: 0 };
+}
+
+/**
+ * A planting that begins by putting a young plant in (tomatoes, peppers, aubergines, potted herbs: first step
+ * "Transplant"/"Plant", raised under cover) goes in during the plant-out window, not in the seed-sowing months
+ * listed for the crop (tomato seed Feb–Apr indoors; plants out from two weeks after the last frost). Most
+ * balcony growers buy these as young plants (decided 2026-11-13). Raising them from seed goes through the
+ * nursery, which keeps its own sowing dates.
+ */
+export function startsAsYoungPlant(crop, regional) {
+  var r = regional || crop, p = propagationOf(crop);
+  // tender and frost-neutral crops only: hardy transplants (onion sets, brassicas, leeks) keep their listed months
+  return sowVerb((r && r.steps) || (crop && crop.steps)) === "Plant" && p.method === "transplant" && p.frostWeeks >= 0;
+}
+
+function youngPlantTiming(crop, regional, region, d) {
+  var frost = (REGION_MAP.get(region) || REGION_MAP.get("western_europe")).frost;
+  var key = toLocalDateKey(d), year = d.getFullYear();
+  var grow = { ...crop, days: Number(regional.days) || Number(crop.days) || 60 };
+  var out = { verb: "Plant", young: true };
+  // hardy perennial herbs (thyme, sage, rosemary...) also go in during their listed spring months
+  if (PERENNIALS.has(crop.name) && parseSowMonths(regional.sowIn || crop.sowIn).includes(d.getMonth()))
+    return { ...out, status: "now", month: d.getMonth(), inMonths: 0 };
+  for (var y = year; y <= year + 1; y++) {
+    var w = plantOutWindow(grow, y, frost);
+    if (!w.open || key > w.latest) continue;
+    var first = localDateFromKey(w.earliest);
+    if (key >= w.earliest) return { ...out, status: "now", month: d.getMonth(), inMonths: 0, from: w.earliest, until: w.latest };
+    var months = (first.getFullYear() - year) * 12 + first.getMonth() - d.getMonth();
+    if (key >= addDaysToLocalKey(w.earliest, -14)) return { ...out, status: "soon", month: first.getMonth(), inMonths: months, from: w.earliest, until: w.latest };
+    return { ...out, status: "later", month: first.getMonth(), inMonths: months, from: w.earliest, until: w.latest };
+  }
+  return { ...out, status: "na", month: null, inMonths: null };
 }
 
 /**
