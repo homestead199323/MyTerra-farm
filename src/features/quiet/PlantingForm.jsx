@@ -21,6 +21,7 @@ import {
 } from "../nursery/nursery-model";
 import { applySeedlingStage } from "../../lib/seedling-stage";
 import { usesSeedling } from "./planting-mode";
+import { WINDOWSILL } from "../nursery/nursery-model";
 import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
@@ -48,7 +49,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
   // One growing area on the map: it is the answer, so it is already chosen.
   const [form, setForm] = useState(() => {
       const beds = (data.zones || []).filter((z) => PLANT_TYPES.includes(z.type));
-      return { ...empty, ...(beds.length === 1 ? { zone: beds[0].id } : {}), ...initial, ...(initial.plantDate ? { when: "now" } : {}) };
+      return { ...empty, ...(beds.length === 1 ? { zone: beds[0].id } : {}), ...initial, ...(initial.plantDate ? { when: "now" } : {}), ...(initial.startIndoors ? { fromSeed: true } : {}) };
     }),
     // The seedling batch this form plants out — consumed by the FIRST save only, so a
     // companion follow-up planting doesn't re-link the batch to the wrong bed.
@@ -103,7 +104,8 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
     covered = zone?.type === "greenhouse";
   const plantOutDate =
     form.plantOutDate || (crop ? suggestDates(crop, todayLocalKey(), frost, covered).plantOutDate : "");
-  const nurseryId = nurseries.some((z) => z.id === form.nursery) ? form.nursery : nurseries[0]?.id;
+  const nurseryId = nurseries.some((z) => z.id === form.nursery) ? form.nursery : nurseries[0]?.id || WINDOWSILL;
+  const nurseryWord = nurseries.length ? "the nursery" : "on the windowsill";
   const seedPlan =
     fromSeed && plan?.count
       ? planBatch({
@@ -221,12 +223,17 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
     const saved = next.garden.plots[next.garden.plots.length - 1];
     if (pd) toast(`${name}: in the ground since ${localDateFromKey(pd).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`);
     else if (!fromSeed) toast(`${name}: saved as a plan`, { detail: waitingLabel(saved, todayLocalKey()) });
+    else {
+      const sowOn = next.nursery?.batches?.[next.nursery.batches.length - 1]?.sowDate;
+      const nice = (k) => localDateFromKey(k).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+      toast(`${name}: start indoors ${nurseries.length ? "in the nursery" : "on a windowsill"}`, { detail: `${sowOn ? `Sow ${nice(sowOn)} · ` : ""}plant out ${nice(plantOutDate)}` });
+    }
     if (companion) {
       setForm({ ...empty, crop: companion, zone: form.zone, plantDate: form.plantDate, when: form.when });
       setCompanion("");
       setQuery("");
       setBrowse(false);
-    } else { onClose(); onSaved?.(); }
+    } else { onClose(); onSaved?.(saved && saved.id); }
   }
   return (
     <Overlay title="Plant a crop" onClose={onClose}>
@@ -366,7 +373,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
       {canNursery && fromSeed && (
         <section className="q-inset q-seed-choice">
           <div className="q-row q-between">
-            <strong>Start as seedling in the nursery</strong>
+            <strong>{nurseries.length ? "Start as seedling in the nursery" : "Start indoors on a sunny windowsill"}</strong>
             <button type="button" className="q-text-button" onClick={() => update({ ...form, fromSeed: false })}>
               Plant directly instead
             </button>
@@ -391,7 +398,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
               </div>
               {seedPlan && (
                 <small>
-                  Sow {seedPlan.batch.cells} cells on {seedPlan.batch.sowDate} · {prop.weeks} weeks in the nursery
+                  Sow {seedPlan.batch.cells} cells on {seedPlan.batch.sowDate} · {prop.weeks} weeks {nurseryWord === "the nursery" ? "in the nursery" : "indoors"}, then plant out
                 </small>
               )}
               <TrayPicker
@@ -461,12 +468,11 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
           <button
             type="button"
             className="q-secondary"
-            disabled={!nurseries.length}
             onClick={() => update({ ...form, fromSeed: true })}
           >
-            Start as seedling
+            Start indoors as seedlings
           </button>
-          {!nurseries.length && <small>Needs a Seedling Nursery area on the map.</small>}
+          {!nurseries.length && <small>No nursery on your map — a seed tray on a sunny windowsill works.</small>}
         </section>
       )}
       {error && (

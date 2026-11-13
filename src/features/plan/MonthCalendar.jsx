@@ -196,7 +196,7 @@ export default function MonthCalendar({ data, onAdd }) {
           <div className="ov-actions">
             <Btn v="secondary" onClick={function () { setOpen(null); }}>Close</Btn>
             {canAddOpen && (
-              <Btn onClick={function () { const name = open.item.name; setOpen(null); onAdd(name, isNow); }}>
+              <Btn onClick={function () { const name = open.item.name; setOpen(null); onAdd(name, isNow, open.job); }}>
                 {isNow ? (open.job === "indoors" || open.job === "outside" ? "Sow it now" : "Plant it now") : `Plan for ${MN_ABR[month]}`}
               </Btn>
             )}

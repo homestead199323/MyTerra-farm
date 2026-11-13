@@ -14,7 +14,7 @@ test('Seedling section stays closed by default, even for transplant crops', () =
 
 test('Seedling section opens only when asked, and only if a nursery exists', () => {
   assert.equal(usesSeedling({ canNursery: true, nurseries: nursery, form: { fromSeed: true } }), true);
-  assert.equal(usesSeedling({ canNursery: true, nurseries: [], form: { fromSeed: true } }), false);
+  assert.equal(usesSeedling({ canNursery: true, nurseries: [], form: { fromSeed: true } }), true); // windowsill
   assert.equal(usesSeedling({ canNursery: false, nurseries: nursery, form: { fromSeed: true } }), false);
 });
 

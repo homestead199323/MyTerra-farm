@@ -53,7 +53,7 @@ export function BatchCard({ batch, data, onOpen }) {
         </strong>
         <small>
           {batch.cells} cells in {currentTray(batch).cells}-cell tray
-          {batch.cells > currentTray(batch).cells ? "s" : ""} · {nursery || "Nursery"}
+          {batch.cells > currentTray(batch).cells ? "s" : ""} · {nursery || (batch.zoneId === "windowsill" ? "Windowsill" : "Nursery")}
           {bed ? ` → ${bed}` : ""}
         </small>
         <StageTrack batch={batch} />

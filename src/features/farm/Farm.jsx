@@ -1016,7 +1016,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
 
       {sp && !(dock&&showAdd) && <PlotOverlay key={sp.id} dock={dock} plot={sp} data={data} setData={setData} onClose={()=>setSelP(null)}/>}
 
-      {showAdd&&<PlantingForm data={data} setData={setData} initial={initial} onClose={()=>{setShowAdd(false);setInitial({});setBackHome(false);}} onSaved={()=>{if(backHome)setPage?.("home");}}/>}
+      {showAdd&&<PlantingForm data={data} setData={setData} initial={initial} onClose={()=>{setShowAdd(false);setInitial({});setBackHome(false);}} onSaved={(id)=>{if(backHome)setPage?.("home");else if(id)setSelP(id);}}/>}
     </div>
   );
 }

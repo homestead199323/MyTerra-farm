@@ -8,6 +8,7 @@ import { stockLines, currentStorageNote, addBoughtStock } from '../src/lib/inven
 import { logHarvest, harvestablePlots } from '../src/lib/harvest-log.js';
 import { produceTotals } from '../src/lib/progress.js';
 import { moneyAmount, formatMoneyShort } from '../src/lib/money.js';
+import { nurseryTasks, WINDOWSILL } from '../src/features/nursery/nursery-model.js';
 
 const all = (o) => JSON.stringify(o);
 
@@ -80,4 +81,12 @@ test('harvest date cannot be in the future and empty amounts change nothing', ()
   assert.equal(logHarvest(base, { name: 'Blackberries', qty: 0 }, '2026-11-12'), base);
   const d = logHarvest(base, { name: 'Blackberries', qty: 1, unit: 'kg', date: '2027-01-01' }, '2026-11-12');
   assert.equal(d.pantry.items[0].addedDate, '2026-11-12');
+});
+
+test('seedlings started without a nursery area say windowsill, not a missing nursery', () => {
+  const data = { zones: [{ id: 'bed1', name: 'Kitchen bed', type: 'raised' }], nursery: { batches: [{ id: 'b1', crop: 'Tomato', zoneId: WINDOWSILL, targetZoneId: 'bed1', plotId: 'p1', cells: 5, plants: 4, sowDate: '2027-03-27', plantOutDate: '2027-05-15', germDays: 7, stage: null, stageDates: {} }] } };
+  const t = nurseryTasks(data, '2027-03-27');
+  const sow = t.find((x) => x.key === 'seed-b1-sown');
+  assert.ok(sow, 'sow job on the day');
+  assert.equal(sow.loc, 'Windowsill');
 });

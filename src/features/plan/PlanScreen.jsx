@@ -56,10 +56,11 @@ export default function PlanScreen({ data, setData, setPage }) {
   }
 
   // now = it goes in today (the form opens dated today); otherwise it is planned, with the date left open
-  function addCrop(name, now) {
+  function addCrop(name, now, job) {
+    const indoors = job === "indoors" ? { startIndoors: true } : {};
     if (!canPlant) setPage("map", { edit: true });
-    else if (now === true) setPage("crops", { crop: name, plantDate: today });
-    else setPage("crops", { crop: name });
+    else if (now === true && !indoors.startIndoors) setPage("crops", { crop: name, plantDate: today });
+    else setPage("crops", { crop: name, ...indoors });
   }
 
   return (

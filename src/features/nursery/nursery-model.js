@@ -16,6 +16,9 @@ export const SOW_EXTRA = 0.2;
 
 export const activeBatches = (data) => (data.nursery?.batches || []).filter((b) => b.stage !== "planted");
 export const nurseryZones = (data) => (data.zones || []).filter((z) => z.type === "nursery");
+/** Seedlings started without a nursery area on the map live here. */
+export const WINDOWSILL = "windowsill";
+const placeName = (zones, id, fallback) => zones.get(id)?.name || (id === WINDOWSILL ? "Windowsill" : fallback);
 
 /** Stages this batch goes through (potting on only for crops that need it). */
 export function stagesOf(batch) {
@@ -142,8 +145,7 @@ export function nurseryTasks(data, todayKey) {
   const tasks = [],
     busy = new Set();
   activeBatches(data).forEach((b) => {
-    const nursery = zones.get(b.zoneId),
-      loc = nursery?.name || "Nursery";
+    const loc = placeName(zones, b.zoneId, "Nursery");
     const bed = zones.get(b.targetZoneId)?.name;
     if (b.stage) busy.add(b.zoneId);
     const next = nextStage(b);
@@ -191,9 +193,9 @@ export function nurseryTasks(data, todayKey) {
       pri: 2,
       type: "water",
       emoji: "💧",
-      title: `Check seedlings in ${zones.get(zoneId)?.name || "the nursery"}`,
+      title: zoneId === WINDOWSILL && !zones.get(zoneId) ? "Check seedlings on the windowsill" : `Check seedlings in ${zones.get(zoneId)?.name || "the nursery"}`,
       desc: "Water from below when the surface is dry. Look for damping off (seedlings collapsing at soil level).",
-      loc: zones.get(zoneId)?.name || "Nursery",
+      loc: placeName(zones, zoneId, "Nursery"),
       zoneId,
       daysOut: 0,
       routine: true,
