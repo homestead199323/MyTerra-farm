@@ -1,8 +1,11 @@
 import { fmtWeight } from "../../lib/utils";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { starterCount } from "../../lib/suggest";
 import { spacingGuide, plantDensity } from "../../data/spacing.js";
 import { maxPlantCount } from "./planting-plan";
 import BedPlan from "./BedPlan";
+
+const LAYOUT_OPEN_KEY = "mt_planting_layout_open";
 
 const PATTERNS = [
   ["rows", "Grid", ""],
@@ -42,6 +45,8 @@ export default function PlantingControls({
   crops,
   editId,
   showAxis = true,
+  simple = false,
+  people = null,
 }) {
   const orchard = zone?.type === "orchard",
     scatter = value.pattern === "scatter",
@@ -85,9 +90,60 @@ export default function PlantingControls({
   };
   const field = (key) => ({ className: badField === key ? "is-problem" : undefined, invalid: badField === key, hint: badField === key ? hints[key] : null });
   const hint = (k) => (badField === k ? <span className="q-field-hint" role="alert">{hints[k]}</span> : null);
+  // A first planting asks only how many (review 2026-11-13): pattern and spacing sit behind "Spacing and layout",
+  // which opens by itself when a spacing field needs fixing or the planting is already off the guide, and stays
+  // open for anyone who has opened it before.
+  const offGuide =
+    String(value.spacingCM) !== String(scatter ? crop?.spacing : hex ? guide.hexCM : guide.inRowCM) ||
+    (!scatter && !hex && String(value.rowSpacingCM) !== String(guide.rowCM));
+  const [opened, setOpened] = useState(() => {
+    try { return localStorage.getItem(LAYOUT_OPEN_KEY) === "1"; } catch { return false; }
+  });
+  const showLayout = !simple || opened || offGuide || badField === "spacingCM" || badField === "rowSpacingCM";
+  const toggleLayout = () => {
+    const next = !showLayout;
+    setOpened(next);
+    try { localStorage.setItem(LAYOUT_OPEN_KEY, next ? "1" : "0"); } catch { /* storage off: open for this form only */ }
+  };
+  const blankCount = String(value.plantCount ?? "").trim() === "" && !byRows;
+  const want = simple && crop && !orchard ? starterCount(crop, people) : 0;
+  const suggestN = want > 0 && maxFit > 0 ? Math.min(want, maxFit) : want;
+  const suggestWhy = suggestN < want ? "as many as fit here" : people ? `a good start for ${people} ${people === 1 ? "person" : "people"}` : "a good first planting";
+  const layoutLine = scatter
+    ? `Scattered · ${crop?.spacing} cm apart`
+    : `${hex ? "Hexagonal" : "Grid"} · ${hex ? `${value.spacingCM} cm apart` : `${value.spacingCM} cm apart, rows ${value.rowSpacingCM} cm`}`;
+  const countField = (
+    <label className={field("plantCount").className}>
+      {orchard ? "Number of trees" : "Number of plants"}
+      <input
+        type="number"
+        min="1"
+        step="1"
+        inputMode="numeric"
+        placeholder={maxFit > 0 ? `Up to ${maxFit}` : undefined}
+        aria-invalid={field("plantCount").invalid || undefined}
+        value={byRows ? plan?.count || "" : (value.plantCount ?? "")}
+        onChange={(e) => update({ mode: "plants", plantCount: e.target.value })}
+      />
+      {hint("plantCount")}
+      {simple && blankCount && suggestN > 0 && !field("plantCount").invalid && (
+        <button type="button" className="q-text-button q-count-suggest" onClick={() => update({ mode: "plants", plantCount: String(suggestN) })}>
+          Use {suggestN} — {suggestWhy}
+        </button>
+      )}
+    </label>
+  );
   return (
     <section className="q-inset q-planting-controls">
-      {orchard && (
+      {simple && countField}
+      {simple && (
+        <button type="button" className="q-layout-toggle" aria-expanded={showLayout} onClick={toggleLayout}>
+          <span>Spacing and layout</span>
+          {!showLayout && <small>{layoutLine}</small>}
+          <b aria-hidden="true">{showLayout ? "Hide" : "Change"}</b>
+        </button>
+      )}
+      {showLayout && orchard && (
         <fieldset className="q-pattern-picker">
           <legend>Tree layout</legend>
           <div className="q-row" role="group">
@@ -112,7 +168,7 @@ export default function PlantingControls({
           </div>
         </fieldset>
       )}
-      {!scatter && (
+      {showLayout && !scatter && (
         <>
           {showAxis && (
           <fieldset className="q-pattern-picker">
@@ -161,21 +217,9 @@ export default function PlantingControls({
           )}
         </>
       )}
+      {showLayout && <>
       <div className="q-grid2">
-        <label className={field("plantCount").className}>
-          {orchard ? "Number of trees" : "Number of plants"}
-          <input
-            type="number"
-            min="1"
-            step="1"
-            inputMode="numeric"
-            placeholder={maxFit > 0 ? `Up to ${maxFit}` : undefined}
-            aria-invalid={field("plantCount").invalid || undefined}
-            value={byRows ? plan?.count || "" : (value.plantCount ?? "")}
-            onChange={(e) => update({ mode: "plants", plantCount: e.target.value })}
-          />
-          {hint("plantCount")}
-        </label>
+        {!simple && countField}
         <label className={field("spacingCM").className}>
           {scatter ? "Space between trees (cm)" : hex ? "Spacing between plants (cm)" : "Between plants (cm)"}
           <input
@@ -215,8 +259,7 @@ export default function PlantingControls({
           : hex
             ? `${guide.hexCM} cm apart`
             : `${guide.inRowCM} cm apart, rows ${guide.rowCM} cm`}
-        {(String(value.spacingCM) !== String(scatter ? crop?.spacing : hex ? guide.hexCM : guide.inRowCM) ||
-          (!scatter && !hex && String(value.rowSpacingCM) !== String(guide.rowCM))) && (
+        {offGuide && (
           <>
             {" · "}
             <button
@@ -238,12 +281,13 @@ export default function PlantingControls({
           Shuffle tree positions
         </button>
       )}
+      </>}
       <div role="status" className="q-planting-summary">
-        <strong>
+        {(!simple || plan?.count > 0) && <strong>
           {plan?.count || 0} {orchard ? "trees" : "plants"}
           {!scatter && ` · ${plan?.rows || 0} ${plan?.rows === 1 ? "row" : "rows"}`}
-          {density > 0 && ` · ${density >= 10 ? Math.round(density) : density.toFixed(1)} per m²`}
-        </strong>
+          {showLayout && density > 0 && ` · ${density >= 10 ? Math.round(density) : density.toFixed(1)} per m²`}
+        </strong>}
         {yieldKg != null && <span>Estimated harvest: ~{fmtWeight(yieldKg)}</span>}
       </div>
       {factor < 1 && !plan?.error && (onBioGuide ? (

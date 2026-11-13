@@ -27,7 +27,7 @@ import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
 import { toast } from "../../lib/toast";
 import { waitingLabel } from "../../lib/sowing";
-import { sowTiming, growsHere } from "../../lib/suggest";
+import { sowTiming, growsHere, describeSuggestion } from "../../lib/suggest";
 import { CROP_MAP } from "../../data/crops";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -44,7 +44,8 @@ const empty = {
   plantCount: "",
   rowCount: "",
 };
-const NO_ROOM = "Won't grow here"; // crops this space cannot take: shown only when searched for, never selectable
+const NO_ROOM = "Not for this space";
+const SUN_WORD = { Full: "Full sun", Partial: "Part shade", "Full-Partial": "Sun or part shade" }; // crops this space cannot take: shown only when searched for, never selectable
 export default function PlantingForm({ data, setData, initial = {}, onClose, onSaved }) {
   // One growing area on the map: it is the answer, so it is already chosen.
   const [form, setForm] = useState(() => {
@@ -75,10 +76,15 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
   const groups = (() => {
     const now = [], later = [], ground = [], day = localDateFromKey(todayLocalKey());
     choices.forEach((c) => {
-      const t = sowTiming(CROP_MAP.get(c.name) || c, data.region, day);
+      const base = CROP_MAP.get(c.name) || c;
+      const t = sowTiming(base, data.region, day);
       if (!growsHere(c.name, data, zone)) ground.push({ c, t });
-      else if (t.status === "later") later.push({ c, t });
-      else now.push({ c, t });
+      else {
+        // what a newcomer compares before choosing: effort, light, time to food (review 2026-11-13)
+        const d = describeSuggestion(base, data.profile, data.region, day);
+        const meta = `${d.effort} · ${SUN_WORD[c.sun] || "Full sun"} · ${d.ready}`;
+        (t.status === "later" ? later : now).push({ c, t, meta });
+      }
     });
     later.sort((a, b) => a.t.inMonths - b.t.inMonths);
     // what cannot grow here is never offered; a search for it by name gets a plain answer instead of an empty list
@@ -259,7 +265,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
             {groups.map((g) => (
               <div key={g[0]} role="group" aria-label={g[0]}>
                 <h4 className="q-crop-group">{g[0]}</h4>
-                {g[1].map(({ c, t }) => (
+                {g[1].map(({ c, t, meta }) => (
                   <button
                     type="button"
                     key={c.name}
@@ -281,8 +287,8 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
                     }}
                   >
                     <FarmIcon name={c.name} emoji={c.emoji} size={30} harvest />
-                    <span className="q-crop-name">{c.name}</span>
-                    {g[0] === NO_ROOM ? <small>needs open ground</small> : t.status === "later" && <small>from {MONTHS[t.month]}</small>}
+                    <span className="q-crop-name">{c.name}{meta && <small className="q-crop-meta">{meta}</small>}</span>
+                    {g[0] !== NO_ROOM && t.status === "later" && <small>from {MONTHS[t.month]}</small>}
                   </button>
                 ))}
               </div>
@@ -342,6 +348,8 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
             value={input}
             onChange={update}
             showAxis={false}
+            simple
+            people={Number(data.profile?.household?.people) || null}
             plan={plan}
             crop={crop}
             zone={zone}
@@ -353,7 +361,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
             crop={form.crop}
             zone={zone}
             plots={data.garden.plots}
-            available={crops.filter((c) => cropFitsZone(c, zone))}
+            available={crops.filter((c) => cropFitsZone(c, zone) && growsHere(c.name, data, zone))}
             onChoose={setCompanion}
             rotation={zone ? rotationCheck(data, zone.id, form.crop, form.plantDate || todayLocalKey()) : null}
           />
