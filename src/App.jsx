@@ -657,7 +657,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       case "tasks": return <TaskQueue data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} pageData={pageData} clearPageData={clearFarmPageData}/>;
       case "map": return <MapScreen data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData} setPage={setPage}/>;
       case "crops": return <CropsScreen data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData} setPage={setPage}/>;
-      case "live": return <Livestock data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData}/>;
+      case "live": return <Livestock data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData} setPage={setPage}/>;
       case "pantry": return <Pantry data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData}/>;
       case "fin": return <Financials data={data} setData={setData}/>;
       case "manuals": return <Manuals data={data}/>;

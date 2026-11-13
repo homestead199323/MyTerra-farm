@@ -90,7 +90,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
   const plan = crop && zone ? planPlanting(zone, data.garden.plots, input, crop) : null;
   const baseYield =
     crop && plan?.count ? expectedYield(crop.name, plan.count, "plants", variety?.yld, data.region) : null;
-  const yieldKg = baseYield == null ? null : Math.round(baseYield * (plan.yieldFactor ?? 1) * 10) / 10;
+  const yieldKg = baseYield == null ? null : Math.round(baseYield * (plan.yieldFactor ?? 1) * 1000) / 1000;
   function update(next) {
     setForm(next);
     setError("");
@@ -250,6 +250,8 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
           onChange={(e) => {
             setQuery(e.target.value);
             setBrowse(true);
+            // Typing a new name drops the crop chosen before, so Save can never record the old one.
+            if (form.crop) update({ ...form, crop: "", variety: "", plantCount: "", rowCount: "" });
           }}
         />
         {browse && (

@@ -146,6 +146,12 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
     if (next !== day) { setDay(next); store(DAY_KEY, JSON.stringify(next)); }
   }, [day, today, due.length, ticked]);
   const progress = jobsProgress(day && day.day === today ? day : null, due.length);
+  // Phones: the next job sits under the map, not only behind the count (review 2026-11-12).
+  const upNext = useMemo(() => {
+    if (due.length) return { t: due[0], when: "" };
+    const later = (tasks || []).filter((t) => t.daysOut > 0 && t.type !== "upcoming-info").sort((a, b) => a.daysOut - b.daysOut)[0];
+    return later ? { t: later, when: later.daysOut === 1 ? "tomorrow" : `in ${later.daysOut} days` } : null;
+  }, [due, tasks]);
 
   const [shown, setShown] = useState(() => stored(DONE_KEY));
   const celebrate = showDayDone(progress, shown, today) && !taskZone && !walk && !modal && !quiet;
@@ -223,9 +229,9 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         onEditLayout={() => setPage("map", { edit: true })} onStartGuide={() => setData({ ...data, setupDone: false })} />
 
       {!quiet && <div className="hv2-hud">
-        <button type="button" className="hv2-cap" aria-label={`${weather?.ok ? `${weather.temp} degrees. ` : ""}${streak} day streak. Open this week's weather`} onClick={() => setWeek(true)}>
+        <button type="button" className="hv2-cap" aria-label={`${weather?.ok ? `${weather.temp} degrees. ` : data.city ? "" : "No town set. "}${streak} day streak. Open this week's weather`} onClick={() => setWeek(true)}>
           <span className="hv2-sun"><Sun size={17} strokeWidth={2.2} /></span>
-          <b>{weather?.ok ? `${weather.temp}°` : new Date().toLocaleDateString(undefined, { weekday: "short" })}</b>
+          <b>{weather?.ok ? `${weather.temp}°` : data.city ? "Weather" : "Add your town"}</b>
           {wide && weather?.ok && <span className="hv2-word">{weather.desc}{weather.location ? ` in ${weather.location}` : ""}</span>}
           <i aria-hidden="true" />
           <Flame size={18} strokeWidth={2.2} className="hv2-flame" />
@@ -239,7 +245,12 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         </button>}
       </div>}
 
-      {demo && onDemoSignup && !quiet && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Keep it free <ArrowRight size={14} /></button>}
+      {!wide && !quiet && upNext && !modal && !walk && !celebrate && <button type="button" className="hv2-next" onClick={() => setPanel(true)}>
+        <small>{upNext.when ? `Next ${upNext.when}` : "Next job"}</small>
+        <strong>{upNext.t.title}</strong>
+        {upNext.t.loc && <span>{upNext.t.loc}</span>}
+      </button>}
+      {demo && onDemoSignup && !quiet && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Save my demo <ArrowRight size={14} /></button>}
 
       {cue && firstBed && !taskZone && !walk && !modal && !celebrate && !quiet && (
         <Cue cue={cue} bedId={firstBed.id} onPlant={() => setPage("crops", { zone: firstBed.id, returnHome: true })} onSkip={() => setData(endCues(data))} />

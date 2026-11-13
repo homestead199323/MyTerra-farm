@@ -11,6 +11,7 @@ import { MN_FULL } from "../../lib/calendar";
 import { toast } from "../../lib/toast";
 import { isPlantZone } from "../farm/living/visuals";
 import { resolveEnvironment } from "../../lib/environment";
+import { REGION_MAP } from "../../data/regions";
 import "./plan.css";
 
 /* ═══════════════════════════════════════════
@@ -56,6 +57,14 @@ export default function PlanScreen({ data, setData, setPage }) {
   }
 
   // now = it goes in today (the form opens dated today); otherwise it is planned, with the date left open
+  // Say which facts the picks used — only the ones the grower actually gave.
+  const pf = data.profile || {};
+  const SUN = { lt3: "under 3 h of sun", "3to5": "3–5 h of sun", "5to7": "5–7 h of sun", gt7: "full sun" };
+  const basis = [
+    `${MN_FULL[localDateFromKey(today).getMonth()]} picks for a ${resolveEnvironment(data)} in ${(REGION_MAP.get(data.region) || {}).name || "your region"}`,
+    SUN[pf.sunlight] || "",
+    ({ some: "some experience", confident: "confident grower", expert: "expert grower" })[pf.experience] || "easy crops first",
+  ].filter(Boolean).join(" · ");
   function addCrop(name, now, job) {
     const indoors = job === "indoors" ? { startIndoors: true } : {};
     if (!canPlant) setPage("map", { edit: true });
@@ -104,7 +113,7 @@ export default function PlanScreen({ data, setData, setPage }) {
 
           <section className="mt-plan-sec" aria-labelledby="plan-now">
             <h3 id="plan-now">Good to {sowNow.length && sowNow.every(function (s) { return s.info.verb === "Plant"; }) ? "plant" : "sow"} in {MN_FULL[now.getMonth()]}</h3>
-            <p className="mt-plan-note">Picked for your {resolveEnvironment(data) === "farm" ? "farm" : resolveEnvironment(data)}, your light and your experience.{canPlant ? "" : ` Add a ${bedWord} to your map first, then plant into it.`}</p>
+            <p className="mt-plan-note">{basis}.{canPlant ? "" : ` Add a ${bedWord} to your map first, then plant into it.`}</p>
             {sowNow.length === 0
               ? <Card style={{ textAlign: "center", padding: "28px 20px", background: C.grdLight }}>
                   <div style={SX.s15Bold}>Nothing new to sow right now</div>

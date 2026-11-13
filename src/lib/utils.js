@@ -8,6 +8,13 @@ import { applySeedlingStage, markBedPrepared } from "./seedling-stage.js";
 // Append an entry to the activity log, capped at 200 entries to prevent localStorage overflow.
 export const appendLog = (logArr, entry) => [...(logArr || []), entry].slice(-200);
 
+/** A weight for people: "40 g" under 1 kg, "1.5 kg", "12 kg" from 10 kg. */
+export const fmtWeight = (kg) => {
+  const v = Number(kg) || 0;
+  if (v > 0 && v < 1) return `${Math.max(1, Math.round(v * 1000))} g`;
+  return `${v >= 10 ? Math.round(v) : Math.round(v * 10) / 10} kg`;
+};
+
 // Local-time YYYY-MM-DD key. Replaces .toISOString().slice(0,10) which is UTC
 // and can be off by one day in non-UTC timezones (e.g. Albania UTC+1/+2).
 export const toLocalDateKey = (d) => {

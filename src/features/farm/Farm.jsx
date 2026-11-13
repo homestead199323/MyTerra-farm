@@ -17,7 +17,7 @@ import { REGIONS, REGION_MAP } from "../../data/regions";
 import { ZT, ZT_MAP } from "../../data/zones";
 import { searchCity } from "../../data/cities";
 import { uid } from "../../lib/storage";
-import { todayLocalKey, localDateFromKey, localDayNumber } from "../../lib/utils";
+import { todayLocalKey, localDateFromKey, localDayNumber, fmtWeight } from "../../lib/utils";
 import { getRegionalCrops, rCM } from "../../lib/regional";
 import PlotOverlay from "./PlotOverlay";
 import GroveScene from "../grove/GroveScene";
@@ -956,7 +956,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
                   {zone&&<span>📍 {zone.name}</span>}
                   {p.plantCount>0&&<span>{unit==="trees"?"🌳":"🌱"} {p.plantCount} {p.plantCount===1?unit.slice(0,-1):unit}</span>}
                   {p.qty>0&&p.measureType==="area"&&<span>📐 {p.qty}m²</span>}
-                  {p.expectedYieldKg>0&&<span>📦 ~{p.expectedYieldKg}kg</span>}
+                  {p.expectedYieldKg>0&&<span>📦 ~{fmtWeight(p.expectedYieldKg)}</span>}
                   {!hasQty&&p.plantDate&&!growth.waiting&&localDateFromKey(p.plantDate)&&<span>{localDateFromKey(p.plantDate).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>}
                   {p.status==="planned"&&p.plannedDate&&localDateFromKey(p.plannedDate)&&<span>from nursery · plant out {localDateFromKey(p.plannedDate).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span>}
                 </div>
@@ -1005,7 +1005,7 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
               <span style={{fontSize:17,fontWeight:650}}>{sec.title}</span>
               {sec.ready>0&&<Pill c={C.orange} bg={C.harvestBg}>{sec.ready} ready</Pill>}
             </span>
-            <small style={{color:C.t2,fontSize:12}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${sec.kg>=10?Math.round(sec.kg):Math.round(sec.kg*10)/10}kg`:""}</small>
+            <small style={{color:C.t2,fontSize:12}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${fmtWeight(sec.kg)}`:""}</small>
           </button>
           {open&&<div style={{display:"grid",gap:8}}>{shown.map(function(p){return renderCrop(p,sec.unit);})}</div>}
           {open&&sec.plots.length>_PREVIEW+1&&(

@@ -55,7 +55,7 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
         {wide && <button type="button" aria-current={page === "manuals" && !more ? "page" : undefined} onClick={() => go("manuals")}><BookOpen size={22} strokeWidth={1.9} /><span>Learn</span></button>}
         <span className="hv2-dock-gap" aria-hidden="true" />
         {wide && <button type="button" aria-current={page === "progress" && !more ? "page" : undefined} onClick={() => go("progress")}><TrendingUp size={22} strokeWidth={1.9} /><span>Progress</span></button>}
-        <button type="button" onClick={() => { setFan(false); setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.9} /><span>Ask</span></button>
+        <button type="button" aria-label={aiLocked ? "Ask the assistant — part of Pro" : "Ask the assistant"} onClick={() => { setFan(false); setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.9} /><span>Ask</span>{aiLocked && <em className="hv2-pro" aria-hidden="true">Pro</em>}</button>
         <button type="button" aria-expanded={more} aria-current={more || inMore ? "page" : undefined} onClick={() => { setFan(false); setMore(!more); }}><Menu size={22} strokeWidth={1.9} /><span>More</span></button>
       </nav>
       {!fan && <button type="button" className="hv2-plus" aria-label="Add" aria-expanded="false" onClick={() => { setMore(false); setFan(true); }}><Plus size={28} strokeWidth={2.4} /></button>}

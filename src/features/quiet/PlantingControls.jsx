@@ -1,3 +1,4 @@
+import { fmtWeight } from "../../lib/utils";
 import { useMemo } from "react";
 import { spacingGuide, plantDensity } from "../../data/spacing.js";
 import { maxPlantCount } from "./planting-plan";
@@ -243,7 +244,7 @@ export default function PlantingControls({
           {!scatter && ` · ${plan?.rows || 0} ${plan?.rows === 1 ? "row" : "rows"}`}
           {density > 0 && ` · ${density >= 10 ? Math.round(density) : density.toFixed(1)} per m²`}
         </strong>
-        {yieldKg != null && <span>Estimated harvest: ~{yieldKg} kg</span>}
+        {yieldKg != null && <span>Estimated harvest: ~{fmtWeight(yieldKg)}</span>}
       </div>
       {factor < 1 && !plan?.error && (onBioGuide ? (
         null

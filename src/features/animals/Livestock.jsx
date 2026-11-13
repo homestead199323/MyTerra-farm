@@ -6,7 +6,7 @@ import { appendLog, todayLocalKey, markTaskDone } from "../../lib/utils";
 import { addStock } from "../../lib/inventory";
 import { recordProduce, subtractProduce } from "../../lib/memory";
 import { toast } from "../../lib/toast";
-import { LDB } from "../../data/livestock";
+import { LDB, POULTRY_SPECIES } from "../../data/livestock";
 import { keepsAnimals } from "../../lib/suggest";
 import { BREEDS } from "../../data/breeds";
 import { Btn, Card, Inp, Sel, Overlay } from "../../components/ui";
@@ -18,7 +18,7 @@ import { animalGroups } from "../quiet/farm-model";
 /* ═══════════════════════════════════════════
    LIVESTOCK
    ═══════════════════════════════════════════ */
-function Livestock({data, setData, pageData, clearPageData}) {
+function Livestock({data, setData, pageData, clearPageData, setPage}) {
   const [showAdd,setShowAdd]=useState(false);
   useEffect(()=>{if(pageData?.add){setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]); // the + menu on the home map
  const [sel,setSel]=useState(null);const [showK,setShowK]=useState(null);const [kQ,setKQ]=useState("1");
@@ -86,6 +86,7 @@ function Livestock({data, setData, pageData, clearPageData}) {
             </span>
             <span style={{fontSize:12,color:C.t2,whiteSpace:"nowrap"}}>{g.head} {g.animals.every(function(x){return x.type==="Bee";})?(g.head===1?"hive":"hives"):(g.head===1?"animal":"animals")}</span>
           </button>
+          {open&&!g.zone&&setPage&&<div className="q-animal-home"><span>They need somewhere to live — their care jobs move there.</span><Btn sm onClick={function(){ if(document.body.classList.contains("mt-home-v2")){ setPage("home"); setTimeout(function(){ window.dispatchEvent(new Event("mt-build")); },0); } else setPage("map",{edit:true}); }}>{g.animals.some(function(x){return POULTRY_SPECIES.has(x.type)||x.type==="Rabbit";})?"Add a coop":g.animals.every(function(x){return x.type==="Bee";})?"Add a hive":"Add a shelter"}</Btn></div>}
           {open&&<div style={{display:"grid",gap:8}}>{g.animals.map(function(a){const db=LDB[a.type];return (
         <Card key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <button className="q-animal-open" onClick={()=>setSel(a.id)}>

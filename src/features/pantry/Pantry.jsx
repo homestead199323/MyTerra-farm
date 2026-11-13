@@ -19,6 +19,12 @@ function daysAgo(key, today) {
   return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`;
 }
 
+/** "1 egg", "6 eggs", otherwise the unit as stored (kg, L, pcs). */
+function unitWord(line, n) {
+  if (line.unit === "pcs" && /\beggs?\b/i.test(line.name || "")) return Number(n) === 1 ? "egg" : "eggs";
+  return line.unit;
+}
+
 /** − [qty] + stepper that works for kg, pcs and L. */
 function QtyStepper({ value, onChange, unit, max }) {
   const step = unit === "pcs" ? 1 : 0.5;
@@ -191,7 +197,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
                   <span className="q-stock-cat">{l.category}</span>
                 </div>
                 <div className="q-stock-qty">
-                  {fmtQty(l.qty)} <small>{l.unit}</small>
+                  {fmtQty(l.qty)} <small>{unitWord(l, l.qty)}</small>
                   {prices[l.key] != null && <em>≈ {money(l.qty * prices[l.key])}</em>}
                 </div>
                 <small className="q-stock-meta">
@@ -249,7 +255,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
             <div className="q-stock-dialog-hero">
               <span className="q-stock-icon is-big">{icon(sell.line.name, sell.line.category, 40)}</span>
               <span>
-                In stock: <strong>{fmtQty(sell.line.qty)} {sell.line.unit}</strong>
+                In stock: <strong>{fmtQty(sell.line.qty)} {unitWord(sell.line, sell.line.qty)}</strong>
               </span>
             </div>
             <label className="q-field">
@@ -262,7 +268,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
               </div>
             </label>
             <label className="q-field">
-              Price per {sell.line.unit} ({E})
+              Price per {unitWord(sell.line, 1)} ({E})
               <input type="number" inputMode="decimal" min="0" step="0.01" placeholder="0.00" value={sell.price} onChange={(e) => setSell({ ...sell, price: e.target.value })} />
             </label>
             <label className="q-field">
@@ -286,7 +292,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
                 <input type="date" value={sell.date} max={today} onChange={(e) => setSell({ ...sell, date: e.target.value })} />
               </label>
             </div>
-            {+sell.qty > sell.line.qty && <p className="q-warning">Only {fmtQty(sell.line.qty)} {sell.line.unit} in stock.</p>}
+            {+sell.qty > sell.line.qty && <p className="q-warning">Only {fmtQty(sell.line.qty)} {unitWord(sell.line, sell.line.qty)} in stock.</p>}
             <div className="q-stock-total">
               <span>Total</span>
               <strong>{money(sellTotal)}</strong>
@@ -310,7 +316,7 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
             <div className="q-stock-dialog-hero">
               <span className="q-stock-icon is-big">{icon(use.line.name, use.line.category, 40)}</span>
               <span>
-                In stock: <strong>{fmtQty(use.line.qty)} {use.line.unit}</strong>
+                In stock: <strong>{fmtQty(use.line.qty)} {unitWord(use.line, use.line.qty)}</strong>
               </span>
             </div>
             <label className="q-field">
@@ -327,14 +333,14 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
               <Segmented label="What happened" value={use.kind} onChange={(kind) => setUse({ ...use, kind })} options={[["use", "Used / eaten"], ["gift", "Given away"], ["waste", "Spoiled"]]} />
             </label>
             <p className="q-stock-note">
-              Leaves {fmtQty(Math.max(0, use.line.qty - (+use.qty || 0)))} {use.line.unit} in stock.
+              Leaves {fmtQty(Math.max(0, use.line.qty - (+use.qty || 0)))} {unitWord(use.line, Math.max(0, use.line.qty - (+use.qty || 0)))} in stock.
             </p>
             <div className="q-stock-buttons">
               <button type="button" className="q-secondary" onClick={() => setUse(null)}>
                 Cancel
               </button>
               <button type="button" className="q-button" disabled={!useValid} onClick={doUse}>
-                Take out {fmtQty(+use.qty || 0)} {use.line.unit}
+                Take out {fmtQty(+use.qty || 0)} {unitWord(use.line, +use.qty || 0)}
               </button>
             </div>
           </div>

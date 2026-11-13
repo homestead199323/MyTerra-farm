@@ -48,7 +48,8 @@ export default function SetupV2({ onComplete }) {
             {REGIONS.map(function (r) { return <option key={r.id} value={r.id}>{r.name}</option>; })}
           </select>
         </label>
-        <button type="button" className="hv2-setup-go" disabled={!environment} onClick={() => onComplete(buildSetup({ environment, size, region, zoneId }))}>Start</button>
+        <p className="hv2-setup-note">We draw a map of your space, then help you pick a first crop. No account needed. Closest climate is fine — change it any time in Settings.</p>
+        <button type="button" className="hv2-setup-go" disabled={!environment} onClick={() => onComplete(buildSetup({ environment, size, region, zoneId }))}>Create my starter map</button>
       </div>
     </div>
   );

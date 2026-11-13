@@ -24,7 +24,7 @@ export default function PlantingLayoutEditor({ data, setData, zone, plot, onDone
     plan = planPlanting(zone, data.garden.plots, input, crop, plot.id);
   const variety = getRegionalVarieties(plot.crop, data.region).find((v) => v.name === plot.variety);
   const yieldKg =
-    Math.round((plan.yieldFactor ?? 1) * expectedYield(plot.crop, plan.count, "plants", variety?.yld, data.region) * 10) / 10;
+    Math.round((plan.yieldFactor ?? 1) * expectedYield(plot.crop, plan.count, "plants", variety?.yld, data.region) * 1000) / 1000;
   function save() {
     if (plan.error) return;
     setData({

@@ -120,7 +120,7 @@ export default function BuildMode({ data, setData, engine, onDone, onDesigner })
       <div className="hv2-build-top">
         <div className="hv2-build-title" role="status">
           <span className="hv2-ico"><Hammer size={17} strokeWidth={2.2} /></span>
-          <span><b>Build mode</b><small>Drag a piece onto your {env === "farm" ? "farm" : env === "balcony" ? "balcony" : "garden"}, or drag an area to move it</small></span>
+          <span><b>Build mode</b><small>Drag or tap a piece to place it on your {env === "farm" ? "farm" : env === "balcony" ? "balcony" : "garden"} · drag an area to move it</small></span>
         </div>
         {past.length > 0 && <button type="button" className="hv2-build-btn" aria-label="Undo" onClick={undo}><Undo2 size={20} /></button>}
         <button type="button" className="hv2-build-btn is-done" onClick={onDone}>Done</button>

@@ -95,7 +95,7 @@ export default function PlantDiary({ data, setData, plot }) {
               <li key={e.id} className={e.status === "issue" ? "issue" : ""}>
                 <Icon size={18} aria-hidden="true" />
                 <span className="pd-what"><strong>{entryLabel(e)}</strong>{e.note ? <span>{e.note}</span> : null}</span>
-                {isOpen && setData && <button type="button" className="pd-sorted" onClick={function () { add({ kind: "ok" }); }}>Sorted</button>}
+                {isOpen && setData && <button type="button" className="pd-sorted" onClick={function () { add({ kind: "ok" }); }}>Mark resolved</button>}
                 <small>{diaryDate(e.at)}</small>
                 {e.kind && setData && <button type="button" className="pd-x" aria-label={"Remove " + entryLabel(e) + ", " + diaryDate(e.at)} onClick={function () { if (big === e.id) setBig(null); setData(removeDiary(data, e.id)); }}><X size={16} /></button>}
               </li>

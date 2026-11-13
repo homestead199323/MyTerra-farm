@@ -129,7 +129,7 @@ export function monthTip(data, month) {
 export const JOB_TIPS = {
   indoors: "Bright windowsill, damp compost.",
   outside: "Rake fine, water the row, sow thinly.",
-  plantOut: "Harden off for a week first.",
+  plantOut: "Harden off first: a week of putting them outside a little longer each day.",
   plant: "Water in well, then mulch.",
   harvest: "Pick little and often.",
 };
