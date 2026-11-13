@@ -52,7 +52,7 @@ export function fanTarget(id, canPlant) {
     case "animal": return ["live", { add: true }];
     case "build": return ["map", { edit: true }];
     case "job": return ["tasks", { addJob: true }];
-    case "harvest": return ["pantry", { add: true }];
+    case "harvest": return ["pantry", { harvest: true }];
     default: return ["home", null];
   }
 }

@@ -3,6 +3,7 @@ import { Trash2, Minus, Plus, ShoppingBasket, Utensils, PackagePlus, ChevronDown
 import { todayLocalKey } from "../../lib/utils";
 import { rCM } from "../../lib/regional";
 import { addBoughtStock, takeStock, sellStock, stockLines, stockValue, unpaidTotal, UNITS } from "../../lib/inventory";
+import { harvestablePlots, logHarvest } from "../../lib/harvest-log";
 import FarmIcon from "../../components/FarmIcon";
 import { Overlay } from "../../components/ui";
 import "./pantry.css";
@@ -67,7 +68,13 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
   const [sell, setSell] = useState(null);
   const [use, setUse] = useState(null);
   const [add, setAdd] = useState(null);
-  useEffect(() => { if (pageData?.add) { setAdd({ name: "", category: "Fresh Produce", qty: "", unit: "kg", cost: "" }); clearPageData?.(); } }, [pageData, clearPageData]); // the + menu on the home map
+  const [harv, setHarv] = useState(null);
+  const pickable = useMemo(() => harvestablePlots(data), [data]);
+  const openHarvest = () => setHarv({ plotId: pickable.length ? pickable[0].id : "", name: "", qty: "", unit: "kg", date: todayLocalKey(), last: false });
+  useEffect(() => {
+    if (pageData?.add) { setAdd({ name: "", category: "Fresh Produce", qty: "", unit: "kg", cost: "" }); clearPageData?.(); }
+    if (pageData?.harvest) { openHarvest(); clearPageData?.(); } // the + menu on the home map
+  }, [pageData, clearPageData]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showMoves, setShowMoves] = useState(false);
   const cropMap = rCM(data.region);
   const lines = useMemo(() => stockLines(data.pantry?.items), [data.pantry?.items]);
@@ -107,6 +114,10 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
     setData(addBoughtStock(data, { name: add.name.trim(), category: add.category, qty: +add.qty, unit: add.unit }, +add.cost || 0, today));
     setAdd(null);
   }
+  function doHarvest() {
+    setData(logHarvest(data, { plotId: harv.plotId || null, name: harv.name, qty: +harv.qty, unit: harv.unit, date: harv.date, last: harv.last }, today));
+    setHarv(null);
+  }
   function remove(line) {
     setData(takeStock(data, { key: line.key, qty: line.qty, kind: "remove", today }));
   }
@@ -117,6 +128,9 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
   const sellValid = sell && within(sell.qty, sell.line.qty) && sell.price !== "" && +sell.price >= 0;
   const useValid = use && within(use.qty, use.line.qty);
   const addValid = add && add.name.trim() && +add.qty > 0;
+  const harvPlot = harv && harv.plotId ? pickable.find((p) => p.id === harv.plotId) : null;
+  const harvValid = harv && +harv.qty > 0 && (harvPlot || harv.name.trim()) && harv.date && harv.date <= today;
+  const zoneName = (p) => ((data.zones || []).find((z) => z.id === p.zone) || {}).name;
   const known = [...new Set([...lines.map((l) => l.name), ...cropMap.keys()])];
 
   return (
@@ -126,6 +140,9 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
           <h2>Pantry &amp; stock</h2>
           <p className="pg-sub">Everything your farm produces. Use it, sell it, and see what it’s worth.</p>
         </div>
+        <button className="q-secondary" onClick={openHarvest}>
+          <ShoppingBasket size={17} /> Log a harvest
+        </button>
         <button className="q-secondary" onClick={() => setAdd({ name: "", category: "Fresh Produce", qty: "", unit: "kg", cost: "" })}>
           <PackagePlus size={17} /> Add stock
         </button>
@@ -318,6 +335,61 @@ export default function Pantry({ data, setData, pageData, clearPageData }) {
               </button>
               <button type="button" className="q-button" disabled={!useValid} onClick={doUse}>
                 Take out {fmtQty(+use.qty || 0)} {use.line.unit}
+              </button>
+            </div>
+          </div>
+        </Overlay>
+      )}
+
+      {harv && (
+        <Overlay title="Log a harvest" onClose={() => setHarv(null)}>
+          <div className="q-stock-dialog">
+            <label className="q-field">
+              What did you pick?
+              <select value={harv.plotId} onChange={(e) => setHarv({ ...harv, plotId: e.target.value, unit: "kg", last: false })}>
+                {pickable.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.crop}{zoneName(p) ? ` · ${zoneName(p)}` : ""}
+                  </option>
+                ))}
+                <option value="">Something else</option>
+              </select>
+            </label>
+            {!harvPlot && (
+              <label className="q-field">
+                Product
+                <input list="q-harvest-products" value={harv.name} placeholder="e.g. Blackberries from the hedge" onChange={(e) => setHarv({ ...harv, name: e.target.value })} />
+                <datalist id="q-harvest-products">
+                  {known.map((n) => (
+                    <option key={n} value={n} />
+                  ))}
+                </datalist>
+              </label>
+            )}
+            <label className="q-field">
+              Picked on
+              <input type="date" value={harv.date} max={today} onChange={(e) => setHarv({ ...harv, date: e.target.value })} />
+            </label>
+            <label className="q-field">
+              How much?
+              <div className="q-row q-wrap">
+                <QtyStepper value={harv.qty} unit={harv.unit} onChange={(qty) => setHarv({ ...harv, qty })} />
+                {!harvPlot && <Segmented label="Unit" value={harv.unit} onChange={(unit) => setHarv({ ...harv, unit })} options={UNITS.map((u) => [u, u])} />}
+              </div>
+              {harv.unit === "kg" && +harv.qty > 0 && +harv.qty < 1 && <small>{Math.round(+harv.qty * 1000)} g</small>}
+            </label>
+            {harvPlot && (
+              <label className="q-check-row">
+                <input type="checkbox" checked={harv.last} onChange={(e) => setHarv({ ...harv, last: e.target.checked })} />
+                <span>That was the last of it — this planting is finished</span>
+              </label>
+            )}
+            <div className="q-stock-buttons">
+              <button type="button" className="q-secondary" onClick={() => setHarv(null)}>
+                Cancel
+              </button>
+              <button type="button" className="q-button" disabled={!harvValid} onClick={doHarvest}>
+                Save harvest
               </button>
             </div>
           </div>

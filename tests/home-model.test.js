@@ -65,7 +65,7 @@ test('home: + fan targets; Plant builds a bed first when there is nowhere to pla
   assert.deepEqual(fanTarget('animal', true), ['live', { add: true }]);
   assert.deepEqual(fanTarget('build', true), ['map', { edit: true }]);
   assert.deepEqual(fanTarget('job', true), ['tasks', { addJob: true }]);
-  assert.deepEqual(fanTarget('harvest', true), ['pantry', { add: true }]);
+  assert.deepEqual(fanTarget('harvest', true), ['pantry', { harvest: true }]);
 });
 
 test('home switch: off by default, ?home=new turns it on and stores it, ?home=old clears it', () => {

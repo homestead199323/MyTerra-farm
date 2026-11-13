@@ -60,6 +60,10 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null, dock=false}) {
   const verb = sowVerb(plot.steps);
   // Sowing the first step of a waiting planting starts its clock today (lib/sowing.js).
   const togStep = (pid, si) => {
+    // The final Harvest step is a harvest, not a checkbox: ask how much was picked so Pantry and Progress both count it.
+    const st = plot.steps && plot.steps[si];
+    const lastHarvestIdx = (plot.steps || []).reduce((acc, s, k) => (/^harvest/i.test(s.l || "") ? k : acc), -1);
+    if (st && !st.done && si === lastHarvestIdx && !notStarted && plot.status !== "harvested") { setHarvKg(String(harvDefault(plot))); return; }
     const plots = data.garden.plots.map(p => p.id === pid ? toggleStep(p, si, todayLocalKey(), crop && crop.days) : p);
     setData({...data, garden: {...data.garden, plots}});
   };

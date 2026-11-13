@@ -90,3 +90,4 @@
   .q-stock-moves li{flex-wrap:wrap;gap:6px}
   .q-move-date{min-width:0;margin-left:auto}
 }
+.q-check-row{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--color-text);min-height:44px;cursor:pointer}.q-check-row input{width:20px;height:20px;accent-color:var(--color-green);flex:none}
