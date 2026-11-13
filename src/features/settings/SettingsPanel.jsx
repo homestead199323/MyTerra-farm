@@ -6,13 +6,12 @@ import { getSession } from "../../lib/auth";
 import { rCR } from "../../lib/regional";
 import { LDB } from "../../data/livestock";
 import { resolveEnvironment, defaultSpaceTitle } from "../../lib/environment";
-import { Download, Upload, Moon, Sun, LogOut, Map as MapIcon } from "lucide-react";
+import { Download, Upload, Moon, Sun, LogOut } from "lucide-react";
 import { CURRENCIES, currencyCode } from "../../lib/money";
 import { farmSummary, describeSummary } from "../../lib/backup";
 import { signInMethods } from "../../lib/auth-messages";
 import { ChangePassword, DeleteAccount } from "./AccountSecurity";
 import Reminders from "./Reminders";
-import { useHomeV2, setHomeV2 } from "../../lib/home-v2";
 
 function fileDay(ms) {
   if (!ms) return "";
@@ -28,7 +27,6 @@ export default function SettingsPanel({
   onClose, data, setData, exportData, readBackup, restoreBackup, darkMode, setDarkMode, onSignOut, plan, onUpgrade, ent, onAccountDeleted, onExitDemo,
 }) {
   const [email, setEmail] = useState("");
-  const homeV2 = useHomeV2();
   const [methods, setMethods] = useState({ password: true, google: false });
   // Import: pick a file → show what it holds → the user confirms before anything is replaced.
   const [pendingImport, setPendingImport] = useState(null); // { data, summary, fileName, fileDate }
@@ -148,18 +146,13 @@ export default function SettingsPanel({
         <span style={ico}>{darkMode ? <Sun size={17} strokeWidth={1.8} /> : <Moon size={17} strokeWidth={1.8} />}</span>
         {darkMode ? "Switch to light mode" : "Switch to dark mode"}
       </button>
-      <button type="button" role="switch" aria-checked={homeV2} onClick={() => setHomeV2(!homeV2)} style={rowBtn}>
-        <span style={ico}><MapIcon size={17} strokeWidth={1.8} /></span>
-        <span style={{ flex: 1 }}>New home screen (beta)</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: homeV2 ? C.green : C.t2 }}>{homeV2 ? "On" : "Off"}</span>
-      </button>
 
       {onSignOut && <Reminders rowBtn={rowBtn} ico={ico} sectionLabel={sectionLabel} />}
 
       {/* Data */}
       <div style={sectionLabel}>Data</div>
       <button type="button" onClick={exportData} style={rowBtn}>
-        <span style={ico}><Download size={17} strokeWidth={1.8} /></span> Export Backup
+        <span style={ico}><Download size={17} strokeWidth={1.8} /></span> Export backup
       </button>
       {!pendingImport && (
         <label style={{ ...rowBtn, opacity: importBusy ? 0.6 : 1 }}>

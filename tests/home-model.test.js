@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dueToday, trackDay, jobsProgress, showDayDone, rowNote, hasProduce, fanTarget } from '../src/features/home/home-model.js';
-import { resolveHomeV2 } from '../src/lib/home-v2.js';
+import { useHomeV2 } from '../src/lib/home-v2.js';
 
 const T = (key, daysOut = 0, type = 'water') => ({ key, daysOut, type, title: key, loc: 'Bed 1' });
 
@@ -68,10 +68,6 @@ test('home: + fan targets; Plant builds a bed first when there is nowhere to pla
   assert.deepEqual(fanTarget('harvest', true), ['pantry', { harvest: true }]);
 });
 
-test('home switch: off by default, ?home=new turns it on and stores it, ?home=old clears it', () => {
-  assert.deepEqual(resolveHomeV2('', null), { on: false });
-  assert.deepEqual(resolveHomeV2('', '1'), { on: true });
-  assert.deepEqual(resolveHomeV2('?home=new', null), { on: true, store: '1' });
-  assert.deepEqual(resolveHomeV2('?home=old', '1'), { on: false, store: null });
-  assert.deepEqual(resolveHomeV2('?x=1&home=other', '1'), { on: true });
+test('the game home is the only home: always on, the old switch is ignored', () => {
+  assert.equal(useHomeV2(), true);
 });

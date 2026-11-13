@@ -41,12 +41,11 @@ import GroveHome from "./features/grove/GroveHome";
 import HomeV2 from "./features/home/HomeV2";
 import GameDock from "./features/home/GameDock";
 import SetupV2 from "./features/home/SetupV2";
-import { useHomeV2 } from "./lib/home-v2";
+import { useHomeV2, isHomeV2 } from "./lib/home-v2";
 import AIAssistant from "./features/assistant/AIAssistant";
 import FeedbackSurvey, { FeedbackPrompt } from "./features/feedback/FeedbackSurvey";
 import { BadgeCelebration } from "./components/BadgeCelebration";
 import Toaster from "./components/Toaster";
-import Onboarding from "./features/onboarding/Onboarding";
 import { SECTIONS, ADMIN_NAV, sectionOf, normalizePage } from "./app/navigation";
 import PlanScreen from "./features/plan/PlanScreen";
 import ProgressScreen from "./features/progress/ProgressScreen";
@@ -432,8 +431,9 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   }, []);
 
   const isMobile = viewW < 768;
-  // Map-first home (spec 2026-11-12): a device switch while it is tried out. Phone and desktop.
+  // Map-first game home (spec 2026-11-12): the only home since 13 Nov 2026, on phone and desktop.
   const homeV2 = useHomeV2();
+  useEffect(() => { isHomeV2(); }, []); // drops the old per-device switch
   const noSide = isMobile || homeV2; // the new home has a dock on every screen size, so no sidebar
   useEffect(() => { document.body.classList.toggle("mt-home-v2", homeV2); return () => document.body.classList.remove("mt-home-v2"); }, [homeV2]);
   const isTablet = viewW >= 768 && viewW < 1024;
@@ -592,7 +592,8 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
 
   // Show onboarding on first visit AND after data reset
   // Condition: no zones and setupDone not set — same as old setup redirect but uses overlay now
-  const showOnboarding = !!(data && !data.setupDone && Array.isArray(data.zones) && data.zones.length === 0);
+  // The game-style setup whenever the space is empty (also for older farms that skipped setup): there is no other home.
+  const showOnboarding = !!(data && Array.isArray(data.zones) && data.zones.length === 0);
 
   const handleOnboardingComplete = useCallback((updates) => {
     setData({ ...data, ...updates });
@@ -745,7 +746,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       <Toaster/>
       <UpgradeSheet open={upgradeOpen} onClose={() => setUpgradeOpen(false)} ent={ent}/>
       {settingsOpen && <SettingsPanel onClose={()=>setSettingsOpen(false)} data={data} setData={setData} exportData={exportData} readBackup={readBackup} restoreBackup={restoreBackup} darkMode={darkMode} setDarkMode={setDarkMode} onSignOut={demo ? null : onSignOut} onExitDemo={demo ? onExitDemo : null} plan={planText} ent={ent} onAccountDeleted={demo ? null : onAccountDeleted} onUpgrade={()=>{setSettingsOpen(false);openUpgrade();}}/>}
-      {showOnboarding && (homeV2 ? <SetupV2 onComplete={handleOnboardingComplete}/> : <Onboarding onComplete={handleOnboardingComplete}/>)}
+      {showOnboarding && <SetupV2 onComplete={handleOnboardingComplete}/>}
     </>
   );
 }
