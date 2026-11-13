@@ -267,3 +267,15 @@ body.mt-building .hv2-dock,body.mt-building .hv2-plus{display:none}
 .hv2-dock button{position:relative}
 .hv2-next{position:fixed;z-index:390;left:max(12px,calc(50% - 250px));right:max(12px,calc(50% - 250px));bottom:calc(96px + env(safe-area-inset-bottom));display:grid;grid-template-columns:auto 1fr;grid-template-areas:'s s' 'b l';column-gap:8px;align-items:baseline;text-align:left;padding:8px 14px;border:1px solid var(--hv2-edge);border-radius:18px;background:var(--hv2-glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:var(--hv2-shadow);color:var(--hv2-ink);font:inherit;cursor:pointer}.hv2-next small{grid-area:s;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--color-green)}.hv2-next strong{grid-area:b;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hv2-next span{grid-area:l;font-size:12px;color:var(--color-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .hv2-setup-note{margin:4px 0 12px;font-size:12.5px;line-height:1.45;color:var(--color-text-2);text-align:center}
+
+/* ── phones and tablets: no live blur over the 3D map ──
+   A blurred glass control has to be re-blurred every time the map under it draws a frame, and the home
+   screen had seven of them. On a touch device the controls are near-solid instead: same look at a glance,
+   and the map's frames go to the map. Desktop keeps the glass. (2026-11-13) */
+@media (pointer:coarse){
+  .hv2,.hv2-dock,.hv2-plus,.hv2-fan,.hv2-scrim,.hv2-done-scrim,.hv2-setup,.hv2-page,.hv2-page-bg,.hv2-build{--hv2-glass:color-mix(in srgb,var(--color-card,#fff) 96%,transparent)}
+  .hv2-cap,.hv2-chip,.hv2-demo,.hv2-dock,.hv2-panel,.hv2-next,.hv2-page-bg,.hv2-build-title,.hv2-build-btn,.hv2-build-tray,.hv2-build-card,
+  .g3-host.g3-home.g3-home.full .g3-ctl .g3-btn.g3-lbl,.g3-host.g3-home.g3-home.full .g3-crop.is-rich{-webkit-backdrop-filter:none;backdrop-filter:none}
+  .g3-host.g3-home.g3-home.full .g3-ctl .g3-btn.g3-lbl,.g3-host.g3-home.g3-home.full .g3-crop.is-rich{background:color-mix(in srgb,var(--g3-card) 96%,transparent)}
+  .hv2-page-bg{background:color-mix(in srgb,var(--color-bg,#f4f6f4) 98%,transparent)}
+}

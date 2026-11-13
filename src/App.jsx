@@ -1,21 +1,17 @@
-import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
-import {
-  Leaf, User, UserRound, MessageSquare, MessageCircle, Settings, ChevronRight,
-  Sun, ListChecks, Tractor, CalendarDays, Menu, BookOpen, TrendingUp, Package, Wallet, Lightbulb, X
-} from "lucide-react";
-import { Overlay } from "./components/ui";
+import { Leaf, User, UserRound, MessageSquare, Settings, ChevronRight, X } from "lucide-react";
 
 import {
   loadFarm, saveFarm, flushFarm, exportFarm,
-  loadFarmOwner, saveFarmOwner, clearFarm,
+  loadFarmOwner, saveFarmOwner, clearFarm, loadUnsynced, clearUnsynced,
   loadPage, savePage,
   loadTheme, saveTheme,
   loadFeedbackDone,
   loadFeedbackDismissed, markFeedbackDismissed,
   loadFirstUse, saveFirstUse,
 } from "./lib/storage";
-import { C, F, SX } from "./lib/theme";
+import { C, F } from "./lib/theme";
 import { todayLocalKey, localDateFromKey } from "./lib/utils";
 import { buildTaskPlan } from "./lib/task-queue";
 import { fetchForecast } from "./lib/weather";
@@ -30,38 +26,29 @@ import { CROP_MAP } from "./data/crops";
 // migrateMemory last: it reads the pantry log that migratePantry normalises.
 const migrateProfile = (d) => migrateMemory(migratePantry(migratePlanned(migratePerennials(migrateProfileBase(d), CROP_MAP, todayLocalKey()), todayLocalKey())), todayLocalKey());
 // Same chain as the local/cloud load paths, for a backup file's raw object.
+const { Pantry, Financials, Manuals, Livestock, MapScreen, CropsScreen, TaskQueue, PlanScreen, ProgressScreen, InsightsScreen, FeedbackSurvey, AdminDashboard, SettingsPanel, AuthScreen } = PAGES;
+// While a screen's file arrives (a moment, the first time only): the page keeps its place instead of jumping.
+const PageWait = () => <div className="mt-page-wait" role="status" aria-label="Loading"><span/></div>;
 const migrateBackup = (d) => migrateYardLine(migrateProfile(migrateCompletions(migrateGamify(migratePlotSchema(migrateZones({...DEF, ...d, log: d.log||[], costs: d.costs||{items:[]}}))))));
-import Pantry from "./features/pantry/Pantry";
-import Financials from "./features/financials/Financials";
-import Manuals from "./features/manuals/Manuals";
-import Livestock from "./features/animals/Livestock";
-import MapScreen, { CropsScreen } from "./features/farm/Farm";
-import TaskQueue from "./features/tasks/TaskQueue";
-import GroveHome from "./features/grove/GroveHome";
 import HomeV2 from "./features/home/HomeV2";
 import GameDock from "./features/home/GameDock";
 import SetupV2 from "./features/home/SetupV2";
-import { useHomeV2, isHomeV2 } from "./lib/home-v2";
+import { PAGES, warmPages } from "./app/pages";
 import AIAssistant from "./features/assistant/AIAssistant";
-import FeedbackSurvey, { FeedbackPrompt } from "./features/feedback/FeedbackSurvey";
+import { isHomeV2 } from "./lib/home-v2";
+import { FeedbackPrompt } from "./features/feedback/FeedbackPrompt";
 import { BadgeCelebration } from "./components/BadgeCelebration";
 import Toaster from "./components/Toaster";
-import { SECTIONS, ADMIN_NAV, sectionOf, normalizePage } from "./app/navigation";
-import PlanScreen from "./features/plan/PlanScreen";
-import ProgressScreen from "./features/progress/ProgressScreen";
-import InsightsScreen from "./features/progress/InsightsScreen";
+import { ADMIN_NAV, sectionOf, normalizePage } from "./app/navigation";
 import { DEF, dataReducer } from "./app/state";
 import { isSupabaseConfigured, recoveryInUrl, authLinkError } from "./lib/db";
 import { getSession, onAuthChange, signOut, signOutLocal } from "./lib/auth";
 import { pullFarmWithTimeout, pushFarm, flushPush, initSyncReconnect, pullIfRemoteNewer, noteAppliedUpdatedAt, resetSync, getSyncStatus } from "./lib/sync";
-import { SyncStatus } from "./components/SyncStatus";
-import AuthScreen from "./features/auth/AuthScreen";
-import SettingsPanel from "./features/settings/SettingsPanel";
-import AdminDashboard from "./features/admin/AdminDashboard";
 import { checkIsAdmin } from "./lib/admin";
 import { fetchEntitlement, getCachedEntitlement, resetEntitlement, hasFeature, planLabel } from "./services/payments/entitlements";
 import { spaceTitle } from "./lib/environment";
 import { parseBackup, farmSummary, describeSummary } from "./lib/backup";
+import { keepLocalEdits } from "./lib/unsynced";
 import { toast } from "./lib/toast";
 import { TrialBanner, UpgradeSheet, LockedAssistantFab, onPaddlePurchase } from "./features/payments/Paywall";
 /* ═══════════════════════════════════════════
@@ -106,74 +93,6 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-
-/* ═══════════════════════════════════════════
-   BOTTOM NAVIGATION — mobile (< 768px)
-   Stage 5: the five areas (Today, Farm, Plan, Learn, Progress).
-   An area opens its first page; the pages inside an area are the tabs
-   at the top of the screen (SectionBar).
-   ═══════════════════════════════════════════ */
-/* Phone tab bar (2026-11-11, Dervis): a phone is for today, the tasks, the map and the calendar, so those are the tabs.
-   What to read or review at a desk (guides, progress, pantry, money, insights) and the assistant sit behind More. */
-const PHONE_TABS = [
-  { id: "today", l: "Today", E: Sun, page: "home", pages: ["home"] },
-  { id: "tasks", l: "Tasks", E: ListChecks, page: "tasks", pages: ["tasks"] },
-  { id: "farm", l: "Farm", E: Tractor, page: "crops", pages: ["crops", "live", "map"] },
-  { id: "cal", l: "Calendar", E: CalendarDays, page: "plan", pages: ["plan"] },
-];
-const MORE_ROWS = [
-  { page: "manuals", l: "Learn", s: "Guides for crops, animals, preserving", E: BookOpen },
-  { page: "progress", l: "Progress", s: "What your space has given you", E: TrendingUp },
-  { page: "pantry", l: "Pantry", s: "What is in stock", E: Package },
-  { page: "fin", l: "Money", s: "Costs and income", E: Wallet },
-  { page: "insights", l: "Insights", s: "Yields and cost per kilo", E: Lightbulb },
-];
-const BottomNav = React.memo(function BottomNav({page, setPage, taskCount, onAsk, aiLocked}) {
-  const [more, setMore] = useState(false);
-  const inMore = !PHONE_TABS.some(function(t){ return t.pages.includes(page); });
-  const moreOn = more || inMore;
-  const tabStyle = function(active){ return {flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:2, border:"none", background:"transparent", cursor:"pointer", padding:"2px 4px", minHeight:44, color: active ? C.green : C.t2, position:"relative"}; };
-  const tabLabel = function(text, active){ return <span className="mt-tablabel" style={{fontSize:10,fontWeight:active?700:500,fontFamily:F.body,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>{text}</span>; };
-  return (
-    <>
-    <nav aria-label="Main navigation" style={{
-      position:"fixed", bottom:0, left:0, right:0,
-      height:"calc(56px + env(safe-area-inset-bottom))",
-      background:C.card, borderTop:`1px solid ${C.bdr}`,
-      display:"flex", alignItems:"flex-start", paddingTop:6,
-      paddingBottom:"env(safe-area-inset-bottom)",
-      zIndex:400, boxShadow:"0 -1px 12px rgba(0,0,0,.06)",
-    }}>
-      {PHONE_TABS.map(function(t) {
-        const isActive = !more && t.pages.includes(page);
-        return (
-          <button key={t.id} aria-label={t.l} aria-current={isActive?"page":undefined} onClick={function(){ setMore(false); setPage(t.page); }} style={tabStyle(isActive)}>
-            <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:isActive?1:0.5,transition:"opacity .15s"}}><t.E size={22} strokeWidth={isActive?2.2:1.7}/></span>
-            {tabLabel(t.l, isActive)}
-            {t.id==="tasks"&&taskCount>0&&(
-              <span style={{position:"absolute",top:0,right:"calc(50% - 20px)",background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:8,minWidth:16,textAlign:"center",lineHeight:"14px"}}>{taskCount}</span>
-            )}
-          </button>
-        );
-      })}
-      <button aria-label="More" aria-expanded={more} onClick={function(){ setMore(!more); }} style={tabStyle(moreOn)}>
-        <span style={{display:"flex",alignItems:"center",justifyContent:"center",opacity:moreOn?1:0.5,transition:"opacity .15s"}}><Menu size={22} strokeWidth={moreOn?2.2:1.7}/></span>
-        {tabLabel("More", moreOn)}
-      </button>
-    </nav>
-    {more && (
-      <Overlay title="More" onClose={function(){ setMore(false); }}>
-        <div className="mt-more">
-          {MORE_ROWS.map(function(r) {
-            return <button key={r.page} type="button" aria-current={page===r.page?"page":undefined} onClick={function(){ setMore(false); setPage(r.page); }}><r.E size={22} strokeWidth={1.8}/><span><strong>{r.l}</strong><small>{r.s}</small></span><ChevronRight size={18}/></button>;
-          })}
-          <button type="button" onClick={function(){ setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.8}/><span><strong>Ask the assistant</strong><small>{aiLocked ? "Part of Pro" : "Answers about your crops and animals"}</small></span><ChevronRight size={18}/></button>
-        </div>
-      </Overlay>
-    )}
-    </>
-  );
-});
 
 /* Pages inside the current area, as tabs above the page (phones + tablets),
    plus the account button on phones (Settings, feedback, plan). */
@@ -432,11 +351,9 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
 
   const isMobile = viewW < 768;
   // Map-first game home (spec 2026-11-12): the only home since 13 Nov 2026, on phone and desktop.
-  const homeV2 = useHomeV2();
   useEffect(() => { isHomeV2(); }, []); // drops the old per-device switch
-  const noSide = isMobile || homeV2; // the new home has a dock on every screen size, so no sidebar
-  useEffect(() => { document.body.classList.toggle("mt-home-v2", homeV2); return () => document.body.classList.remove("mt-home-v2"); }, [homeV2]);
-  const isTablet = viewW >= 768 && viewW < 1024;
+  useEffect(() => { const t = setTimeout(warmPages, 6000); return () => clearTimeout(t); }, []); // after the map is up
+  useEffect(() => { document.body.classList.add("mt-home-v2"); return () => document.body.classList.remove("mt-home-v2"); }, []);
 
   // Flush pending save on tab close / navigate away
   useEffect(() => {
@@ -498,6 +415,9 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
 
   // Navigate + persist current page
   const setPage = useCallback((p, pData) => {
+    // The farm map is the home screen: "Map" without the designer is simply back to the farm
+    // (it used to open a second, smaller copy of the map inside a panel over the real one).
+    if (p === "map" && !(pData && pData.edit)) p = "home";
     setPageRaw(p);
     setPageData(pData || null);
     try { savePage(p); } catch(e) {}
@@ -641,7 +561,6 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
     const id = setTimeout(() => { syncDigests(data, forecast).catch(() => {}); }, 4000);
     return () => clearTimeout(id);
   }, [data, forecast, pushOn]);
-  const taskCount = useMemo(() => tasks.filter(t => t.pri <= 2).length, [tasks]);
   const clearFarmPageData = useCallback(() => setPageData(null), []);
 
   // Loading fallback — if reducer somehow returns null, render a safe placeholder instead of crashing pg()
@@ -649,10 +568,9 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
     return <div style={{padding:40,textAlign:"center",color:C.t2,fontFamily:F.body}}>Loading…</div>;
   }
 
-  const currentSection = sectionOf(page);
   // The map is the whole screen on the new home (an empty space still gets the old page with its set-up prompt).
   // New home: the farm is a stage that stays mounted; every other page opens as a panel over it.
-  const stage = homeV2 && (data.zones || []).length > 0 && !showOnboarding;
+  const stage = (data.zones || []).length > 0 && !showOnboarding;
   const mapHome = stage && page === "home";
   const goFarm = () => setPage("home");
 
@@ -670,8 +588,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       case "insights": return <InsightsScreen data={data} setPage={setPage} locked={!analyticsAllowed} onUpgrade={openUpgrade}/>;
       case "feedback": return <FeedbackSurvey setPage={setPage}/>;
       case "admin": return <AdminDashboard/>;
-      default: return stage ? null
-        : <GroveHome data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts}/>;
+      default: return null; // home is the map itself (HomeV2 below)
     }
   };
 
@@ -679,65 +596,20 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
     <>
       {/* Fonts loaded via system fallback for offline use */}
       <div className="mt-shell" style={{display:"flex",fontFamily:F.body,background:C.bg,color:C.text,overflow:"hidden",letterSpacing:"0.005em"}}>
-        <nav style={{width:noSide?0:isTablet?64:220,minWidth:noSide?0:isTablet?64:220,background:C.card,borderRight:noSide?"none":`1px solid ${C.bdr}`,display:noSide?"none":"flex",flexDirection:"column",padding:"0",overflow:"hidden",position:"relative",transition:"width .3s cubic-bezier(.25,.46,.45,.94)"}}>
-          {/* Premium brand header */}
-          <div style={{padding:isTablet?"16px 0":"24px 20px 20px",marginBottom:4,background:C.grdHero,borderRadius:isTablet?"0":"0 0 20px 0",display:"flex",flexDirection:"column",alignItems:isTablet?"center":"flex-start"}}>
-            <div style={{fontSize:isTablet?22:21,fontFamily:F.head,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",display:"flex",alignItems:"center",gap:6}}><Leaf size={isTablet?22:20} strokeWidth={2}/>{!isTablet&&" MyTerra"}</div>
-            {!isTablet&&<div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:3,fontWeight:500}}>Farm Manager</div>}
-          </div>
-          <div style={{padding:"8px 10px",display:"flex",flexDirection:"column",gap:2}}>
-          {SECTIONS.map(function(sec, idx) {
-            const inSec = !!currentSection && currentSection.id === sec.id;
-            const single = sec.pages.length === 1;
-            return (
-            <React.Fragment key={sec.id}>
-            {isTablet && idx !== 0 && <div style={{height:1,background:C.bdr,margin:"4px 12px"}}/>}
-            <button onClick={function(){ setPage(sec.pages[0].id); }} className="nav-item" aria-current={inSec&&(single||isTablet)?"page":undefined} style={{display:"flex",alignItems:"center",gap:isTablet?0:11,padding:isTablet?"10px 0":"10px 14px",marginTop:!isTablet&&idx!==0?6:0,justifyContent:isTablet?"center":"flex-start",border:"none",background:inSec&&(single||isTablet)?C.gp:"transparent",color:inSec?C.green:C.text,cursor:"pointer",fontSize:14,fontFamily:F.body,fontWeight:inSec?700:600,textAlign:"left",width:"100%",borderRadius:10,borderLeft:isTablet?"none":inSec&&single?`3px solid ${C.green}`:"3px solid transparent",position:"relative",letterSpacing:"0.01em"}} title={isTablet?sec.l:undefined} aria-label={isTablet?sec.l:undefined}>
-              <span style={{width:isTablet?undefined:24,display:"flex",alignItems:"center",justifyContent:"center",opacity:inSec?1:0.6,transition:"opacity .2s"}}><sec.E size={isTablet?20:17} strokeWidth={inSec?2.2:1.8}/></span>{!isTablet&&sec.l}
-              {sec.id==="today"&&taskCount>0&&<span style={{position:"absolute",right:isTablet?4:10,top:isTablet?4:undefined,background:"linear-gradient(135deg, #f59e0b, #d97706)",color:"#fff",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,boxShadow:"0 2px 6px rgba(245,158,11,.3)"}}>{taskCount}</span>}
-            </button>
-            {!isTablet && !single && sec.pages.map(function(pg2) {
-              const on = page === pg2.id;
-              return (
-                <button key={pg2.id} onClick={function(){ setPage(pg2.id); }} className="nav-item" aria-current={on?"page":undefined} style={{display:"flex",alignItems:"center",padding:"7px 14px 7px 49px",border:"none",background:on?C.gp:"transparent",color:on?C.green:C.t2,cursor:"pointer",fontSize:13,fontFamily:F.body,fontWeight:on?600:500,textAlign:"left",width:"100%",borderRadius:10,borderLeft:on?`3px solid ${C.green}`:"3px solid transparent"}}>
-                  {pg2.l}
-                </button>
-              );
-            })}
-            </React.Fragment>
-            );
-          })}
-          {isAdmin && (
-            <button onClick={function(){ setPage(ADMIN_NAV.id); }} className="nav-item" aria-current={page===ADMIN_NAV.id?"page":undefined} style={{display:"flex",alignItems:"center",gap:isTablet?0:11,padding:isTablet?"10px 0":"10px 14px",marginTop:10,justifyContent:isTablet?"center":"flex-start",border:"none",background:page===ADMIN_NAV.id?C.gp:"transparent",color:page===ADMIN_NAV.id?C.green:C.t2,cursor:"pointer",fontSize:13,fontFamily:F.body,fontWeight:600,textAlign:"left",width:"100%",borderRadius:10}} title={isTablet?ADMIN_NAV.l:undefined}>
-              <span style={{width:isTablet?undefined:24,display:"flex",alignItems:"center",justifyContent:"center"}}><ADMIN_NAV.E size={isTablet?20:16} strokeWidth={1.8}/></span>{!isTablet&&ADMIN_NAV.l}
-            </button>
-          )}
-          </div>
-          <div style={SX.flex1}/>
-          <div style={{borderTop:`1px solid ${C.bdr}`,margin:isTablet?"0 8px":"0 10px"}}/>
-          <button onClick={()=>setPage("feedback")} style={{display:"flex",alignItems:"center",gap:isTablet?0:8,padding:isTablet?"10px 0":"10px 20px 6px",border:"none",background:"transparent",color:C.t2,cursor:"pointer",fontSize:12,fontFamily:F.body,fontWeight:500,width:"100%",justifyContent:isTablet?"center":"flex-start"}} title="Give feedback">
-            <MessageSquare size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Give feedback</span>}
-          </button>
-          <button onClick={()=>setSettingsOpen(true)} style={{display:"flex",alignItems:"center",gap:isTablet?0:8,padding:isTablet?"10px 0":"6px 20px 14px",border:"none",background:"transparent",color:C.t2,cursor:"pointer",fontSize:12,fontFamily:F.body,fontWeight:500,width:"100%",justifyContent:isTablet?"center":"flex-start"}} title="Settings">
-            <Settings size={isTablet?20:14} strokeWidth={1.8}/>{!isTablet&&<span style={{marginLeft:2}}>Settings</span>}
-          </button>
-        </nav>
         {stage && <HomeV2 wide={!isMobile} covered={!mapHome} data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} forecastState={forecastState} alerts={plan.alerts} demo={demo} onDemoSignup={openUpgrade}/>}
         {stage && !mapHome && <button type="button" className="hv2-page-strip" aria-label="Back to the farm" onClick={goFarm}/>}
         {stage && !mapHome && <div className={`hv2-page-bg${isMobile ? "" : " is-wide"}`} aria-hidden="true"/>}
-        <main className={stage ? `hv2-page${isMobile ? "" : " is-wide"}` : undefined} hidden={mapHome} style={stage ? undefined : {flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":homeV2?(isTablet?"24px 24px 104px":"32px 36px 104px"):isTablet?"24px":"32px 36px",background:C.bg}}>
+        <main className={stage ? `hv2-page${isMobile ? "" : " is-wide"}` : undefined} hidden={mapHome} style={stage ? undefined : {flex:1,overflow:"auto",padding:isMobile?"16px 16px calc(80px + env(safe-area-inset-bottom))":"32px 36px 104px",background:C.bg}}>
           {stage && isMobile && <span className="hv2-page-grab" aria-hidden="true"/>}
           {/* Nothing renders under the first-run setup: the 3D map would otherwise
               animate behind it and drain a phone's battery for no one. */}
-          {!showOnboarding && !mapHome && (viewW < 1024 || homeV2) && <SectionBar page={page} setPage={setPage} onAccount={noSide && !stage ? () => setAccountOpen(true) : null} onClose={stage ? goFarm : null}/>}
+          {!showOnboarding && !mapHome && <SectionBar page={page} setPage={setPage} onAccount={!stage ? () => setAccountOpen(true) : null} onClose={stage ? goFarm : null}/>}
           {!showOnboarding && !mapHome && (demo ? <DemoBanner onSignup={openUpgrade} onSignin={onDemoSignin}/> : <TrialBanner ent={ent} onUpgrade={openUpgrade}/>)}
-          {!showOnboarding && pg()}
+          {!showOnboarding && <Suspense fallback={<PageWait/>}>{pg()}</Suspense>}
         </main>
       </div>
-      {noSide&&!showOnboarding&&(homeV2
-        ? <GameDock wide={!isMobile} page={page} setPage={setPage} data={data} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade} onAccount={function(){ setAccountOpen(true); }}/>
-        : <BottomNav page={page} setPage={setPage} taskCount={taskCount} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade}/>)}
-      {noSide&&accountOpen&&<AccountSheet page={page} setPage={setPage} isAdmin={isAdmin} title={spaceTitle(data)} plan={planText} onUpgrade={openUpgrade} onClose={()=>setAccountOpen(false)} onOpenSettings={()=>{setAccountOpen(false);setSettingsOpen(true);}}/>}
+      {!showOnboarding && <GameDock wide={!isMobile} page={page} setPage={setPage} data={data} aiLocked={!aiAllowed} onAsk={aiAllowed ? function(){ window.dispatchEvent(new Event("mt-assistant")); } : openUpgrade} onAccount={function(){ setAccountOpen(true); }}/>}
+      {accountOpen&&<AccountSheet page={page} setPage={setPage} isAdmin={isAdmin} title={spaceTitle(data)} plan={planText} onUpgrade={openUpgrade} onClose={()=>setAccountOpen(false)} onOpenSettings={()=>{setAccountOpen(false);setSettingsOpen(true);}}/>}
       {showFeedbackPrompt && <FeedbackPrompt onOpen={() => { setShowFeedbackPrompt(false); setPage("feedback"); }} onDismiss={() => { setShowFeedbackPrompt(false); try { markFeedbackDismissed(); } catch(e) { console.warn("Could not save feedback dismissal state:", e); } }}/>}
       <BadgeCelebration queue={badgeQueue} onDismiss={dismissBadge}/>
       {!showOnboarding && (aiAllowed
@@ -745,7 +617,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
         : <LockedAssistantFab lift={page === "home"} onClick={openUpgrade}/>)}
       <Toaster/>
       <UpgradeSheet open={upgradeOpen} onClose={() => setUpgradeOpen(false)} ent={ent}/>
-      {settingsOpen && <SettingsPanel onClose={()=>setSettingsOpen(false)} data={data} setData={setData} exportData={exportData} readBackup={readBackup} restoreBackup={restoreBackup} darkMode={darkMode} setDarkMode={setDarkMode} onSignOut={demo ? null : onSignOut} onExitDemo={demo ? onExitDemo : null} plan={planText} ent={ent} onAccountDeleted={demo ? null : onAccountDeleted} onUpgrade={()=>{setSettingsOpen(false);openUpgrade();}}/>}
+      {settingsOpen && <Suspense fallback={null}><SettingsPanel onClose={()=>setSettingsOpen(false)} data={data} setData={setData} exportData={exportData} readBackup={readBackup} restoreBackup={restoreBackup} darkMode={darkMode} setDarkMode={setDarkMode} onSignOut={demo ? null : onSignOut} onExitDemo={demo ? onExitDemo : null} plan={planText} ent={ent} onAccountDeleted={demo ? null : onAccountDeleted} onUpgrade={()=>{setSettingsOpen(false);openUpgrade();}}/></Suspense>}
       {showOnboarding && <SetupV2 onComplete={handleOnboardingComplete}/>}
     </>
   );
@@ -898,6 +770,17 @@ function AuthGate() {
       if (!pulled) { setPhase("signedout"); return; }
 
       if (pulled.source === "cloud" && pulled.data) {
+        // This device closed with edits the cloud never got (made offline, or the app was closed while
+        // the save was on its way) and nothing newer has been saved since: keep them and upload them.
+        // Before this the cloud copy always won, and those edits were dropped without a word.
+        let mine = false;
+        try { mine = localBelongsToUser && keepLocalEdits({ unsyncedAt: loadUnsynced(), cloudUpdatedAt: pulled.updatedAt, hasLocal: !!loadFarm() }); } catch (e) { mine = false; }
+        if (mine) {
+          noteAppliedUpdatedAt(pulled.updatedAt || 0);
+          mount(null, true, true);
+          return;
+        }
+        try { clearUnsynced(); } catch (e) { /* ignore */ }
         // Cloud has a real saved farm — use it. Nothing to push back.
         if (handoff) { try { clearFarm(); } catch (e) { /* ignore */ } } // demo farm discarded
         try { saveFarmOwner(userId); } catch (e) { /* ignore */ }
@@ -1114,7 +997,7 @@ function AuthGate() {
   }
 
   if (phase === "recovery") {
-    return <AuthScreen initialMode="reset" onPasswordUpdated={finishRecovery}/>;
+    return <Suspense fallback={null}><AuthScreen initialMode="reset" onPasswordUpdated={finishRecovery}/></Suspense>;
   }
 
   if (phase === "demo") {
@@ -1122,7 +1005,7 @@ function AuthGate() {
   }
 
   if (phase === "signedout") {
-    return <AuthScreen key={authMode || "default"} initialMode={authMode} initialNotice={authNotice} onTryDemo={startDemo}/>;
+    return <Suspense fallback={null}><AuthScreen key={authMode || "default"} initialMode={authMode} initialNotice={authNotice} onTryDemo={startDemo}/></Suspense>;
   }
 
   // ready

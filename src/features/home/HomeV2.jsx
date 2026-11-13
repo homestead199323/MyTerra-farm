@@ -7,7 +7,7 @@ import { Overlay } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 import GroveScene from "../grove/GroveScene";
 import WeatherWeek from "../grove/WeatherWeek";
-import { StarterKit } from "../grove/GroveHome";
+import StarterKit from "./StarterKit";
 import { tasksByZone, taskGlyph } from "../grove/zone-tasks";
 import FarmCheck from "./FarmCheck";
 import { planRound } from "../quiet/walk-model";
@@ -62,7 +62,7 @@ const CUE_TEXT = {
   job: "Jobs pop up on the map. Tap one to tick it off",
 };
 /** Where a cue's target is on screen right now (the map's labels move with the camera). */
-function useTargetRect(selector) {
+function useTargetRect(selector, engine) {
   const [rect, setRect] = useState(null);
   useEffect(() => {
     let last = "";
@@ -74,16 +74,23 @@ function useTargetRect(selector) {
     };
     read();
     const timer = setInterval(read, 250);
-    return () => clearInterval(timer);
-  }, [selector]);
+    // while the map's camera moves, the pointer moves with its target instead of catching up afterwards
+    const off = engine && engine.onView ? engine.onView(read) : null;
+    return () => { clearInterval(timer); if (off) off(); };
+  }, [selector, engine]);
   return rect;
 }
 
 /** First-run cue: a bubble and a pulsing ring on the thing to tap next (plant → animal → job). */
-function Cue({ cue, bedId, onPlant, onSkip }) {
+function Cue({ cue, bedId, engine, onPlant, onSkip }) {
   const selector = cue.current === "plant" ? `.g3-label[data-zone="${bedId}"] .g3-pill` : cue.current === "animal" ? ".hv2-plus" : ".g3-home .g3-badge";
-  const rect = useTargetRect(selector);
+  const rect = useTargetRect(selector, engine);
+  // The map needs a moment to draw its labels: the plain "Plant" card (for a bed with no label on screen)
+  // waits for that, instead of flashing up and being swapped for the pointer a second later.
+  const [settled, setSettled] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setSettled(true), 3500); return () => clearTimeout(t); }, []);
   if (cue.current === "job" && !rect) return null; // nothing due yet: this cue waits for the first marker
+  if (cue.current === "plant" && !rect && !settled) return null;
   const vw = window.innerWidth, vh = window.innerHeight, width = Math.min(280, vw - 24);
   const cx = rect ? rect.x + rect.w / 2 : vw / 2;
   const left = Math.max(12, Math.min(vw - width - 12, cx - width / 2));
@@ -284,7 +291,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
       {demo && onDemoSignup && !quiet && !busy && <button type="button" className="hv2-demo" onClick={onDemoSignup}>Demo farm · Save my demo <ArrowRight size={14} /></button>}
 
       {cue && firstBed && !taskZone && !busy && !modal && !celebrate && !quiet && (
-        <Cue cue={cue} bedId={firstBed.id} onPlant={() => setPage("crops", { zone: firstBed.id, returnHome: true })} onSkip={() => setData(endCues(data))} />
+        <Cue cue={cue} bedId={firstBed.id} engine={engine} onPlant={() => setPage("crops", { zone: firstBed.id, returnHome: true })} onSkip={() => setData(endCues(data))} />
       )}
 
       {fresh && due.length === 0 && !cue && !quiet && !busy && (

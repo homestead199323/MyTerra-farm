@@ -46,7 +46,9 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
   const animals = keepsAnimals(data) || ((data.livestock && data.livestock.animals) || []).length > 0; // a balcony keeps none
   const rows = MORE.filter((r) => !top.includes(r.page) && (animals || r.page !== "live"));
   const fanItems = FAN.filter((f) => animals || f.id !== "animal"), slots = fanItems.length === 4 ? [0, 1, 3, 4] : [0, 1, 2, 3, 4];
-  const inMore = !top.includes(page);
+  // On a wide screen Progress is a dock button, and Insights, Pantry and Money are its tabs: they light it up, not More.
+  const inProgress = wide && ["progress", "insights", "pantry", "fin"].includes(page);
+  const inMore = !top.includes(page) && !inProgress;
   return (
     <>
       <nav aria-label="Main navigation" className={`hv2-dock${wide ? " is-wide" : ""}`}>
@@ -54,7 +56,7 @@ export default function GameDock({ page, setPage, data, onAsk, aiLocked, onAccou
         <button type="button" aria-current={page === "plan" && !more ? "page" : undefined} onClick={() => go("plan")}><CalendarDays size={22} strokeWidth={1.9} /><span>{wide ? "Plan" : "Calendar"}</span></button>
         {wide && <button type="button" aria-current={page === "manuals" && !more ? "page" : undefined} onClick={() => go("manuals")}><BookOpen size={22} strokeWidth={1.9} /><span>Learn</span></button>}
         <span className="hv2-dock-gap" aria-hidden="true" />
-        {wide && <button type="button" aria-current={page === "progress" && !more ? "page" : undefined} onClick={() => go("progress")}><TrendingUp size={22} strokeWidth={1.9} /><span>Progress</span></button>}
+        {wide && <button type="button" aria-current={inProgress && !more ? "page" : undefined} onClick={() => go("progress")}><TrendingUp size={22} strokeWidth={1.9} /><span>Progress</span></button>}
         <button type="button" aria-label={aiLocked ? "Ask the assistant — part of Pro" : "Ask the assistant"} onClick={() => { setFan(false); setMore(false); onAsk(); }}><MessageCircle size={22} strokeWidth={1.9} /><span>Ask</span>{aiLocked && <em className="hv2-pro" aria-hidden="true">Pro</em>}</button>
         <button type="button" aria-expanded={more} aria-current={more || inMore ? "page" : undefined} onClick={() => { setFan(false); setMore(!more); }}><Menu size={22} strokeWidth={1.9} /><span>More</span></button>
       </nav>

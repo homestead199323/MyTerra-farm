@@ -24,6 +24,8 @@
    ═══════════════════════════════════════════ */
 import { supabase, isSupabaseConfigured } from "./db";
 import { getSession } from "./auth";
+import { markUnsynced, clearUnsynced } from "./storage";
+import { retryDelay } from "./unsynced";
 
 const SCHEMA_VERSION = 7;
 
@@ -35,6 +37,8 @@ let _dirty = false; // true when a push is queued but not yet confirmed
 // successful push). pullIfRemoteNewer compares against this to detect a
 // write made on another device.
 let _lastUpdatedAt = 0;
+let _retryTimer = null; // a failed upload is tried again by itself (it used to wait for the next edit)
+let _retries = 0;
 
 // ── Sync status machine (Phase 6) ──────────────────────────────────
 // 'synced'  — nothing pending; cloud is up to date
@@ -122,6 +126,7 @@ export function pushFarm(data) {
   if (!isSupabaseConfigured) return;
   _pendingData = data;
   _dirty = true;
+  markUnsynced(Date.now()); // stays on the device until the cloud confirms this edit (lib/unsynced.js)
 
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     setStatus("offline"); // queued; will drain on reconnect
@@ -149,21 +154,31 @@ export async function flushPush() {
 
   const payload = _pendingData;
   setStatus("syncing");
-  const { data: rows, error } = await supabase
-    .from("farms")
-    .upsert(
-      { user_id: session.user.id, data: payload, schema_version: SCHEMA_VERSION },
-      { onConflict: "user_id" }
-    )
-    .select("updated_at")
-    .maybeSingle();
+  let rows, error;
+  try {
+    ({ data: rows, error } = await supabase
+      .from("farms")
+      .upsert(
+        { user_id: session.user.id, data: payload, schema_version: SCHEMA_VERSION },
+        { onConflict: "user_id" }
+      )
+      .select("updated_at")
+      .maybeSingle());
+  } catch (e) {
+    error = e; // the request itself failed (connection dropped mid-way)
+  }
 
   if (error) {
-    // Keep _dirty true so a later flush retries. Don't clear the queue.
-    console.warn("[sync] pushFarm failed (will retry on next change/reconnect):", error.message);
+    // Keep _dirty true and the queue as it is, and try again shortly: with no retry an upload that
+    // failed once stayed un-backed-up until the next edit or reconnect.
+    console.warn("[sync] pushFarm failed (retrying):", error.message || error);
     setStatus("error");
+    if (_retryTimer) clearTimeout(_retryTimer);
+    _retryTimer = setTimeout(() => { _retryTimer = null; void flushPush(); }, retryDelay(_retries++));
     return;
   }
+  _retries = 0;
+  if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
 
   if (rows && rows.updated_at) {
     _lastUpdatedAt = new Date(rows.updated_at).getTime();
@@ -171,6 +186,7 @@ export async function flushPush() {
   // Only clear dirty if no newer data arrived while the request was in flight.
   if (_pendingData === payload) {
     _dirty = false;
+    clearUnsynced();
     setStatus("synced");
   } else {
     // Newer data queued mid-flight — keep going, schedule a follow-up flush.
@@ -187,6 +203,8 @@ export async function flushPush() {
 // and flushPush writes under whatever session exists at flush time).
 export function resetSync() {
   if (_pushTimer) { clearTimeout(_pushTimer); _pushTimer = null; }
+  if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
+  _retries = 0;
   _pendingData = null;
   _dirty = false;
   _lastUpdatedAt = 0;

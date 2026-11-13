@@ -1041,3 +1041,60 @@
   Still shared (the 3D-rendered plant pictures used where a growth stage is shown, e.g. Crops rows): potato /
   sweet potato, onion / garlic, bean / pea, turnip / celeriac, dill / fennel, lentil / chickpea. Each pair
   uses one 3D model; separating them means six new models and a re-render.
+
+- [~] **Review pass: code, every screen, phone + desktop walk; Crops simplified; lighter map (2026-11-13, owner
+  request: "thorough code review, UX/UI review on all screens, test like a user on mobile and web, fix all
+  findings… make it light for mobile as the map felt laggy"; mid-session: "crops looks weird to manage. Simplify
+  it all… why are seedlings showing when I click on existing crops… maybe it's better to have them all
+  collapsed").** Walked in headless Chrome (software GL) at 390 × 844 and 1440 × 900: setup for balcony / backyard
+  / farm, first planting, jobs, + fan, build mode, every menu page, light and dark.
+  **Crops page.** Groups (Vegetable beds — "Pots and planters" on a balcony — Herbs, Fruit trees, Seedlings last)
+  start closed when the list is longer than 6 rows, each showing its count, "N ready" and small crop pictures;
+  the group of the crop being looked at opens by itself; a short list (most balconies) shows everything. Rows
+  are one line: picture in its progress ring, name, plants · bed, and one status ("Ready to pick", "6 weeks to
+  harvest", "Planned"). Seedlings are one-line rows too ("Sprouts in 4 days", "Not sown yet … Sow in 70 days");
+  the tray and steps open on tap. On desktop the detail pane opens the first row of the list (it opened
+  `plots[0]`, a crop that was not on screen). Logic in `src/features/farm/crops-model.js` (tested).
+  **Crop card (`PlotOverlay`).** Big picture + one line (stage · bed · "Harvest in 10 days · 23 Nov"); Harvest
+  button at the top when ready (it was at the very bottom); the five stages are buttons — tap the one you see
+  (replaces the "Growth stage" drop-down); four facts in one row; diary buttons; next 3 steps with "All N
+  steps"; everything else (water, feeding, pests, neighbours, space, storage, guide, videos) folded into "Care
+  guide". The empty "Crop data" card is gone. Done steps were a light-mode green in dark mode: fixed.
+  **Crop pictures.** `scripts/render-icons.mjs` renders at 2× and trims each crop's stages to one shared
+  square, so the plant fills its picture (it sat at ~45 % of the frame, which is why every stage looked like the
+  same seedling at 30 px). All 320 pictures re-rendered from the current models (1.25 → 2.1 MB in total,
+  fetched one by one as shown; quality 78).
+  **Planting form.** The suggested number of plants is filled in (Save used to answer an empty box with an error
+  below the fold: a dead button); an error now scrolls into view and the unanswered "in the ground yet?" is
+  marked red; "Already planted" ticks the planting step (the first job of a crop planted today was to plant it
+  again) — `stepsAlreadyPlanted` in `lib/sowing.js`.
+  **Map, lighter.** (1) No live blur over the map on touch devices: the home screen had seven blurred glass
+  controls, each re-blurred on every map frame; they are near-solid there now, desktop keeps the glass.
+  (2) One drawing resolution: it used to drop for every drag and jump back (two buffer re-allocations and a
+  blurry-then-sharp map per touch); now a device that runs slow while the map moves steps down once at the end
+  of the gesture and remembers it for a week (`grove/quality.js`, tested). (3) Idle animation 30 fps on phones
+  (20 read as lag). (4) Where the browser supports `KHR_parallel_shader_compile` the map's ~40 shader programs
+  compile in the background before the first frame instead of freezing it. (5) `app.html` preloads the map
+  chunk, so it downloads alongside the entry script instead of after it. (6) First-run pointer follows its
+  target while the camera moves, and its fallback card no longer flashes up before the map has drawn.
+  **App shell.** Every screen except the map is its own chunk (`src/app/pages.js`), fetched on first open and
+  warmed in the background 6 s after start: entry script 1,530 → 1,157 kB (459 → 352 kB gzip). All JS/CSS chunks
+  are now required in the service-worker precache (offline). Removed what the game home made unreachable: the
+  old dashboard (`GroveHome`), the old morning walk (`today/WalkOverlay`), the 12-step onboarding, the sidebar
+  and the old phone tab bar. The Farm panel's "Map" tab opened a second, smaller 3D map over the real one: it
+  now goes back to the farm (`map` stays a page id only for the layout designer). Dock: Insights, Pantry and
+  Money light up Progress on desktop.
+  **Sync (found in code review).** The cloud copy won every time the app opened, so edits made offline — or
+  ticked just before the app was closed — were dropped silently on the next open. Each edit now leaves a time
+  stamp on the device until the cloud confirms it; on open, a stamp newer than the cloud copy keeps this device's
+  farm and uploads it (still last-write-wins: a later save from another device wins). A failed upload retries by
+  itself (5 s → 1 min) instead of waiting for the next edit. `lib/unsynced.js` (tested).
+  **Verified:** 299 + 3 tests, ESLint, production build; the built app walked at both sizes (setup → first
+  planting → every page, no console errors, no failed requests); harvest and seedling flows; resolution
+  step-down observed (1.5 → 1.25 → 1.0 under software GL).
+  **NOT verified:** nothing was measured on a real phone — frame rate, the blur change and background shader
+  compile are reasoned, not measured; the sync change was not run against the live Supabase project (unit
+  tests only).
+  **Open:** entry script is still 1.16 MB (data tables, planting form, Supabase, React); first balcony planting
+  in November offers only garlic as "plant now" (correct, but a thin first run); desktop Pantry / Money /
+  Animals are sparse when empty; Insights empty states are paragraphs.

@@ -13,7 +13,8 @@ import { PAL, rboxGeo, flat, setEnvironment, fillLight } from "../src/features/g
 import { CROP_MAP } from "../src/data/crops";
 import { fixture } from "./fixture";
 
-const SIZE = 192, TIME = { value: 0 };
+// ?size=384 renders at twice the list size so the trimmed icons stay sharp (scripts/render-icons.mjs)
+const SIZE = Math.min(768, Math.max(96, Number(new URLSearchParams(window.location.search).get("size")) || 192)), TIME = { value: 0 };
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1); renderer.setSize(SIZE, SIZE); renderer.setClearColor(0x000000, 0);
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1;

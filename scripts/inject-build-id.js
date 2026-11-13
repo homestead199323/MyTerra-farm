@@ -26,10 +26,11 @@ for (const needle of [PLACEHOLDER, CRITICAL_MARK, OPTIONAL_MARK, SHELL_MARK]) {
 
 const buildId = String(Date.now());
 const assetFiles = readdirSync("dist/assets");
-// Entry JS/CSS and the lazily loaded map chunk: without them the app shell is
-// an empty page, so they are required at install time.
+// All of the app's code: the entry, the map chunk and every screen's own chunk
+// (src/app/pages.js). Without them a screen opened offline is a blank page, so
+// they are required at install time. Pictures stay best effort.
 const critical = assetFiles
-  .filter((name) => /^(index|Grove3D)-[\w-]+\.(js|css)$/.test(name))
+  .filter((name) => /\.(js|css)$/.test(name))
   .map((name) => "/assets/" + name);
 const optional = assetFiles.filter((name) => !critical.includes("/assets/" + name)).map((name) => "/assets/" + name);
 const optionalShell = existsSync("dist/manuals")
@@ -38,6 +39,22 @@ const optionalShell = existsSync("dist/manuals")
 if (critical.length < 2) {
   console.error(`[inject-build-id] expected the entry js+css in dist/assets, found: ${critical.join(", ") || "none"}`);
   process.exit(1);
+}
+
+// The map is the home screen but lives in its own chunk, which the browser only
+// learns about after it has run the entry script. A modulepreload hint in the
+// page lets it download both at the same time.
+const APP_HTML = "dist/app.html";
+const mapChunks = assetFiles.filter((name) => /^Grove3D-[\w-]+\.js$/.test(name));
+if (existsSync(APP_HTML) && mapChunks.length === 1) {
+  const html = readFileSync(APP_HTML, "utf8");
+  const hint = `<link rel="modulepreload" crossorigin href="/assets/${mapChunks[0]}">`;
+  if (!html.includes(hint) && html.includes("</head>")) {
+    writeFileSync(APP_HTML, html.replace("</head>", `  ${hint}\n  </head>`));
+    console.log(`[inject-build-id] app.html preloads ${mapChunks[0]}`);
+  }
+} else {
+  console.warn(`[inject-build-id] map chunk not preloaded (found ${mapChunks.length})`);
 }
 
 const list = (paths) => paths.map((p) => JSON.stringify(p)).join(",") + ",";

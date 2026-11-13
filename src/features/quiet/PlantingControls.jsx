@@ -1,5 +1,5 @@
 import { fmtWeight } from "../../lib/utils";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { starterCount } from "../../lib/suggest";
 import { spacingGuide, plantDensity } from "../../data/spacing.js";
 import { maxPlantCount } from "./planting-plan";
@@ -109,6 +109,15 @@ export default function PlantingControls({
   const want = simple && crop && !orchard ? starterCount(crop, people) : 0;
   const suggestN = want > 0 && maxFit > 0 ? Math.min(want, maxFit) : want;
   const suggestWhy = suggestN < want ? "as many as fit here" : people ? `a good start for ${people} ${people === 1 ? "person" : "people"}` : "a good first planting";
+  // A new planting starts with the suggested number already in the box (once per crop and bed): Save works
+  // straight away, and the number is still the grower's to change or clear.
+  const filledFor = useRef("");
+  const fillKey = simple && crop && zone ? `${crop.name}|${zone.id}` : "";
+  useEffect(() => {
+    if (!fillKey || filledFor.current === fillKey) return;
+    if (!blankCount) { filledFor.current = fillKey; return; }
+    if (suggestN > 0 && maxFit > 0) { filledFor.current = fillKey; update({ mode: "plants", plantCount: String(suggestN) }); }
+  });
   const layoutLine = scatter
     ? `Scattered · ${crop?.spacing} cm apart`
     : `${hex ? "Hexagonal" : "Grid"} · ${hex ? `${value.spacingCM} cm apart` : `${value.spacingCM} cm apart, rows ${value.rowSpacingCM} cm`}`;

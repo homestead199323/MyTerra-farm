@@ -311,21 +311,31 @@ export const Stat = React.memo(function Stat({label,value,sub,color=C.green}) {
    SHARED CROP DETAIL COMPONENTS
    Used in both FarmMap zoomed view & Farming overlay
    ═══════════════════════════════════════════ */
-export const StepChecklist = React.memo(function StepChecklist({steps, plantDate, onToggle, plotId}) {
+export const StepChecklist = React.memo(function StepChecklist({steps, plantDate, onToggle, plotId, compact=false}) {
+  const [all, setAll] = useState(false);
   if (!steps || steps.length === 0) return null;
+  // compact (the crop card): only what comes next, three at most; the whole plan is one tap away
+  const items = steps.map(function(s, i){ return {s, i}; });
+  const open = items.filter(function(x){ return !x.s.done; });
+  const short = compact && !all && steps.length > 3;
+  const shown = short ? open.slice(0, 3) : items;
   return (
     <div style={SX.mb12}>
-      <div style={{fontSize:13,fontWeight:700,color:C.green,marginBottom:8}}>Growing steps</div>
-      {steps.map((s, i) => {
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,marginBottom:8}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.green}}>{short ? (open.length ? "Next steps" : "All steps done") : "Growing steps"}</div>
+        {compact && steps.length > 3 && <button type="button" className="q-text-button" onClick={function(){ setAll(!all); }}>{all ? "Show next steps only" : `All ${steps.length} steps`}</button>}
+      </div>
+      {shown.map(function(x) {
+        const s = x.s, i = x.i;
         const stepDate = localDateFromKey(addDaysToLocalKey(plantDate, s.d));
         const sd = stepDate ? stepDate.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "";
         return (
-          <div key={i} role="checkbox" aria-checked={!!s.done} tabIndex={0} onClick={e => {e.stopPropagation(); onToggle?.(plotId, i);}} onKeyDown={e => {if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();onToggle?.(plotId, i);}}} style={{display:"flex",gap:10,padding:"10px 12px",background:s.done?"#f0faf0":C.card,border:`1px solid ${s.done?C.gm:C.bdr}`,borderRadius:C.rs,marginBottom:4,cursor:"pointer"}}>
+          <div key={i} role="checkbox" aria-checked={!!s.done} tabIndex={0} onClick={e => {e.stopPropagation(); onToggle?.(plotId, i);}} onKeyDown={e => {if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();onToggle?.(plotId, i);}}} style={{display:"flex",gap:10,padding:"10px 12px",background:s.done?C.gp:C.card,border:`1px solid ${s.done?C.gm:C.bdr}`,borderRadius:C.rs,marginBottom:4,cursor:"pointer"}}>
             <div style={{width:22,height:22,borderRadius:22,border:`2px solid ${s.done?C.green:C.bdr}`,background:s.done?C.green:"transparent",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,flexShrink:0}}>{s.done?"✓":""}</div>
             <div style={SX.flex1}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
                 <strong style={{fontSize:13,textDecoration:s.done?"line-through":"none"}}>{s.l}</strong>
-                <span style={{fontSize:10,color:C.t2,fontFamily:F.mono}}>Day {s.d}{sd ? ` (${sd})` : ""}</span>
+                <span style={{fontSize:11,color:C.t2,whiteSpace:"nowrap"}}>{sd || `Day ${s.d}`}</span>
               </div>
               <div style={SX.t2_12mt2}>{s.t}</div>
             </div>

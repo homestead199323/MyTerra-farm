@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { C, F, SX } from "../../lib/theme";
 import { Btn, Card, Overlay, Pill, StepChecklist, StorageCard, WaterCard, Actions } from "../../components/ui";
 import { COMP } from "../../data/companions";
@@ -12,7 +12,8 @@ import PlantDiary from "./PlantDiary";
 import {relation, growthOf, STAGES} from "../quiet/farm-model";
 import PlantArt from "../quiet/PlantArt";
 import PlantingLayoutEditor from "../quiet/PlantingLayoutEditor";
-import { editablePlanting } from "../quiet/planting-plan";
+import { editablePlanting, isTreeCrop } from "../quiet/planting-plan";
+import "./crops.css";
 import { toggleStep, isAwaitingSowing, startGrowing, sowVerb, nextStepAfter } from "../../lib/sowing";
 import { toast } from "../../lib/toast";
 import { recordRemoval } from "../../lib/memory";
@@ -54,10 +55,14 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null, dock=false}) {
   const setObserved = (v) => setData({...data, garden: {...data.garden, plots: data.garden.plots.map(a => a.id === plot.id ? {...a, observedStage: v === "" ? null : +v, observedStageDate: v ? todayLocalKey() : null} : a)}});
   const [harvKg, setHarvKg] = useState(null); // null = not asked yet
   const [harvEdited, setHarvEdited] = useState(false);
+  // "How much did you pick?" opens near the top of the card: bring it into view when it is asked from further down (the Harvest step)
+  const harvRef = useRef(null), asking = harvKg != null;
+  useEffect(() => { if (asking && harvRef.current?.scrollIntoView) harvRef.current.scrollIntoView({ block: "center", behavior: "smooth" }); }, [asking]);
   const growth = growthOf(plot, crop, todayLocalKey());
   const waiting = isAwaitingSowing(plot);
   const notStarted = waiting || plot.status === "planned" || !plot.plantDate;
   const verb = sowVerb(plot.steps);
+  const isTree = isTreeCrop(crop);
   // Sowing the first step of a waiting planting starts its clock today (lib/sowing.js).
   const togStep = (pid, si) => {
     // The final Harvest step is a harvest, not a checkbox: ask how much was picked so Pantry and Progress both count it.
@@ -116,108 +121,133 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null, dock=false}) {
     );
   }
 
-  const canHarvestNow = plot.status !== "harvested" && !!plot.harvestDate && localDateFromKey(plot.harvestDate) <= localDateFromKey(todayLocalKey()) && harvKg == null;
-  return (
-    <Overlay ariaLabel={plot.name || plot.crop} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={plot.crop} emoji={crop.emoji} size={24}/>{plot.name || plot.crop}</span>} onClose={onClose} dock={dock} sheet layoutId={layoutId}>
-      <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
-        <Pill>{plot.status === "harvested" ? "Harvested" : growth.label}</Pill>
-        <Pill>☀ {crop.sun}</Pill>
-        <Pill>💧 {crop.waterFreq}</Pill>
-        {zone && <Pill c={C.blue} bg={C.waterBg}>📍 {zone.name}</Pill>}
+  const canHarvestNow = plot.status !== "harvested" && !notStarted && !!plot.harvestDate && localDateFromKey(plot.harvestDate) <= localDateFromKey(todayLocalKey()) && harvKg == null;
+  const harvested = plot.status === "harvested";
+  // one line that says where this planting is on its way to the plate
+  const daysLeft = plot.harvestDate && !notStarted ? Math.round((localDateFromKey(plot.harvestDate) - localDateFromKey(todayLocalKey())) / 864e5) : null;
+  const growWeeks = (plot.growDays || crop.days || 60) < 14 ? `about ${plot.growDays || crop.days} days` : `about ${Math.round((plot.growDays || crop.days || 60) / 7)} weeks`;
+  const when = harvested ? "Harvested"
+    : notStarted ? `Harvest ${growWeeks} after ${verb === "Plant" ? "planting" : "sowing"}`
+    : daysLeft == null ? ""
+    : daysLeft <= 0 ? "Ready to pick"
+    : daysLeft <= 14 ? `Harvest in ${daysLeft} ${daysLeft === 1 ? "day" : "days"} · ${niceDate(plot.harvestDate)}`
+    : `Harvest in about ${Math.round(daysLeft / 7)} weeks · ${niceDate(plot.harvestDate)}`;
+  const observed = Number.isInteger(plot.observedStage);
+  const ready = !harvested && !notStarted && daysLeft != null && daysLeft <= 0;
+  const harvestForm = harvKg != null && (
+    <div ref={harvRef} style={{margin:"0 0 14px",padding:"12px 14px",border:`1.5px solid ${C.green}`,borderRadius:12,background:C.gp}}>
+      <label htmlFor="harv-kg" style={{display:"block",fontSize:13,fontWeight:700,color:C.text,marginBottom:6}}>How much did you pick? (kg)</label>
+      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+        <input id="harv-kg" type="number" inputMode="decimal" min="0" step="0.1" autoFocus value={harvKg} onChange={e=>{setHarvKg(e.target.value);setHarvEdited(true);}}
+          style={{width:110,padding:"9px 12px",border:`1.5px solid ${C.bdr}`,borderRadius:10,fontSize:16,background:C.card,color:C.text}}/>
+        <Btn v="success" onClick={()=>harv(plot)}>Save harvest</Btn>
+        <Btn v="ghost" sm onClick={()=>{setHarvKg(null);setHarvEdited(false);}}>Cancel</Btn>
       </div>
-
-      {plot.status !== "harvested" && (
-        <Card style={{marginBottom:14,padding:"12px 14px"}}>
-          {/* where this planting is on its way to harvest: its five stages, the current one marked */}
-          <ol className="q-growth-steps" aria-label={`Growth stages: now ${growth.label}`}>
-            {STAGES.slice(1).map((label, i) => (
-              <li key={label} className={i + 1 === growth.index ? "on" : i + 1 < growth.index ? "done" : ""} aria-current={i + 1 === growth.index ? "step" : undefined}>
-                <PlantArt crop={plot.crop} stage={i + 1} size={30} />
-                <small>{label}</small>
-              </li>
-            ))}
-          </ol>
-          {setData && (
-            <div className="q-row q-wrap q-plant-actions">
-              <label className="q-stage-select">
-                Growth stage
-                <select aria-label={`Observed stage for ${plot.name || plot.crop}`} value={plot.observedStage ?? ""} onChange={e => setObserved(e.target.value)}>
-                  <option value="">Use estimate</option>
-                  {STAGES.slice(1).map((l, i) => <option value={i + 1} key={l}>{l}</option>)}
-                </select>
-              </label>
-              {editable && !editLayout && <button type="button" className="q-text-button" onClick={() => setEditLayout(true)}>Edit spacing & layout</button>}
-            </div>
-          )}
-        </Card>
-      )}
-      {editLayout && editable && <PlantingLayoutEditor data={data} setData={setData} zone={editable.zone} plot={editable.plot} onDone={() => setEditLayout(false)}/>}
-      <PlantDiary data={data} setData={setData} plot={plot}/>
-
-      {(plot.plantCount > 0 || plot.qty > 0 || plot.expectedYieldKg > 0) && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8,marginBottom:14}}>
-          {plot.plantCount > 0 && <Card style={{background:C.soft,padding:"10px 14px"}}><div style={SX.capHeaderT2}>Plants</div><div style={{fontSize:20,fontWeight:700,color:C.green}}>{plot.plantCount}</div><div style={SX.t2_10}>{notStarted ? "planned" : "in the ground"}</div></Card>}
-          {plot.qty > 0 && plot.measureType === "area" && <Card style={{background:C.waterBg,padding:"10px 14px"}}><div style={SX.capHeaderT2}>Area</div><div style={{fontSize:20,fontWeight:700,color:C.blue}}>{plot.qty}m²</div><div style={SX.t2_10}>bed size</div></Card>}
-          {plot.qty > 0 && plot.measureType === "plants" && !plot.plantCount && <Card style={{background:C.waterBg,padding:"10px 14px"}}><div style={SX.capHeaderT2}>Count</div><div style={{fontSize:20,fontWeight:700,color:C.blue}}>{plot.qty}</div><div style={SX.t2_10}>plants</div></Card>}
-          {plot.expectedYieldKg > 0 && <Card style={{background:C.harvestBg,padding:"10px 14px"}}><div style={SX.capHeaderT2}>Est. yield</div><div style={{fontSize:20,fontWeight:700,color:C.orange}}>~{fmtWeight(plot.expectedYieldKg)}</div><div style={SX.t2_10}>at harvest</div></Card>}
-          {plot.plantCount && crop.spacing ? <Card style={{background:C.surface,padding:"10px 14px"}}><div style={SX.capHeaderT2}>Spacing</div><div style={{fontSize:20,fontWeight:700,color:C.text}}>{plot.layout?.spacingCM||crop.spacing}cm</div><div style={SX.t2_10}>{plot.layout?.pattern==='scatter'?'minimum distance':'between plants'}</div></Card> : null}
+      <div style={{fontSize:11.5,color:C.t2,marginTop:6}}>Prefilled with the estimate. Weigh it if you can.</div>
+    </div>
+  );
+  return (
+    <Overlay ariaLabel={plot.name || plot.crop} title={<span style={{display:"inline-flex",alignItems:"center",gap:8}}><FarmIcon name={plot.crop} emoji={crop.emoji} size={28} harvest/>{plot.name || plot.crop}</span>} onClose={onClose} dock={dock} sheet layoutId={layoutId}>
+      <div className="cd-hero">
+        <span className="cd-hero-art"><PlantArt crop={plot.crop} stage={harvested ? 5 : growth.index} size={84}/></span>
+        <div className="cd-hero-text">
+          <b>{harvested ? "Harvested" : ready ? "Ready to pick" : growth.label}</b>
+          <span>{[zone && zone.name, !ready && !harvested && when !== growth.label ? when : ""].filter(Boolean).join(" · ")}</span>
+          {canHarvestNow && <Btn onClick={()=>setHarvKg(String(harvDefault(plot)))}>Harvest</Btn>}
         </div>
-      )}
+      </div>
+      {harvestForm}
 
-      {plot.zone && zone && zoneStats && zoneStats.totalM2 > 0 && (
-        <Card style={{marginBottom:12, background: zoneStats.pct >= 0.95 ? C.dangerBg : zoneStats.pct >= 0.7 ? C.harvestBg : C.soft}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-            <div style={{fontSize:12,fontWeight:700,color:zoneFill}}>
-              {zoneStats.pct >= 0.95 ? "Bed is full" : zoneStats.pct >= 0.7 ? "Bed is getting full" : "Space in this bed"}
-            </div>
-            <div style={{fontSize:11,color:C.t2,fontFamily:F.mono}}>{zone.name}</div>
-          </div>
-          <div style={{height:8,borderRadius:4,background:C.bdr,overflow:"hidden",marginBottom:6}}>
-            <div style={{height:"100%",width:`${Math.min(100,zoneStats.pct*100).toFixed(0)}%`,background:zoneFill,borderRadius:4,transition:"width .4s"}}/>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.t2}}>
-            <span>Used: <strong style={{color:C.text}}>{zoneStats.usedM2}m²</strong></span>
-            {zoneMyArea > 0 && <span>This crop: <strong style={{color:zoneFill}}>{Math.round(zoneMyArea*10)/10}m²</strong></span>}
-            <span>Free: <strong style={{color:zoneFill}}>{zoneStats.freeM2}m²</strong> of {Math.round(zoneStats.totalM2*10)/10}m²</span>
-          </div>
-        </Card>
-      )}
-
-      {showComp && (
-        <Card style={{marginBottom:12,background:compBad.length > 0 ? C.dangerBg : C.soft}}>
-          <div style={SX.lblGreen}>Companions in zone</div>
-          {compGood.length > 0 && <div style={{fontSize:12,color:C.green,marginTop:4}}>✓ Good: {compGood.join(", ")}</div>}
-          {compBad.length  > 0 && <div style={{fontSize:12,color:C.red,marginTop:4}}>✕ Bad: {compBad.join(", ")}</div>}
-        </Card>
-      )}
-
-      {notStarted && plot.status !== "harvested" && (
-        <Card style={{marginBottom:12,background:C.gp,border:`1px solid ${C.gm}`}}>
+      {notStarted && !harvested && (
+        <Card style={{marginBottom:14,background:C.gp,border:`1px solid ${C.gm}`}}>
           <div style={{fontSize:13,fontWeight:700,color:C.green}}>Not in the ground yet</div>
           <div style={{fontSize:12.5,color:C.t2,margin:"4px 0 10px",lineHeight:1.5}}>
-            {verb === "Plant" ? "Plant it" : "Sow it"} when you're ready. Tap below on the day you do: the growing steps and harvest date start from then.
+            Tap on the day you {verb === "Plant" ? "plant" : "sow"} it: the steps and the harvest date start from then.
           </div>
           <Btn sm onClick={startNow}>{verb === "Plant" ? "I planted it today" : "I sowed it today"}</Btn>
         </Card>
       )}
-      <WaterCard waterNote={crop.waterNote} waterFreq={crop.waterFreq}/>
-      <div className="g2" style={{gap:8,marginBottom:16}}>
-        <Card><div style={SX.t2_11b}>{verb === "Plant" ? "PLANTED" : "SOWN"}</div><div style={{fontSize:15,fontWeight:700}}>{notStarted ? "Not yet" : niceDate(plot.plantDate)}</div></Card>
-        <Card><div style={SX.t2_11b}>HARVEST</div><div style={{fontSize:15,fontWeight:700}}>{notStarted ? `${(plot.growDays || crop.days || 60) < 14 ? `about ${plot.growDays || crop.days} days` : `about ${Math.round((plot.growDays || crop.days || 60) / 7)} weeks`} after ${verb === "Plant" ? "planting" : "sowing"}` : niceDate(plot.harvestDate)}</div></Card>
+
+      {!harvested && !notStarted && (
+        <>
+          {/* its five stages, the current one marked; tap the one you see to correct the estimate */}
+          <ol className="cd-stages" aria-label={`Growth stages: now ${growth.label}`}>
+            {STAGES.slice(1).map((label, i) => (
+              <li key={label} className={i + 1 === growth.index ? "on" : i + 1 < growth.index ? "done" : ""}>
+                <button type="button" disabled={!setData} aria-pressed={i + 1 === growth.index} aria-label={`${label}${i + 1 === growth.index ? " (now)" : ""}`} onClick={() => setObserved(plot.observedStage === i + 1 ? "" : String(i + 1))}>
+                  <PlantArt crop={plot.crop} stage={i + 1} size={46} />
+                  <small>{label === "Harvest window" ? "Harvest" : label}</small>
+                </button>
+              </li>
+            ))}
+          </ol>
+          <div className="cd-stage-note">
+            {setData && (observed
+              ? <button type="button" className="q-text-button" onClick={() => setObserved("")}>Stage set by you · use the estimate</button>
+              : <span>Looks different? Tap the stage you see.</span>)}
+            {editable && !editLayout && <button type="button" className="q-text-button" onClick={() => setEditLayout(true)}>Edit spacing and layout</button>}
+          </div>
+        </>
+      )}
+      {editLayout && editable && <PlantingLayoutEditor data={data} setData={setData} zone={editable.zone} plot={editable.plot} onDone={() => setEditLayout(false)}/>}
+
+      <div className="cd-facts">
+        {plot.plantCount > 0 && <div><small>{isTree ? "Trees" : "Plants"}</small><b>{plot.plantCount}</b></div>}
+        {plot.qty > 0 && plot.measureType === "area" && <div><small>Area</small><b>{plot.qty} m²</b></div>}
+        {plot.expectedYieldKg > 0 && <div><small>Est. yield</small><b>~{fmtWeight(plot.expectedYieldKg)}</b></div>}
+        <div><small>{verb === "Plant" ? "Planted" : "Sown"}</small><b>{notStarted ? "Not yet" : niceDate(plot.plantDate)}</b></div>
+        {!notStarted && plot.harvestDate && <div><small>Harvest</small><b>{niceDate(plot.harvestDate)}</b></div>}
       </div>
 
-      <Card style={{marginBottom:12,background:C.soft,border:`1px solid ${C.gm}`}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:4}}><span style={{fontSize:13,fontWeight:700,color:C.green}}>Crop data</span>{crop.pH && <Pill c={C.text} bg={C.warm}>pH {crop.pH}</Pill>}</div></Card>
-      {crop.fert && <Card style={{marginBottom:12,background:C.soft}}><div style={SX.lblGreen}>Feeding</div><div style={{fontSize:12,marginTop:4,lineHeight:1.5}}>{crop.fert}</div></Card>}
-      {crop.pests && crop.pests.length > 0 && <Card style={{marginBottom:12,background:C.harvestBg}}><div style={{fontSize:12,fontWeight:700,color:C.orange}}>Pests and fixes</div>{crop.pests.slice(0,3).map(function(pst,i){return <div key={i} style={{marginTop:4}}><strong style={{fontSize:11}}>{pst.n}</strong>{pst.t && <div style={SX.t2_11}>→ {pst.t}</div>}</div>;})}</Card>}
+      <PlantDiary data={data} setData={setData} plot={plot}/>
 
-      <StepChecklist steps={plot.steps} plantDate={notStarted ? null : plot.plantDate} onToggle={togStep} plotId={plot.id}/>
-      <StorageCard storage={crop.storage}/>
-      <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(crop.name + " growing guide complete")}`} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12,color:C.red,textDecoration:"none",fontWeight:600,padding:"8px 14px",background:C.dangerBg,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:8}}>▶ Search YouTube for {crop.name.toLowerCase()} growing guides</a>
-      {setPage && (
-        <button onClick={function(){onClose();setPage("manuals");}} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:C.green,fontWeight:600,padding:"8px 14px",background:C.gp,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:12,cursor:"pointer",width:"100%",textAlign:"left"}}>
-          Need help growing {crop.name}? Read the full guide in Learn →
-        </button>
-      )}
+      <StepChecklist compact steps={plot.steps} plantDate={notStarted ? null : plot.plantDate} onToggle={togStep} plotId={plot.id}/>
+
+      <details className="cd-more">
+        <summary>Care guide</summary>
+        <div className="cd-more-body">
+          <div style={{display:"flex",gap:6,margin:"4px 0 12px",flexWrap:"wrap"}}>
+            <Pill>☀ {crop.sun} sun</Pill>
+            <Pill>💧 {crop.waterFreq}</Pill>
+            {plot.plantCount && crop.spacing ? <Pill>{plot.layout?.spacingCM || crop.spacing} cm apart</Pill> : null}
+            {crop.pH && <Pill>pH {crop.pH}</Pill>}
+          </div>
+          <WaterCard waterNote={crop.waterNote} waterFreq={crop.waterFreq}/>
+          {crop.fert && <Card style={{marginBottom:12,background:C.soft}}><div style={SX.lblGreen}>Feeding</div><div style={{fontSize:13,marginTop:4,lineHeight:1.5}}>{crop.fert}</div></Card>}
+          {crop.pests && crop.pests.length > 0 && <Card style={{marginBottom:12,background:C.harvestBg}}><div style={{fontSize:12,fontWeight:700,color:C.orange}}>Pests and fixes</div>{crop.pests.slice(0,3).map(function(pst,i){return <div key={i} style={{marginTop:4}}><strong style={{fontSize:12.5}}>{pst.n}</strong>{pst.t && <div style={SX.t2_12mt2}>→ {pst.t}</div>}</div>;})}</Card>}
+          {showComp && (
+            <Card style={{marginBottom:12,background:compBad.length > 0 ? C.dangerBg : C.soft}}>
+              <div style={SX.lblGreen}>Neighbours in this bed</div>
+              {compGood.length > 0 && <div style={{fontSize:12.5,color:C.green,marginTop:4}}>✓ Good: {compGood.join(", ")}</div>}
+              {compBad.length  > 0 && <div style={{fontSize:12.5,color:C.red,marginTop:4}}>✕ Keep apart: {compBad.join(", ")}</div>}
+            </Card>
+          )}
+          {plot.zone && zone && zoneStats && zoneStats.totalM2 > 0 && (
+            <Card style={{marginBottom:12, background: zoneStats.pct >= 0.95 ? C.dangerBg : zoneStats.pct >= 0.7 ? C.harvestBg : C.soft}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <div style={{fontSize:12,fontWeight:700,color:zoneFill}}>
+                  {zoneStats.pct >= 0.95 ? "Bed is full" : zoneStats.pct >= 0.7 ? "Bed is getting full" : "Space in this bed"}
+                </div>
+                <div style={{fontSize:12,color:C.t2}}>{zone.name}</div>
+              </div>
+              <div style={{height:8,borderRadius:4,background:C.bdr,overflow:"hidden",marginBottom:6}}>
+                <div style={{height:"100%",width:`${Math.min(100,zoneStats.pct*100).toFixed(0)}%`,background:zoneFill,borderRadius:4,transition:"width .4s"}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap",fontSize:12,color:C.t2}}>
+                {zoneMyArea > 0 && <span>This crop: <strong style={{color:C.text}}>{Math.round(zoneMyArea*10)/10} m²</strong></span>}
+                <span>Free: <strong style={{color:zoneFill}}>{zoneStats.freeM2} m²</strong> of {Math.round(zoneStats.totalM2*10)/10} m²</span>
+              </div>
+            </Card>
+          )}
+          <StorageCard storage={crop.storage}/>
+          {setPage && (
+            <button onClick={function(){onClose();setPage("manuals");}} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:C.green,fontWeight:600,padding:"10px 14px",background:C.gp,borderRadius:C.rs,border:`1px solid ${C.bdr}`,marginBottom:8,cursor:"pointer",width:"100%",textAlign:"left"}}>
+              Full {crop.name.toLowerCase()} guide in Learn →
+            </button>
+          )}
+          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(crop.name + " growing guide complete")}`} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:13,color:C.t2,textDecoration:"underline",fontWeight:600,padding:"8px 2px",marginBottom:4}}>Videos on growing {crop.name.toLowerCase()}</a>
+        </div>
+      </details>
 
       {confirmDel ? (
         <div role="alert" style={{padding:"12px 14px",borderRadius:12,background:C.dangerBg,marginBottom:4}}>
@@ -225,26 +255,12 @@ function PlotOverlay({plot, data, setData, onClose, setPage=null, dock=false}) {
           <Actions><Btn v="secondary" onClick={()=>setConfirmDel(false)}>Keep it</Btn><Btn v="danger" onClick={()=>del(plot.id)}>Yes, remove</Btn></Actions>
         </div>
       ) : (
-        <Actions className={canHarvestNow ? "" : "is-inline"}>
+        <Actions className="is-inline">
           <button type="button" className="mt-danger-link" onClick={()=>del(plot.id)}>Remove planting</button>
-          {canHarvestNow ? <Btn onClick={()=>setHarvKg(String(harvDefault(plot)))}>Harvest</Btn> : null}
         </Actions>
-      )}
-      {harvKg != null && (
-        <div style={{marginTop:10,padding:"12px 14px",border:`1.5px solid ${C.green}`,borderRadius:12,background:C.gp}}>
-          <label htmlFor="harv-kg" style={{display:"block",fontSize:13,fontWeight:700,color:C.text,marginBottom:6}}>How much did you pick? (kg)</label>
-          <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-            <input id="harv-kg" type="number" inputMode="decimal" min="0" step="0.1" value={harvKg} onChange={e=>{setHarvKg(e.target.value);setHarvEdited(true);}}
-              style={{width:110,padding:"9px 12px",border:`1.5px solid ${C.bdr}`,borderRadius:10,fontSize:16,background:C.card,color:C.text}}/>
-            <Btn v="success" onClick={()=>harv(plot)}>Save harvest</Btn>
-            <Btn v="ghost" sm onClick={()=>{setHarvKg(null);setHarvEdited(false);}}>Cancel</Btn>
-          </div>
-          <div style={{fontSize:11.5,color:C.t2,marginTop:6}}>Prefilled with MyTerra's estimate. Weigh it if you can — Insights compare real harvests with the estimate.</div>
-        </div>
       )}
     </Overlay>
   );
 }
 
 export default PlotOverlay;
-

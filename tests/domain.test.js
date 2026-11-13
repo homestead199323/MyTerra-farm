@@ -574,7 +574,7 @@ test('Five areas hold every page; old saved pages still open',()=>{
   assert.deepEqual(SECTIONS[1].pages.map(p=>p.id),['crops','live','map']);
   assert.equal(sectionOf('tasks').id,'today');assert.equal(sectionOf('live').id,'space');assert.equal(sectionOf('fin').id,'progress');
   assert.equal(sectionOf('feedback'),null);assert.equal(sectionOf('nonsense').id,'today');
-  assert.equal(normalizePage('farm'),'map');assert.equal(normalizePage('season'),'plan');assert.equal(normalizePage('setup'),'home');assert.equal(normalizePage('bogus'),'home');assert.equal(normalizePage('pantry'),'pantry');
+  assert.equal(normalizePage('farm'),'home');assert.equal(normalizePage('map'),'home');assert.equal(normalizePage('season'),'plan');assert.equal(normalizePage('setup'),'home');assert.equal(normalizePage('bogus'),'home');assert.equal(normalizePage('pantry'),'pantry');
 });
 test('Plan lists waiting plantings, fresh suggestions and a season strip',()=>{
   const data={region:'western_europe',profile:{environment:'backyard',experience:'beginner'},zones:[{id:'b',name:'Bed',type:'raised'}],garden:{plots:[
@@ -1037,3 +1037,5 @@ test('calendar: tips come from the frost dates and the crop data',()=>{
 });
 import './review-fixes.test.js';
 import './plain-words.test.js';
+import './crops-page.test.js';
+import './quality.test.js';

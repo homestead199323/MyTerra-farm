@@ -23,6 +23,7 @@ import {
   activeBatches,
 } from "./nursery-model";
 import PlantingForm from "../quiet/PlantingForm";
+import FarmIcon from "../../components/FarmIcon";
 import { SeedlingTray, TrayPicker, SeedTimeline, CropSeedInfo, StageTrack } from "./NurseryVisuals";
 
 const STEP_WHY = {
@@ -60,6 +61,27 @@ export function BatchCard({ batch, data, onOpen }) {
         <SeedTimeline batch={batch} compact />
         <small className="q-batch-next">Next: {nextStepText(batch)}</small>
       </div>
+    </button>
+  );
+}
+
+const NEXT_VERB = { sown: "Sow", sprouted: "Sprouts", potted: "Pot on", hardening: "Harden off", planted: "Plant out" };
+/** One line in the Crops list: what it is, where it is headed, and the next thing to do. Opens the batch. */
+export function BatchRow({ batch, data, onOpen }) {
+  const bed = data.zones.find((z) => z.id === batch.targetZoneId)?.name,
+    nursery = data.zones.find((z) => z.id === batch.zoneId)?.name || (batch.zoneId === "windowsill" ? "Windowsill" : "Nursery");
+  const next = nextStage(batch), sown = !!batch.stage;
+  return (
+    <button type="button" className="cr-row" onClick={onOpen}>
+      <span className="cr-seed-art"><FarmIcon name={batch.crop} size={34} harvest /></span>
+      <span className="cr-row-text">
+        <strong>
+          {batch.crop}
+          {batch.variety ? ` (${batch.variety})` : ""}
+        </strong>
+        <small>{sown ? `${batch.cells} cells · ${nursery}${bed ? ` → ${bed}` : ""}` : `Not sown yet · for ${bed || nursery}`}</small>
+      </span>
+      <span className={`cr-status${sown ? "" : " is-wait"}`}>{next ? `${NEXT_VERB[next] || STAGE_LABELS[next]} ${inDays(scheduleOf(batch)[next])}` : "Planted out"}</span>
     </button>
   );
 }

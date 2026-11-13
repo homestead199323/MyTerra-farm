@@ -968,3 +968,9 @@ select:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-green) 
 
 .q-animal-home{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;margin:0 0 8px;border-radius:12px;background:var(--surface-soft);font-size:13px;color:var(--color-text-2)}
 .hv2-pro{position:absolute;top:2px;right:6px;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:1px 5px;border-radius:6px;background:var(--color-green);color:#fff;line-height:1.4}
+
+/* A screen whose file is still arriving (first open only): a quiet pulse where the page will be */
+.mt-page-wait{display:grid;place-items:center;min-height:40vh}
+.mt-page-wait span{width:34px;height:34px;border-radius:50%;border:3px solid var(--color-border);border-top-color:var(--color-green);animation:mt-page-wait .8s linear infinite}
+@keyframes mt-page-wait{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.mt-page-wait span{animation:none}}

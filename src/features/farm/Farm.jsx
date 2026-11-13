@@ -6,9 +6,10 @@ import { C, F, SX } from "../../lib/theme";
 import { Btn, Card, Pill, Ring, Stat, PageHead } from "../../components/ui";
 import {bedRows, growthOf} from "../quiet/farm-model";
 import {ChevronDown, ChevronRight} from "lucide-react";
-import { NurseryList } from "../nursery/NurseryUI";
-import { activeBatches } from "../nursery/nursery-model";
-import {isTreeCrop} from "../quiet/planting-plan";
+import { BatchRow, SeedlingOverlay, StartSeedsForm } from "../nursery/NurseryUI";
+import { activeBatches, scheduleOf, nextStage } from "../nursery/nursery-model";
+import { cropSections, sectionOpen, sectionOfPlot, rowStatus } from "./crops-model";
+import "./crops.css";
 import PlantArt from "../quiet/PlantArt";
 import MapLines from "../quiet/MapLines";
 import { addDraftPoint, lineLength, snapPoint, lineAnchors, snapZone, defaultGrid } from "../grove/path-draw";
@@ -17,7 +18,7 @@ import { REGIONS, REGION_MAP } from "../../data/regions";
 import { ZT, ZT_MAP } from "../../data/zones";
 import { searchCity } from "../../data/cities";
 import { uid } from "../../lib/storage";
-import { todayLocalKey, localDateFromKey, localDayNumber, fmtWeight } from "../../lib/utils";
+import { todayLocalKey } from "../../lib/utils";
 import { getRegionalCrops, rCM } from "../../lib/regional";
 import PlotOverlay from "./PlotOverlay";
 import GroveScene from "../grove/GroveScene";
@@ -907,113 +908,99 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
   const [openSec,setOpenSec]=useState({});
   const [showAll,setShowAll]=useState({});
   const [initial,setInitial]=useState({});
+  const [openBatch,setOpenBatch]=useState(null);
+  const [startSeeds,setStartSeeds]=useState(false);
   const [backHome,setBackHome]=useState(false); // opened from the home map (its + or a first-run cue): saving goes back to the map
   useEffect(()=>{if(pageData?.crop||pageData?.zone||pageData?.add){const next={...pageData};delete next.add;delete next.returnHome;setInitial(next);setBackHome(!!pageData.returnHome);setShowAdd(true);clearPageData?.();}},[pageData,clearPageData]);
   const sp=data.garden.plots.find(p=>p.id===selP);
-  // Wide new home: the crop's details sit beside the list, and one is always open.
+  const today=todayLocalKey();
+  const env=resolveEnvironment(data);
+  const cropMap=rCM(data.region);
+  const sections=cropSections(data,cropMap,today,env);
+  const seedlings=activeBatches(data).slice().sort(function(a,b){return (scheduleOf(a)[nextStage(a)]||"").localeCompare(scheduleOf(b)[nextStage(b)]||"");});
+  const hasNursery=data.zones.some(function(z){return z.type==="nursery";});
+  const cropCount=sections.reduce(function(n,s){return n+s.plots.length;},0);
+  const total=cropCount+seedlings.length;
+  // Wide screen: the crop's details sit beside the list, and one is always open (the first row of the list).
   const dock=useWideStage();
-  const firstId=dock?(data.garden.plots.find(function(p){return p.status!=="harvested";})||{}).id:null;
+  const firstId=dock&&sections.length?sections[0].plots[0].id:null;
   useEffect(()=>{if(dock&&!selP&&firstId&&!showAdd)setSelP(firstId);},[dock,selP,firstId,showAdd]);
-  // Pre-computed values to avoid IIFEs in JSX (IIFEs crash the app)
-  const _active=data.garden.plots.filter(function(p){return p.status!=="harvested";});
-  const _totalArea=_active.reduce(function(s,p){return s+(p.measureType==="area"?+(p.qty||0):0);},0);
-  const _totalYield=_active.reduce(function(s,p){return s+(p.expectedYieldKg||0);},0);
-  const _ready=_active.filter(function(p){return !p.sowPending&&p.status!=="planned"&&p.harvestDate&&localDateFromKey(p.harvestDate)<=localDateFromKey(todayLocalKey());}).length;
+  const selectedKey=sp?sectionOfPlot(sections,sp.id):null;
+  const isOpen=function(key){return sectionOpen(key,{choice:openSec,total,selectedKey});};
+  const toggle=function(key){setOpenSec({...openSec,[key]:!isOpen(key)});};
   // Planting needs somewhere to plant: without a bed/planter the header button led to an empty form.
   const _canPlant=data.zones.some(function(z){return isPlantZone(z.type);});
-  const _bedWord=resolveEnvironment(data)==="balcony"?"planter":"bed";
-  // Trees (orchard crops or any fruit/nut tree) get their own section, separate from vegetable beds.
-  // Sections: vegetable beds, herbs, and trees (orchard areas or any fruit/nut tree, wherever planted).
-  const _cropMap=rCM(data.region);
-  const _kind=function(p){const z=data.zones.find(z=>z.id===p.zone);const c=_cropMap.get(p.crop);if(z?.type==="orchard"||isTreeCrop(c))return "orchard";if(c?.cat==="Herb"||z?.type==="herbs")return "herbs";return "beds";};
-  const _today=localDateFromKey(todayLocalKey());
-  const _dueIn=function(p){const h=localDateFromKey(p.harvestDate);return h?(h-_today)/864e5:Infinity;};
-  const _sum=function(list,key){return list.reduce(function(s,p){return s+(+p[key]||0);},0);};
-  const _sections=[["beds","Vegetable beds","plants"],["herbs","Herbs","plants"],["orchard","Orchard","trees"]].map(function([key,title,unit]){
-    const plots=_active.filter(function(p){return _kind(p)===key;}).sort(function(a,b){return _dueIn(a)-_dueIn(b);});
-    return {key,title,unit,plots,count:_sum(plots,"plantCount"),kg:_sum(plots,"expectedYieldKg"),ready:plots.filter(function(p){return _dueIn(p)<=0;}).length};
-  });
-  const _PREVIEW=5;
-  const _seedlings=activeBatches(data);
+  const _bedWord=env==="balcony"?"planter":"bed";
+  const _PREVIEW=6;
+  // A crop picked on a long list: its row comes into view (the list may have been scrolled elsewhere).
+  const listRef=useRef(null);
+  useEffect(()=>{
+    if(!selP||!listRef.current)return;
+    const row=listRef.current.querySelector(`[data-plot="${selP}"]`);
+    if(row&&row.scrollIntoView)row.scrollIntoView({block:"nearest"});
+  },[selP,selectedKey]);
   function renderCrop(p,unit){
-        const c=rCM(data.region).get(p.crop);
-        const growth=growthOf(p,c,todayLocalKey());
-        const pct=growth.progress;
-        const todayDate = localDateFromKey(todayLocalKey());
-        const harvestDate = localDateFromKey(p.harvestDate);
-        const isR=!growth.waiting&&p.harvestDate&&harvestDate<=todayDate;
-        const dL=harvestDate?localDayNumber(harvestDate)-localDayNumber(todayDate):null; // whole calendar days (DST-safe)
-        const zone=data.zones.find(z=>z.id===p.zone);
-        const hasQty = p.plantCount || p.qty;
-        return (
-          <div key={p.id}>
-          <Card onClick={()=>setSelP(p.id)} style={dock&&selP===p.id?{boxShadow:`0 0 0 2px ${C.green}`}:isR?{boxShadow:`0 0 0 2px ${C.orange}`}:{}}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <Ring pct={pct} size={60} color={isR?C.orange:C.green}><PlantArt crop={p.crop} stage={growth.index} size={48}/></Ring>
-              <div style={SX.flex1}>
-                <div style={{fontSize:15,fontWeight:600}}>{p.name||p.crop}</div>
-                <div style={{fontSize:12,color:C.t2,marginTop:2,display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {zone&&<span>📍 {zone.name}</span>}
-                  {p.plantCount>0&&<span>{unit==="trees"?"🌳":"🌱"} {p.plantCount} {p.plantCount===1?unit.slice(0,-1):unit}</span>}
-                  {p.qty>0&&p.measureType==="area"&&<span>📐 {p.qty}m²</span>}
-                  {p.expectedYieldKg>0&&<span>📦 ~{fmtWeight(p.expectedYieldKg)}</span>}
-                  {!hasQty&&p.plantDate&&!growth.waiting&&localDateFromKey(p.plantDate)&&<span>{localDateFromKey(p.plantDate).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>}
-                  {p.status==="planned"&&p.plannedDate&&localDateFromKey(p.plannedDate)&&<span>from nursery · plant out {localDateFromKey(p.plannedDate).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span>}
-                </div>
-              </div>
-              <div style={{display:"flex",gap:4,flexDirection:"column",alignItems:"flex-end"}}>
-                {isR&&!growth.waiting&&<Pill c={C.orange} bg={C.harvestBg}>Harvest window</Pill>}
-                {growth.waiting
-                  ? <Pill c={C.green} bg={C.gp}>{growth.label}</Pill>
-                  : <>{dL>0&&<Pill>{dL<=14?`${dL} days to harvest`:`~${Math.round(dL/7)} wk to harvest`}</Pill>}{!isR&&<small style={{fontSize:11,color:C.t2}}>{growth.label}</small>}</>}
-              </div>
-            </div>
-          </Card>
-          </div>
-        );
+    const c=cropMap.get(p.crop);
+    const growth=growthOf(p,c,today);
+    const status=rowStatus(p,growth,today);
+    const zone=data.zones.find(z=>z.id===p.zone);
+    const count=p.plantCount>0?`${p.plantCount} ${p.plantCount===1?unit.slice(0,-1):unit}`:"";
+    return (
+      <button type="button" key={p.id} data-plot={p.id} className={`cr-row${dock&&selP===p.id?" is-on":""}${status.tone==="ready"?" is-ready":""}`} aria-pressed={dock?selP===p.id:undefined} onClick={function(){setSelP(p.id);}}>
+        <Ring pct={growth.progress} size={52} color={status.tone==="ready"?C.orange:C.green}><PlantArt crop={p.crop} stage={growth.index} size={42}/></Ring>
+        <span className="cr-row-text">
+          <strong>{p.name||p.crop}</strong>
+          <small>{[count,zone&&zone.name].filter(Boolean).join(" · ")}</small>
+        </span>
+        <span className={`cr-status${status.tone?` is-${status.tone}`:""}`}>{status.text}</span>
+      </button>
+    );
   }
+  const head=function(key,title,summary,open,ready,icons){
+    return (
+      <button type="button" className="cr-head" aria-expanded={open} onClick={function(){toggle(key);}}>
+        {open?<ChevronDown size={18} aria-hidden="true"/>:<ChevronRight size={18} aria-hidden="true"/>}
+        <span className="cr-head-title">{title}</span>
+        {ready>0&&<span className="cr-status is-ready">{ready} ready</span>}
+        {!open&&icons.length>0&&<span className="cr-head-icons" aria-hidden="true">{icons.slice(0,4).map(function(n,i){return <FarmIcon key={n+i} name={n} size={24} harvest/>;})}{icons.length>4&&<i>+{icons.length-4}</i>}</span>}
+        <small>{summary}</small>
+      </button>
+    );
+  };
+  const seedOpen=isOpen("seedlings");
+  const toSow=seedlings.filter(function(b){return !b.stage;}).length;
   return (
-    <div className={`page-enter mt-crops${dock&&sp?" has-detail":""}`} style={SX.mw800}>
-      <PageHead title="Crops" sub="From seed to harvest">
+    <div className={`page-enter mt-crops${dock&&sp?" has-detail":""}`} style={SX.mw800} ref={listRef}>
+      <PageHead title="Crops" sub={cropCount>0?`${cropCount} growing${seedlings.length?` · ${seedlings.length} ${seedlings.length===1?"tray":"trays"} of seedlings`:""}`:null}>
         {_canPlant&&<Btn onClick={()=>setShowAdd(true)}>+ Plant a crop</Btn>}
       </PageHead>
-      {(_seedlings.length>0||data.zones.some(function(z){return z.type==="nursery";}))&&(
-        <section style={{marginBottom:18}}>
-          <button type="button" aria-expanded={openSec.seedlings??true} onClick={function(){setOpenSec({...openSec,seedlings:!(openSec.seedlings??true)});}}
-            style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,width:"100%",padding:"8px 2px",margin:"0 0 6px",background:"none",border:0,borderBottom:`1px solid ${C.bdr}`,cursor:"pointer",color:C.text,textAlign:"left"}}>
-            <span style={{display:"flex",alignItems:"center",gap:8}}>
-              {(openSec.seedlings??true)?<ChevronDown size={18}/>:<ChevronRight size={18}/>}
-              <span style={{fontSize:17,fontWeight:650}}>Seedlings</span>
-            </span>
-            <small style={{color:C.t2,fontSize:12}}>{_seedlings.length} {_seedlings.length===1?"batch":"batches"} · {_seedlings.reduce(function(n,b){return n+b.cells;},0)} cells</small>
-          </button>
-          {(openSec.seedlings??true)&&<NurseryList data={data} setData={setData}/>}
-        </section>)}
-      {_active.length===0?
-        <Card style={{textAlign:"center",padding:"clamp(20px, 6vw, 48px) 24px",background:C.grdLight}}><div style={SX.s15Bold}>Ready to grow?</div><div style={{color:C.t2,marginTop:6,fontSize:12.5,maxWidth:280,margin:"6px auto 14px",lineHeight:1.5}}>{_canPlant?`Pick a crop and a ${_bedWord}: MyTerra lays out the rows at the right spacing and plans every step.`:`First add a ${_bedWord} to your map. Then pick what to grow in it.`}</div>{_canPlant?<Btn onClick={()=>setShowAdd(true)}>+ Plant a crop</Btn>:setPage&&<Btn onClick={()=>setPage("map",{edit:true})}>+ Add a {_bedWord}</Btn>}</Card>:
-      <>{_sections.map(function(sec){
-        if(!sec.plots.length)return null;
-        const open=openSec[sec.key]??true, all=showAll[sec.key]||sec.plots.length<=_PREVIEW+1;
+      {cropCount===0&&
+        <Card style={{textAlign:"center",padding:"clamp(20px, 6vw, 48px) 24px",background:C.grdLight,marginBottom:14}}><div style={SX.s15Bold}>Ready to grow?</div><div style={{color:C.t2,marginTop:6,fontSize:12.5,maxWidth:280,margin:"6px auto 14px",lineHeight:1.5}}>{_canPlant?`Pick a crop and a ${_bedWord}: MyTerra lays out the rows at the right spacing and plans every step.`:`First add a ${_bedWord} to your map. Then pick what to grow in it.`}</div>{_canPlant?<Btn onClick={()=>setShowAdd(true)}>+ Plant a crop</Btn>:setPage&&<Btn onClick={()=>setPage("map",{edit:true})}>+ Add a {_bedWord}</Btn>}</Card>}
+      {sections.map(function(sec){
+        const open=isOpen(sec.key), all=showAll[sec.key]||sec.plots.length<=_PREVIEW+1;
         const shown=all?sec.plots:sec.plots.slice(0,_PREVIEW);
+        const names=sec.plots.map(function(p){return p.crop;}).filter(function(n,i,a){return a.indexOf(n)===i;});
         return (
-        <section key={sec.key} style={{marginBottom:18}}>
-          <button type="button" aria-expanded={open} onClick={function(){setOpenSec({...openSec,[sec.key]:!open});}}
-            style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"2px 10px",width:"100%",padding:"8px 2px",margin:"0 0 6px",background:"none",border:0,borderBottom:`1px solid ${C.bdr}`,cursor:"pointer",color:C.text,textAlign:"left"}}>
-            <span style={{display:"flex",alignItems:"center",gap:8}}>
-              {open?<ChevronDown size={18}/>:<ChevronRight size={18}/>}
-              <span style={{fontSize:17,fontWeight:650,whiteSpace:"nowrap"}}>{sec.title}</span>
-              {sec.ready>0&&<Pill c={C.orange} bg={C.harvestBg}>{sec.ready} ready</Pill>}
-            </span>
-            <small style={{color:C.t2,fontSize:12,marginLeft:"auto",whiteSpace:"nowrap"}}>{sec.plots.length} {sec.plots.length===1?"crop":"crops"} · {sec.count} {sec.unit}{sec.kg>0?` · ~${fmtWeight(sec.kg)}`:""}</small>
-          </button>
-          {open&&<div style={{display:"grid",gap:8}}>{shown.map(function(p){return renderCrop(p,sec.unit);})}</div>}
+        <section key={sec.key} className="cr-sec">
+          {head(sec.key,sec.title,`${sec.plots.length} ${sec.plots.length===1?"crop":"crops"}`,open,sec.ready,names)}
+          {open&&<div className="cr-list">{shown.map(function(p){return renderCrop(p,sec.unit);})}</div>}
           {open&&sec.plots.length>_PREVIEW+1&&(
             <button type="button" className="q-text-button" style={{marginTop:8}} onClick={function(){setShowAll({...showAll,[sec.key]:!all});}}>
               {all?"Show fewer":`Show all ${sec.plots.length} crops`}
             </button>)}
-        </section>);})}</>}
+        </section>);})}
+      {(seedlings.length>0||hasNursery)&&(
+        <section className="cr-sec">
+          {head("seedlings","Seedlings",seedlings.length?`${seedlings.length} ${seedlings.length===1?"tray":"trays"}${toSow?` · ${toSow} to sow`:""}`:"None yet",seedOpen,0,seedlings.map(function(b){return b.crop;}))}
+          {seedOpen&&<div className="cr-list">
+            {seedlings.map(function(b){return <BatchRow key={b.id} batch={b} data={data} onOpen={function(){setOpenBatch(b.id);}}/>;})}
+            <button type="button" className="q-secondary cr-start" onClick={function(){setStartSeeds(true);}}>+ Start seeds</button>
+          </div>}
+        </section>)}
 
-      {sp && !(dock&&showAdd) && <PlotOverlay key={sp.id} dock={dock} plot={sp} data={data} setData={setData} onClose={()=>setSelP(null)}/>}
+      {sp && !(dock&&showAdd) && <PlotOverlay key={sp.id} dock={dock} plot={sp} data={data} setData={setData} setPage={setPage} onClose={()=>setSelP(null)}/>}
+      {openBatch&&<SeedlingOverlay batchId={openBatch} data={data} setData={setData} onClose={function(){setOpenBatch(null);}}/>}
+      {startSeeds&&<StartSeedsForm data={data} setData={setData} onClose={function(){setStartSeeds(false);}}/>}
 
       {showAdd&&<PlantingForm data={data} setData={setData} initial={initial} onClose={()=>{setShowAdd(false);setInitial({});setBackHome(false);}} onSaved={(id)=>{if(backHome)setPage?.("home");else if(id)setSelP(id);}}/>}
     </div>
@@ -1028,28 +1015,23 @@ function Farming({data, setData, pageData, clearPageData, setPage}) {
    Crops is now a separate top-level screen.
    ════════════════════════════════════════════ */
 function MapScreen({data, setData, pageData, clearPageData, setPage}) {
-  const [editing, setEditing] = useState(function() {
+  // Only the layout designer lives here now; the map itself is the home screen.
+  const [editing] = useState(function() {
     return !!(pageData && pageData.edit);
   });
 
   useEffect(function() { clearPageData(); }, [clearPageData]);
+  useEffect(function() { if (!editing) setPage("home"); }, [editing, setPage]);
 
   function handlePlantInZone(zoneId) {
     // Crops is its own page now — hand the zone over so the plant form pre-fills.
     setPage("crops", {zone: zoneId});
   }
 
-  if (editing) {
-    return (
-      <div style={{maxWidth:1100}}>
-        <Setup data={data} setData={setData} onPlantInZone={handlePlantInZone} onBack={function(){setEditing(false);}}/>
-      </div>
-    );
-  }
-
+  if (!editing) return null;
   return (
     <div style={{maxWidth:1100}}>
-      <GroveScene data={data} setData={setData} onEditLayout={function(){setEditing(true);}} onPlantInZone={handlePlantInZone} onShowCrops={function(){setPage("crops");}}/>
+      <Setup data={data} setData={setData} onPlantInZone={handlePlantInZone} onBack={function(){setPage("home");}}/>
     </div>
   );
 }

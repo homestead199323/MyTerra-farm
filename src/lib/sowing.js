@@ -122,6 +122,16 @@ export function toggleStep(plot, stepIdx, todayKey, cropDays) {
   return { ...plot, steps: plot.steps.map(function (s, k) { return k === stepIdx ? { ...s, done: turningOn } : s; }) };
 }
 
+/**
+ * Steps for a planting saved as "already in the ground": putting it in (and any preparation before that)
+ * has happened, so those are ticked. Without this the first job of a planting made today was to plant it again.
+ */
+export function stepsAlreadyPlanted(steps) {
+  if (!Array.isArray(steps)) return steps;
+  const first = firstStepIdx(steps);
+  return steps.map(function (s, k) { return { ...s, done: k === first || (Number(s.d) || 0) < 0 }; });
+}
+
 /** What happens next on a plot after a step, for the "done" toast: { label, inDays } or null. */
 export function nextStepAfter(plot, todayKey) {
   if (!plot || !Array.isArray(plot.steps) || !plot.plantDate) return null;

@@ -16,6 +16,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Plus, Minus, Compass, Maximize2, Minimize2, X, ChevronDown, Sprout, House, Trees, PawPrint, Droplets, Warehouse, Hexagon, MapPin } from "lucide-react";
 import { pinchIntent, isCoarse } from "./gestures";
+import { startRatio, createPace, readRatio, saveRatio } from "./quality";
 import { focusDistance } from "./focus-camera";
 import { homeView, fitView, turnLimit } from "./home-view";
 import { onCover, coverInset, mergeInset, setCover } from "./cover";
@@ -2017,8 +2018,13 @@ export default function Grove3D(props) {
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" }); }
     catch (err) { void err; latest.current.onUnavailable?.(); return; }
     const coarse = isCoarse(), mobile = coarse || Math.min(screen.width, screen.height) < 820;
-    const DPR = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2), LOW = Math.min(DPR, mobile ? 1.15 : 1.25);
-    renderer.setPixelRatio(DPR);
+    // One drawing resolution for the whole visit. It used to drop for every drag and jump back after it: two
+    // buffer re-allocations (a hitch each) and a blurry-then-sharp map on every touch. Now a device that
+    // cannot keep up steps down once, at the end of a gesture, and remembers it (quality.js).
+    const maxDPR = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
+    let dpr = startRatio(maxDPR, readRatio());
+    renderer.setPixelRatio(dpr);
+    const pace = createPace();
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false; // static scene: shadows render once
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -2041,9 +2047,9 @@ export default function Grove3D(props) {
     const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), S = { W: 0, H: 0 };
     let queued = false, dirty = false, animOn = false, animRaf = 0, lastFrame = 0, inView = true;
     const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const IDLE_MS = mobile ? 1000 / 20 : 1000 / 30; // idle animation rate; gestures and camera moves render every frame
+    const IDLE_MS = 1000 / 30; // idle animation rate (20 fps on phones made the sway look like lag); gestures and camera moves render every frame
     const st = { renderer, scene, camera, sun, world: null, hits: [], plotHits: [], dims: null, fitted: false, anchors: {}, highlight: null, pickGroup: null, picked: null, calls: 0, animating: false };
-    st.reduced = reduced; st.mobile = mobile; st.coarse = coarse; state.current = st;
+    st.reduced = reduced; st.mobile = mobile; st.coarse = coarse; st.envTex = envTex; state.current = st;
     if (import.meta.env?.DEV && typeof window !== "undefined") window.__g3 = st; // dev-only inspection hook
     // the sky (sky.js) owns every light value; FIXED_SKY reproduces the map's original fixed afternoon
     st.sky = FIXED_SKY;
@@ -2075,6 +2081,7 @@ export default function Grove3D(props) {
     const pv = new THREE.Vector3();
     let lastNow = 0;
     st.render = (now = performance.now()) => {
+      if (st.compiling) { dirty = true; return; } // first frame waits for its shaders (see the world build below)
       dirty = false;
       if (st.growthAnim) {
         const a = st.growthAnim, elapsed = now - a.start, axis = new THREE.Vector3(), next = new THREE.Matrix4();
@@ -2097,7 +2104,6 @@ export default function Grove3D(props) {
       setEnvironment(envTex, st.sky.envIntensity); // glossy materials reflect this map's own environment (a no-op unless it changed)
       renderer.render(scene, camera);
       st.calls = renderer.info.render.calls;
-      if (st.viewSubs && st.viewSubs.size) st.viewSubs.forEach((f) => f());
       // zone names hang just above the front edge of the thing they name (the footprint edge nearest the
       // viewer) so they never cover a roof; they shrink as the camera pulls back; placement (selected →
       // pending jobs → biggest footprint, no overlaps, far-out size threshold) lives in labels.js
@@ -2129,6 +2135,7 @@ export default function Grove3D(props) {
           n.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%) translateY(-2px) scale(${ls.toFixed(3)})`; n.style.display = show ? "" : "none";
         });
       }
+      if (st.viewSubs && st.viewSubs.size) st.viewSubs.forEach((f) => f()); // after the labels are placed: a listener can read where they are now
     };
     st.requestRender = () => { dirty = true; if (queued || animOn) return; queued = true; requestAnimationFrame(() => { queued = false; if (state.current === st && dirty) st.render(); }); };
     // the animation loop runs only while the map is on screen and the tab is visible; idle frames are
@@ -2136,6 +2143,7 @@ export default function Grove3D(props) {
     const frame = (now) => {
       animRaf = 0; if (!animOn) return;
       if (st.brain && now - st.brainAt >= 250) { st.brainAt = now; const legs = st.brain.tick(now / 1000, { night: st.sky.night, reduced: st.reduced }); if (legs.length) { applyLegs(st.herdMesh, legs); dirty = true; } }
+      pace.frame(now, controls.interacting && !st.compiling && now - (st.builtAt || 0) > 4000); // the first seconds compile shaders: not a fair sample
       if (dirty || controls.interacting || now - lastFrame >= IDLE_MS) { lastFrame = now; st.render(now); }
       animRaf = requestAnimationFrame(frame);
     };
@@ -2152,7 +2160,13 @@ export default function Grove3D(props) {
     const controls = new FarmControls(camera, renderer.domElement, {
       focusBounds: (zone) => st.hits.find((h) => h.userData.zoneId === zone.id)?.userData.focusBounds,
       change: () => st.requestRender(),
-      interact: (on) => { renderer.setPixelRatio(on ? LOW : DPR); st.requestRender(); },
+      interact: (on) => {
+        if (!on) { // gesture over: if it ran slow, the map gets lighter from here on
+          const next = pace.settle(dpr);
+          if (next !== dpr) { dpr = next; renderer.setPixelRatio(dpr); renderer.shadowMap.needsUpdate = true; saveRatio(dpr); }
+        }
+        st.requestRender();
+      },
       first: () => latest.current.dismissHint?.(),
       coop: (kind) => latest.current.showCoop?.(kind),
       reset: () => { latest.current.clearFocus?.(); st.reset(true); },
@@ -2392,7 +2406,18 @@ export default function Grove3D(props) {
     st.hits.forEach((h) => { const a = st.anchors[h.userData.zoneId]; if (a) a.h = Math.min(6, h.userData.bounds.h); }); // label height: roof ridge, bed edge…
     st.setupSun(); st.fx.cloudKey = ""; st.fx.precipKey = ""; st.setWeatherFx(st.sky);
     if (dimsChanged) st.fitted = false;
-    st.size(); st.select(P.selectedId || P.focusId); setBusy(false); st.setAnim();
+    st.size(); st.select(P.selectedId || P.focusId); st.builtAt = performance.now();
+    // First build: the map's ~40 shader programs are compiled in the background where the browser can
+    // (KHR_parallel_shader_compile), so the page stays responsive instead of freezing on the first frame.
+    // Without that extension nothing changes: they compile with the first frame, as before. Later builds reuse them.
+    if (!st.compiledOnce && typeof st.renderer.compileAsync === "function" && st.renderer.extensions.has("KHR_parallel_shader_compile")) {
+      st.compiledOnce = true; st.compiling = true;
+      const done = () => { if (state.current !== st || !st.compiling) return; st.compiling = false; st.builtAt = performance.now(); setBusy(false); st.requestRender(); };
+      const giveUp = setTimeout(done, 6000);
+      setEnvironment(st.envTex, st.sky.envIntensity); // as the first frame will have it, so the programs compiled here are the ones it uses
+      st.renderer.compileAsync(st.scene, st.camera).then(done, done).finally(() => clearTimeout(giveUp));
+    } else if (!st.compiling) setBusy(false);
+    st.setAnim();
     const t = setTimeout(() => { st.renderer.shadowMap.needsUpdate = true; st.requestRender(); }, GROWTH_DURATION_MS + GROWTH_STAGGER_MS + 100);
     return () => clearTimeout(t);
   }, [builtKey, motionReduced]);
@@ -2605,7 +2630,7 @@ export default function Grove3D(props) {
       )}
       {!preview && hint && !busy && !picked && <div className="g3-hint" aria-hidden="true">Drag to move · pinch or scroll to zoom · two fingers to turn</div>}
       {!preview && coop && <div className="g3-coop" role="status">{coop === "touch" ? "Use two fingers to move the map, or open it full screen" : "Hold ⌘ / Ctrl and scroll to zoom the map"}</div>}
-      {busy && <div className="g3-busy" aria-live="polite">Building your farm…</div>}
+      {busy && <div className="g3-busy" aria-live="polite">Drawing your {env === "balcony" ? "balcony" : env === "backyard" ? "garden" : "farm"}…</div>}
     </div>
   );
 }

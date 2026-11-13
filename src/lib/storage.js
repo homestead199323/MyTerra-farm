@@ -35,6 +35,7 @@ export const kvRemove = (key) => {
 const KEYS = {
   FARM: "hfm_data_v7",
   FARM_OWNER: "hfm_farm_owner", // user id the local FARM cache belongs to (Phase 5 multi-account guard)
+  UNSYNCED: "hfm_unsynced_at", // time (ms) of the newest edit the cloud has not confirmed yet (lib/unsynced.js)
   PAGE: "hfm_page",
   THEME: "hfm_theme",
   FEEDBACK_DONE: "hfm_feedback_done",
@@ -91,7 +92,13 @@ export const clearFarm = () => {
   _latestData = null;
   kvRemove(KEYS.FARM);
   kvRemove(KEYS.FARM_OWNER);
+  kvRemove(KEYS.UNSYNCED);
 };
+
+// Time stamp of the newest edit the cloud has not confirmed (0 = everything is backed up).
+export const markUnsynced = (ms) => kvSet(KEYS.UNSYNCED, String(ms));
+export const clearUnsynced = () => kvRemove(KEYS.UNSYNCED);
+export const loadUnsynced = () => Number(kvGet(KEYS.UNSYNCED)) || 0;
 
 // Returns the raw JSON string (or null). Used by the ErrorBoundary
 // "Export Backup" button — we deliberately skip parse-then-stringify so a

@@ -57,7 +57,9 @@ export const PAGE_IDS = new Set(SECTIONS.flatMap((s) => s.pages.map((p) => p.id)
 
 /** A page saved by an older version of the app → the page it is now. */
 export function normalizePage(saved) {
-  if (saved === "farm") return "map";
+  // The map is the home screen now: the old "Map" page (and "Farm" before it) is the home.
+  // "map" stays a page id only for the layout designer, which is opened with { edit: true }.
+  if (saved === "farm" || saved === "map") return "home";
   if (saved === "season") return "plan"; // the seasonal calendar lives in Plan now
   if (!saved || saved === "setup" || !PAGE_IDS.has(saved)) return "home";
   return saved;

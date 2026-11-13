@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Overlay, Inp, Sel, Btn, Actions } from "../../components/ui";
 import { rCR, rCM, getRegionalVarieties } from "../../lib/regional";
 import { uid } from "../../lib/storage";
@@ -26,7 +26,7 @@ import { suggestTrays, potTrayFor, trayOf } from "../../data/trays";
 import { currencySymbol } from "../../lib/money";
 import { plannedFields } from "../../lib/planned";
 import { toast } from "../../lib/toast";
-import { waitingLabel, sowVerb } from "../../lib/sowing";
+import { waitingLabel, sowVerb, stepsAlreadyPlanted } from "../../lib/sowing";
 import { sowTiming, growsHere, describeSuggestion } from "../../lib/suggest";
 import { CROP_MAP } from "../../data/crops";
 import { TrayPicker, SeedTimeline, SeedlingTray } from "../nursery/NurseryVisuals";
@@ -60,6 +60,9 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
     [browse, setBrowse] = useState(!initial.crop),
     [companion, setCompanion] = useState(""),
     [error, setError] = useState("");
+  // The message sits above the buttons at the end of a long form: bring it into view, or Save looks dead.
+  const errorRef = useRef(null);
+  useEffect(() => { if (error && errorRef.current?.scrollIntoView) errorRef.current.scrollIntoView({ block: "center", behavior: "smooth" }); }, [error]);
   const crops = rCR(data.region),
     crop = rCM(data.region).get(form.crop),
     rawZone = data.zones.find((z) => z.id === form.zone),
@@ -174,7 +177,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         harvestDate: pd ? addDaysToLocalKey(pd, variety?.days || crop.days) : "",
         status: pd ? "planted" : "planned",
         growDays: variety?.days || crop.days,
-        steps: crop.steps.map((s) => ({ ...s, done: false })),
+        steps: pd ? stepsAlreadyPlanted(crop.steps) : crop.steps.map((s) => ({ ...s, done: false })),
       };
     if (fromSeed) plot.plannedDate = plantOutDate;
     // A plan with no date waits for its window: a job on Today now, or when its month comes (lib/sowing.js).
@@ -456,7 +459,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         </section>
       )}
       {!fromSeed && (
-        <div className="q-when" role="group" aria-label="Is it in the ground yet?">
+        <div className={`q-when${error && !form.when ? " is-problem" : ""}`} role="group" aria-label="Is it in the ground yet?">
           <span className="q-when-label">Is it in the ground yet?</span>
           <div className="q-seg">
             <button type="button" aria-pressed={form.when === "now"} onClick={() => update({ ...form, when: "now", plantDate: form.plantDate || todayLocalKey() })}>
@@ -497,7 +500,7 @@ export default function PlantingForm({ data, setData, initial = {}, onClose, onS
         </section>
       )}
       {error && (
-        <p role="alert" className="q-warning">
+        <p role="alert" className="q-warning" ref={errorRef}>
           {error}
         </p>
       )}
