@@ -35,7 +35,8 @@ The scripts are CommonJS; `package.json` here says so (the repo itself is ES mod
    `node record_loop.js <id> rehearse`, then `node record_loop.js <id>` and `python3 loops_compose.py <id>`.
    540x960, no caption (the line of text is on the page), tap marker drawn in, and the last half second
    dissolves into the first so the loop restarts without a jump.
-6. **The hero**: `node hero.js h` and `node hero.js v`, then `python3 hero_compose.py h` and `v`.
+6. **The hero**: `node hero.js h` and `node hero.js v` (about 15 minutes each without a graphics card), then
+   `python3 hero_compose.py h` and `v`. `node hero.js h 3` keeps three frames per space to check the framing first.
 7. **The stills**: `node stills.js <shot>` → `out/stills/`, then `python3 stills_web.py` → `out/web/s5-*.webp`.
 8. Copy `out/web/*` to `public/landing/`, run **`python3 check_media.py`** (every file the page names exists,
    is not a stand-in, fits its size budget), then `npm run build`, `npx vite preview --port 4179` and
@@ -43,11 +44,10 @@ The scripts are CommonJS; `package.json` here says so (the repo itself is ES mod
 
 ## Where this stands (14 November 2026)
 
-The page (`public/landing.html`, `public/landing.js`) is rebuilt for the new media and tested with stand-ins.
-No real film, clip or still has been made yet: recording was paused the same day because the app's visuals
-were being changed. `first_minute.js` was rehearsed start to finish against the 14 November app and worked.
-`loops.js`, `hero.js` and the shot list in `stills.js` are drafts that have not been run. To finish: rebuild the
-gardens (`mk.js`), rehearse and correct each script, record, then steps 4 to 8 below.
+Everything on the page was filmed on 14 November against that day's app: the film, the nine clips, the hero loop and
+the nine stills. Gardens: `states/balcony.json`, `backyard.json`, `farm.json` at 26 June 2027, and
+`backyard_may.json` (`AGE_SHIFT=51 node mk.js backyard 2027-05-06`, then rename) for the frosty week. The build clip
+uses a brand-new backyard instead, because a new piece has nowhere to land in the full demo garden.
 
 ## Stand-ins
 

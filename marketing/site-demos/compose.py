@@ -7,13 +7,15 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 ENV = sys.argv[1]; ARGS = sys.argv[2:]
 W, H, FPS = 720, 1280, 30
-SX, SY, SW, SH = 56, 226, 608, 1029          # phone screen rect in the video
+SY, SH = 226, 1029                            # top and height of the phone screen in the video
 BEZ, RAD = 8, 40
-K = SW / 390.0                                # CSS px → video px
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FR = f"{ROOT}/frames/{ENV}"; OUT = f"{ROOT}/out"; SC = f"{OUT}/scenes_{ENV}"
 os.makedirs(SC, exist_ok=True)
 man = json.load(open(f"{FR}/manifest.json")); caps = json.load(open(f"{ROOT}/captions.json"))[ENV]
+VP = json.load(open(f"{FR}/{man['segments'][0]['dir']}/events.json"))["viewport"]   # the phone size the script was filmed at
+SW = min(608, round(SH * VP["width"] / VP["height"])); SX = (W - SW) // 2    # as wide as its shape allows, centred
+K = SW / float(VP["width"])                   # CSS px → video px
 FONT = "/usr/share/fonts/opentype/inter/Inter-%s.otf"
 def font(w, s): return ImageFont.truetype(FONT % w, s)
 MINT = (159, 214, 180); WHITE = (255, 255, 255); AMBER = (246, 185, 59)

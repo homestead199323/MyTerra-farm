@@ -1,7 +1,6 @@
 // node stills.js <name> [scroll] : one still picture of the real app for the homepage → out/stills/<name>.png
 // Phone size 390x844 at 2x. Same frozen clock, demo gardens and mocked forecast as the demo videos.
 const Rec = require('./rec2'); const fs = require('fs');
-// STATUS 2026-11-14: DRAFT shot list for the map-first home, not run yet (recording was paused). Check each still.
 const J = '2027-06-26T08:10:00+01:00';
 const btn = (r, name) => r.p.getByRole('button', { name }).locator('visible=true').first();
 const SHOTS = {
@@ -11,15 +10,15 @@ const SHOTS = {
   'why-jobs': { state: 'states/farm.json', time: J, run: async (r) => { await r.tap(btn(r, /^Today.s jobs/)); await r.jump(1.2); } },
   // (2) living 3D map: the backyard home with its job markers
   'why-map': { state: 'states/backyard.json', time: J, run: async (r) => { await r.settle(3000, 2.0); } },
-  // (3) weather that knows the plan: a frosty May week
-  'why-frost': { state: 'states/backyard_may.json', time: '2027-05-06T09:40:00+01:00', weather: 'frost', run: async (r) => { await r.tap(btn(r, /Open this week's weather/)); await r.jump(1.2); } },
+  // (3) weather that knows the plan: a frosty May week, the job that names the crops to cover
+  'why-frost': { state: 'states/backyard_may.json', time: '2027-05-06T09:40:00+01:00', weather: 'frost', run: async (r) => { await r.tap(btn(r, /jobs? waiting at Veg patch/i)); await r.jump(1.2); } },
   // (4) plants, animals, pantry, money: the farm's pantry
   'why-all': { state: 'states/farm.json', time: J, run: async (r) => { await r.tap(btn(r, 'More')); await r.jump(0.6); await r.tap(r.el(/^Pantry/)); await r.jump(1.2); } },
   // know-how: crops that fit the space, what to sow this month, a crop guide, the assistant
   'kh-fit': { state: 'states/balcony.json', time: J, run: async (r) => { await r.tap(btn(r, 'More')); await r.jump(0.6); await r.tap(r.el(/^Crops/)); await r.jump(0.8); await r.tap(btn(r, '+ Plant a crop')); await r.jump(1.2); } },
   'kh-sow': { state: 'states/balcony.json', time: J, run: async (r) => { await r.tap(btn(r, 'Calendar')); await r.jump(1.2); } },
   'kh-guide': { state: 'states/balcony.json', time: J, run: async (r) => { await r.tap(btn(r, 'More')); await r.jump(0.6); await r.tap(r.el(/^Learn/)); await r.jump(1.0); await r.tap(r.el(/^Tomato/)); await r.jump(1.2); } },
-  'kh-ask': { state: 'states/balcony.json', time: J, run: async (r) => { await r.tap(btn(r, 'Ask the assistant')); await r.jump(1.2); } },
+  'kh-ask': { state: 'states/balcony.json', time: J, run: async (r) => { await r.tap(btn(r, 'Ask the assistant')); await r.settle(1500, 1.0); await r.tap(btn(r, 'How to grow tomatoes')); await r.settle(1500, 1.5); } },
 };
 (async () => {
   const name = process.argv[2]; const s = SHOTS[name]; if (!s) throw new Error('unknown shot ' + name);

@@ -1,9 +1,10 @@
 // node mk.js <env> [today] → states/<env>.json (localStorage dump with the demo garden)
+// AGE_SHIFT=51 node mk.js backyard 2027-05-06 → the same garden seven weeks earlier (keep it as states/backyard_may.json)
 const Rec = require('./rec2'); const seed = require('./seed'); const fs = require('fs');
 (async () => {
   const env = process.argv[2]; const today = process.argv[3] || '2027-06-26'; const time = today + 'T09:30:00+01:00';
   let r = await Rec.open({ out: 'explore/mk', time });
-  const res = await seed(r.p, env, today);
+  const res = await seed(r.p, env, today, +(process.env.AGE_SHIFT || 0));
   console.log(env, 'notes:', JSON.stringify(res.notes)); if (process.argv[4]) console.log(res.plots.join('\n'));
   await r.browser.close();
   const kv = { hfm_data_v7: JSON.stringify(res.data), hfm_first_use: String(new Date(today).getTime() - 2 * 864e5), hfm_feedback_dismissed: 'true', hfm_feedback_done: 'true', hfm_theme: 'light' };

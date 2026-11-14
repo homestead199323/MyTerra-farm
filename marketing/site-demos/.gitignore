@@ -8,3 +8,4 @@ w1/
 w2/
 w3/
 walk*.js
+__pycache__/

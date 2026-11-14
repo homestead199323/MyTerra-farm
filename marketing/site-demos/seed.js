@@ -1,8 +1,11 @@
 // Builds a demo garden with the app's own code (planting planner, yield, pantry, memory),
 // running inside the page so every record has the shape the app itself would write.
 const SPECS = require('./specs');
-async function seed(page, env, today) {
-  const spec = SPECS[env];
+async function seed(page, env, today, ageShift = 0) {
+  let spec = SPECS[env];
+  // An earlier date for the same garden (the frosty May week): everything is that many days younger, and what would
+  // not be in the ground yet has only just gone in. Trees keep their age.
+  if (ageShift) spec = { ...spec, plantings: spec.plantings.map((pl, i) => (pl.ago >= 300 ? pl : { ...pl, ago: Math.max(pl.ago - ageShift, 3 + ((i * 3) % 8)) })) };
   const out = await page.evaluate(async ({ spec, today }) => {
     const [{ CROPS }, reg, pp, fc, ut, inv, mem, st, per, zt, nm] = await Promise.all([
       import('/src/data/crops.js'), import('/src/lib/regional.js'), import('/src/features/quiet/planting-plan.js'), import('/src/lib/farm-calc.js'),

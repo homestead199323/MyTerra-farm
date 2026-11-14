@@ -9,7 +9,7 @@ const Rec = require('./rec2'); const fs = require('fs'); const LOOPS = require('
   if (storage && L.weather) { delete storage.hfm_weather_cache_v1; delete storage.hfm_forecast_cache_v1; }   // a saved forecast would win over the mocked one
   const r = await Rec.open({ out, time: L.time, storage, weather: L.weather || null, rehearse, viewport: { width: 390, height: 694 } });
   const t0 = Date.now();
-  try { await r.ready(L.readyMs || 3500); await L.run(r, r.p); }
+  try { if (L.state) await r.ready(L.readyMs || 3500); await L.run(r, r.p); }   // a clip with no saved garden starts on the setup card
   catch (e) { console.log('LOOP FAIL', id, e.message.slice(0, 500)); try { await r.p.screenshot({ type: 'jpeg', quality: 70, path: `${out}/zz-fail.jpg` }); console.log('BTN', JSON.stringify(await r.buttons()).slice(0, 1800)); } catch (x) {} r.recording = false; await r.save(); process.exit(1); }
   r.recording = false; console.log(id, 'frames', r.n, (r.n / 30).toFixed(1) + 's', 'took', Math.round((Date.now() - t0) / 1000) + 's');
   await r.save();

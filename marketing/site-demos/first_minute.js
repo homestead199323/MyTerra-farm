@@ -3,6 +3,7 @@
 const dlg = (p) => p.locator('[role=dialog]').last();
 module.exports = {
   env: 'first_minute', label: 'Your first minute',
+  viewport: { width: 390, height: 720 },   // tall enough that the first-run pointer card sits beside the balcony, not over it
   takes: [
     { time: '2027-04-17T09:30:00+01:00', storage: null, chapters: [
       { id: 'setup',
@@ -25,7 +26,7 @@ module.exports = {
           await r.tap(dlg(p).getByRole('button', { name: /^Lettuce/ }).first(), { pre: 0.8, post: 1.9 });
           await r.scroll(250, 1.1, { x: 195, y: 380 }); await r.hold(1.9); await r.peek('fit');   // "8 plants · 1 row · ~1.6 kg" and the bed plan
           const later = dlg(p).getByRole('button', { name: 'Plan for later', exact: true });
-          const box = await later.boundingBox(); await r.scroll(Math.round(box.y - 330), 1.2, { x: 195, y: 380 }); await r.hold(0.3);
+          const box = await later.boundingBox(); await r.scroll(Math.round(box.y - 360), 1.2, { x: 195, y: 380 }); await r.hold(0.3);
           await r.tap(later, { pre: 0.6, post: 0.7 });
           await r.tap(dlg(p).getByRole('button', { name: 'Save planting', exact: true }), { pre: 0.6, post: 2.6 });
         } },

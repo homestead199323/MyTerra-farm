@@ -10,7 +10,7 @@ const Rec = require('./rec2'); const fs = require('fs');
     fs.rmSync(out, { recursive: true, force: true });
     const storage = take.storage ? JSON.parse(fs.readFileSync(take.storage)) : null;
     if (storage && take.weather) { delete storage.hfm_weather_cache_v1; delete storage.hfm_forecast_cache_v1; }
-    const r = await Rec.open({ out, time: take.time, storage, weather: take.weather || null, rehearse });
+    const r = await Rec.open({ out, time: take.time, storage, weather: take.weather || null, rehearse, ...(demo.viewport ? { viewport: demo.viewport } : {}) });
     const t0 = Date.now();
     for (const ch of take.chapters) {
       const f0 = r.n; const c0 = Date.now();
