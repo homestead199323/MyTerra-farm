@@ -10,24 +10,24 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-14-website-media-redo-design.md`
 
-## Status — 14 November 2026, 13:00
+## Status — 14 November 2026, 16:00
 
-Recording was stopped by Dervis the same day: he is changing visuals in the app, so no film, clip or still is to be
-made until he says the app is ready. Done so far, on branch `website-media-redo` (not pushed, not on `main`):
+Recording was paused at midday while the app's visuals changed, and resumed at 13:27 on Dervis's word. Branch
+`website-media-redo`, rebased on `9afb008` (main after the desktop cards work).
 
-- [x] Task 1 — app fix (growth panel and its date on phones). Commit `Growth preview on phones…`. Old pantry-icon bug: already fixed.
-- [x] Task 2 — pipeline runs in place; `finger.py`; demo gardens build with the 14 Nov app (states are not in git: run `mk.js`).
-- [~] Task 3 — `first_minute.js` rehearsed start to finish and works (setup → map → lettuce, plan for today → job → "Day done!"). Not filmed.
-- [~] Task 4 — `record_loop.js`, `loops_compose.py` written; `loops.js` is a DRAFT, not rehearsed.
-- [~] Task 5 — `hero.js`, `hero_compose.py` DRAFT, not run.
-- [~] Task 6 — `stills.js` shot list DRAFT, `stills_web.py` written, not run.
-- [x] Task 7 — the page, built and tested with stand-ins (`placeholders.sh`). Old media removed from the branch.
-- [x] Task 8 — `verify_site.js` and `check_media.py`: on the built site every check passes except the FILM-SECONDS
-  token, which `apply_times.py` fills once the film exists.
+- [x] Task 1 — app fix (growth panel and its date on phones). Old pantry-icon bug: already fixed.
+- [x] Task 2 — pipeline runs in place; `finger.py`; demo gardens (`mk.js`; `AGE_SHIFT` for the frosty May week).
+- [x] Task 3 — the film: 35.2 s, four parts, phone filmed at 390 x 720.
+- [x] Task 4 — nine clips, 6.0 to 10.1 s, 261 to 568 kB (MP4).
+- [x] Task 5 — hero loop, 12 s, both shapes.
+- [x] Task 6 — nine stills.
+- [x] Task 7 — the page. Old media removed.
+- [x] Task 8 — `check_media.py`: media ready. `verify_site.js` on the built site: all checks passed
+  (1440, 390 and 320 px, reduced motion). 312 + 3 tests pass.
 - [ ] Task 9 — show, then ship.
 
-Still to do at media time, besides recording: rewrite the `alt` text of the nine stills in `landing.html` to describe
-the new pictures; re-check each clip's line on the page against what the clip shows.
+Changed from the plan: `y-build` is filmed in a brand-new backyard (the demo garden is full); `y-frost` uses a May
+garden with young plants; media in the repo is 17 MB (both copies of every video), at most 8.2 MB for one visitor.
 
 ## Global Constraints
 

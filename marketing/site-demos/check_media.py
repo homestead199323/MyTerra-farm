@@ -14,16 +14,22 @@ def limit(n):
     if n.startswith("hero5-") and not n.endswith(".webp"): return 1600
     if n.endswith(".webp"): return 120
     return None
-total = 0
+total = 0; sizes = {}
 for n in names:
     p = f"{PUB}/landing/{n}"
     if not os.path.exists(p): print("MISSING    ", n); bad += 1; continue
-    kb = os.path.getsize(p) / 1024; total += kb; lim = limit(n)
+    kb = os.path.getsize(p) / 1024; total += kb; sizes[n] = kb; lim = limit(n)
     if stand.get(n) == hashlib.sha256(open(p, "rb").read()).hexdigest(): print("PLACEHOLDER", n); bad += 1
     elif lim and kb > lim: print("TOO BIG    ", n, round(kb), "kB >", lim); bad += 1
 if "FILM-SECONDS" in html: print("TOKEN       FILM-SECONDS still in landing.html (run apply_times.py)"); bad += 1
-if total > 15000: print("TOO BIG     all media", round(total), "kB > 15000"); bad += 1
+# What one visitor can fetch at most: every picture, and for each video one copy (the larger of MP4 and WebM), one hero shape.
+vids = {}
+for n, kb in sizes.items():
+    if n.endswith((".mp4", ".webm")): b = n.rsplit(".", 1)[0]; vids[b] = max(vids.get(b, 0), kb)
+hero = max([v for b, v in vids.items() if b.startswith("hero5-")] or [0])
+visit = sum(kb for n, kb in sizes.items() if n.endswith(".webp")) + sum(v for b, v in vids.items() if not b.startswith("hero5-")) + hero
+if visit > 15000: print("TOO BIG     a visitor who watches everything fetches", round(visit), "kB > 15000"); bad += 1
 unused = sorted(f for f in os.listdir(f"{PUB}/landing") if f not in names)
 if unused: print("not named by the page (delete?):", ", ".join(unused))
-print(len(names), "files,", round(total), "kB.", f"RESULT: {bad} problem(s)" if bad else "RESULT: media ready")
+print(len(names), "files,", round(total), "kB in the repo;", round(visit), "kB at most for one visitor.", f"RESULT: {bad} problem(s)" if bad else "RESULT: media ready")
 sys.exit(1 if bad else 0)
