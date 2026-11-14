@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Overlay, Inp, Sel, Btn, Actions } from "../../components/ui";
-import { rCR, rCM, getRegionalVarieties } from "../../lib/regional";
+import { rCR, rCM } from "../../lib/regional";
+import { getRegionalVarieties } from "../../lib/regional-detail";
 import { uid } from "../../lib/storage";
 import { appendLog, todayLocalKey, addDaysToLocalKey, localDateFromKey } from "../../lib/utils";
 import { expectedYield } from "../../lib/farm-calc";

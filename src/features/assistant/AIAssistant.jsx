@@ -7,8 +7,8 @@ import { rCR } from "../../lib/regional";
 import { farmKnowledgeEngine, buildAISuggestions } from "../../lib/ai";
 import { daysBetweenLocalKeys, todayLocalKey } from "../../lib/utils";
 
-export default function AIAssistant({data, lift }) {
-  const [open, setOpen] = useState(false);
+export default function AIAssistant({data, lift, startOpen }) {
+  const [open, setOpen] = useState(!!startOpen); // startOpen: mounted by the first tap on Ask (App.jsx AssistantHost)
   // On a phone the button slides away while you scroll down a page and comes back when you scroll up, so it never sits on what you are reading.
   const [away, setAway] = useState(false);
   useEffect(() => {

@@ -13,11 +13,11 @@
    Mode on first open: landing-page "Start free" links carry ?signup, so
    new visitors land on "Create account" instead of "Welcome back".
    ═══════════════════════════════════════════ */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Leaf } from "lucide-react";
 import { C, F } from "../../lib/theme";
 import { Btn, Inp } from "../../components/ui";
-import { signUpEmail, signInEmail, sendPasswordReset, updatePassword } from "../../lib/auth";
+import { signUpEmail, signInEmail, sendPasswordReset, updatePassword, warmAuth } from "../../lib/auth";
 import { initialAuthMode, friendlyAuthError } from "../../lib/auth-messages";
 
 const COPY = {
@@ -28,6 +28,7 @@ const COPY = {
 };
 
 export default function AuthScreen({ initialMode, initialNotice, onPasswordUpdated, onTryDemo }) {
+  useEffect(() => { warmAuth(); }, []); // the sign-in library is fetched while the form is being filled in
   const [mode, setMode] = useState(() => initialMode || initialAuthMode(typeof window !== "undefined" ? window.location.search : ""));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sun, Flame, ListChecks, Footprints, ChevronRight, ChevronUp, ArrowRight, Check, Sprout } from "lucide-react";
 import { fetchWeather } from "../../lib/weather";
@@ -6,7 +6,6 @@ import { todayLocalKey } from "../../lib/utils";
 import { Overlay } from "../../components/ui";
 import FarmIcon from "../../components/FarmIcon";
 import GroveScene from "../grove/GroveScene";
-import WeatherWeek from "../grove/WeatherWeek";
 import StarterKit from "./StarterKit";
 import { tasksByZone, taskGlyph } from "../grove/zone-tasks";
 import FarmCheck from "./FarmCheck";
@@ -19,8 +18,11 @@ import { RemindersPrompt } from "../settings/Reminders";
 import { isPlantZone } from "../farm/living/visuals";
 import { dueToday, trackDay, jobsProgress, showDayDone, rowNote } from "./home-model";
 import { cueState, endCues } from "./setup-model";
-import BuildMode from "./BuildMode";
 import "./home-v2.css";
+
+// Opened on demand (the week's weather with its town list, and build mode): fetched in the background after start.
+const WeatherWeek = lazy(() => import("../grove/WeatherWeek"));
+const BuildMode = lazy(() => import("./BuildMode"));
 
 /* The map-first home (spec: docs/superpowers/specs/2026-11-12-map-first-home-design.md).
    The 3D map is the screen; three controls float on it: weather + streak, the jobs chip, and the
@@ -304,11 +306,11 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
       )}
       {panel && wide && !quiet && !busy && jobsList}
 
-      {build && !covered && <BuildMode data={data} setData={setData} engine={engine} wide={wide} onDone={() => setBuild(false)} onDesigner={() => { setBuild(false); setPage("map", { edit: true }); }} />}
+      {build && !covered && <Suspense fallback={null}><BuildMode data={data} setData={setData} engine={engine} wide={wide} onDone={() => setBuild(false)} onDesigner={() => { setBuild(false); setPage("map", { edit: true }); }} /></Suspense>}
 
       {week && !quiet && (
         <Overlay title="This week" onClose={() => setWeek(false)}>
-          <div className="hv2-week"><WeatherWeek data={data} setData={setData} forecast={forecast} forecastState={forecastState} alerts={alerts} onOpenTasks={() => { setWeek(false); setPage("tasks"); }} /></div>
+          <div className="hv2-week"><Suspense fallback={<div className="mt-page-wait" role="status" aria-label="Loading"><span/></div>}><WeatherWeek data={data} setData={setData} forecast={forecast} forecastState={forecastState} alerts={alerts} onOpenTasks={() => { setWeek(false); setPage("tasks"); }} /></Suspense></div>
         </Overlay>
       )}
 

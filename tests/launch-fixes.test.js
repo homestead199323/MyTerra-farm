@@ -5,7 +5,7 @@ import {daysBetweenLocalKeys,localDayNumber,localDateFromKey,todayLocalKey,markT
 import {parseTaskKey,buildTaskQueue} from '../src/lib/task-queue.js';
 import {applyTaskCompletion,undoTaskCompletion} from '../src/features/quiet/complete-task.js';
 import {applySeedlingStage} from '../src/lib/seedling-stage.js';
-import {getRegionalVarieties} from '../src/lib/regional.js';
+import {getRegionalVarieties} from '../src/lib/regional-detail.js';
 import {normalizeUnit,migratePantry} from '../src/lib/inventory.js';
 import {CITY_DB} from '../src/data/cities.js';
 import {fixture} from './fixture.js';
@@ -132,7 +132,8 @@ test('Conservative yields: a denser grid never estimates more per square metre t
   }
 });
 test('Conservative yields: a variety never swaps a regional yield for the base one', async () => {
-  const { getRegionalVarieties, getRegionalCrop } = await import('../src/lib/regional.js');
+  const { getRegionalCrop } = await import('../src/lib/regional.js');
+  const { getRegionalVarieties } = await import('../src/lib/regional-detail.js');
   const { CROP_MAP } = await import('../src/data/crops.js');
   const { VARIETIES, VAR_RO } = await import('../src/data/varieties.js');
   // Zucchini has no northern list: the base list is borrowed, scaled to the northern crop yield
@@ -178,7 +179,8 @@ test('Pacific Northwest uses the maritime (Western Europe) guide and keeps dolla
 });
 test('Apple and pear are full crops in every region', async () => {
   const { CROPS, CROP_MAP } = await import('../src/data/crops.js');
-  const { getRegionalCrop, getRegionalVarieties } = await import('../src/lib/regional.js');
+  const { getRegionalCrop } = await import('../src/lib/regional.js');
+  const { getRegionalVarieties } = await import('../src/lib/regional-detail.js');
   const { cropMeasureType } = await import('../src/lib/farm-calc.js');
   const { isTreeCrop, cropFitsZone } = await import('../src/features/quiet/planting-plan.js');
   const { getCropDifficulty } = await import('../src/lib/calendar.js');

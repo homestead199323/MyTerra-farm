@@ -19,6 +19,11 @@ const load = {
   AdminDashboard: () => import("../features/admin/AdminDashboard"),
   SettingsPanel: () => import("../features/settings/SettingsPanel"),
   AuthScreen: () => import("../features/auth/AuthScreen"),
+  AIAssistant: () => import("../features/assistant/AIAssistant"),
+  // not screens, but opened from the map and fetched the same way (their lazy() lives next to where they are used)
+  ZoneCard: () => import("../features/grove/GroveZoneCard"),
+  WeatherWeek: () => import("../features/grove/WeatherWeek"),
+  BuildMode: () => import("../features/home/BuildMode"),
 };
 
 export const PAGES = {
@@ -36,17 +41,19 @@ export const PAGES = {
   AdminDashboard: lazy(load.AdminDashboard),
   SettingsPanel: lazy(load.SettingsPanel),
   AuthScreen: lazy(load.AuthScreen),
+  AIAssistant: lazy(load.AIAssistant),
 };
 
 /* Screens a person reaches first come first; the owner-only and sign-in screens are not warmed. */
-const WARM = ["Farm", "TaskQueue", "PlanScreen", "Manuals", "ProgressScreen", "Pantry", "Livestock", "Financials", "InsightsScreen", "SettingsPanel"];
+const WARM = ["ZoneCard", "Farm", "TaskQueue", "AIAssistant", "PlanScreen", "WeatherWeek", "BuildMode", "Manuals", "ProgressScreen", "Pantry", "Livestock", "Financials", "InsightsScreen", "SettingsPanel"];
 let warmed = false;
 /** Fetch the other screens one at a time while the device is idle. Safe to call more than once. */
 export function warmPages() {
   if (warmed || typeof window === "undefined") return;
   warmed = true;
   if (navigator.connection && navigator.connection.saveData) return; // the person asked the browser to save data
-  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 400));
+  // With a deadline: the map animates all the time, and on a slow phone a bare idle callback may never come.
+  const idle = window.requestIdleCallback ? (f) => window.requestIdleCallback(f, { timeout: 1200 }) : (f) => setTimeout(f, 400);
   const queue = WARM.slice();
   const next = () => {
     const name = queue.shift();

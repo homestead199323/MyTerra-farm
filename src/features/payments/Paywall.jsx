@@ -20,7 +20,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Lock, MessageCircle, Sparkles, X } from "lucide-react";
 import { C, F } from "../../lib/theme";
-import { supabase } from "../../lib/db";
+import { getClient } from "../../lib/db";
 import { toast } from "../../lib/toast";
 import { SUPPORT_EMAIL } from "../../lib/auth-messages";
 
@@ -97,7 +97,7 @@ export async function openPaddleCheckout(planId) {
   try {
     const Paddle = await loadPaddle();
     if (!Paddle) return false;
-    const { data } = await supabase.auth.getUser();
+    const { data } = await (await getClient()).auth.getUser();
     const user = data && data.user;
     if (!user) {
       toast("Couldn't open checkout", { detail: "Sign in again, then choose a plan." });

@@ -13,7 +13,8 @@ import { buildTaskQueue } from "./task-queue";
 import { formatMoneyShort } from "./money";
 import { getCropDifficulty } from "./calendar";
 import { daysBetweenLocalKeys } from "./utils";
-import { rCR, rCM, getRegionalCalendar, getRegionalVarieties } from "./regional";
+import { rCR, rCM } from "./regional";
+import { getRegionalCalendar, getRegionalVarieties } from "./regional-detail";
 
 // The preservation method a question is about: its exact name, else the method sharing the most
 // distinctive words with the question ("pickle" -> Vinegar Pickling, "pressure canning" -> Pressure Canning).

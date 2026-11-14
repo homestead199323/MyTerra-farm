@@ -22,7 +22,7 @@
    This module does NOT run migrations — App.jsx owns that. pull* return
    raw cloud data and the caller migrates before dispatching.
    ═══════════════════════════════════════════ */
-import { supabase, isSupabaseConfigured } from "./db";
+import { getClient, isSupabaseConfigured } from "./db";
 import { getSession } from "./auth";
 import { markUnsynced, clearUnsynced } from "./storage";
 import { retryDelay } from "./unsynced";
@@ -85,7 +85,7 @@ export async function pullFarm() {
 
   let row, error;
   try {
-    ({ data: row, error } = await supabase
+    ({ data: row, error } = await (await getClient())
       .from("farms")
       .select("data, schema_version, updated_at")
       .eq("user_id", session.user.id)
@@ -156,7 +156,7 @@ export async function flushPush() {
   setStatus("syncing");
   let rows, error;
   try {
-    ({ data: rows, error } = await supabase
+    ({ data: rows, error } = await (await getClient())
       .from("farms")
       .upsert(
         { user_id: session.user.id, data: payload, schema_version: SCHEMA_VERSION },

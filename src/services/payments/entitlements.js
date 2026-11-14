@@ -29,7 +29,7 @@
    Pro features that cost money server-side (AI) must ALSO be gated
    server-side when they get a backend. UI gates are UX, not security.
    ═══════════════════════════════════════════ */
-import { supabase, isSupabaseConfigured } from "../../lib/db";
+import { getClient, sessionPossible, isSupabaseConfigured } from "../../lib/db";
 
 // ── Constants ───────────────────────────────────────────────────────
 export const TRIAL_DAYS = 7;
@@ -178,8 +178,9 @@ export function getCachedEntitlement(nowMs) {
  * blip — worst case it degrades to read-only.
  */
 export async function fetchEntitlement() {
-  if (!isSupabaseConfigured) return getCachedEntitlement();
+  if (!isSupabaseConfigured || !sessionPossible()) return getCachedEntitlement(); // nobody signed in: no row to read
   try {
+    const supabase = await getClient();
     const { data: userData } = await supabase.auth.getUser();
     const user = userData && userData.user;
     if (!user) return getCachedEntitlement();

@@ -25,7 +25,8 @@ function JumpBar({ k }) {
   }, [k]);
   return <div ref={ref} className="lr-jump" role="navigation" aria-label="Jump to a section" hidden />;
 }
-import { rCR, getRegionalCalendar } from "../../lib/regional";
+import { rCR } from "../../lib/regional";
+import { getRegionalCalendar } from "../../lib/regional-detail";
 import { parseSowMonths, parseHarvestMonths } from "../../lib/calendar";
 import { COMP } from "../../data/companions";
 import { LDB } from "../../data/livestock";

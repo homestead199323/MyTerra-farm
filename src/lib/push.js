@@ -15,7 +15,7 @@
    (iOS 16.4+), so the UI says so instead of offering a switch that fails.
    ═══════════════════════════════════════════ */
 
-import { supabase, isSupabaseConfigured } from "./db";
+import { getClient, isSupabaseConfigured } from "./db";
 import { buildDigests } from "./digest";
 import { loadPushPrefs, savePushPrefs } from "./storage";
 
@@ -65,7 +65,7 @@ function bytesToB64u(buf) {
 }
 
 async function publicKey() {
-  const { data, error } = await supabase.functions.invoke(FN, { body: { action: "public-key" } });
+  const { data, error } = await (await getClient()).functions.invoke(FN, { body: { action: "public-key" } });
   if (error || !data || !data.publicKey) throw new Error("Couldn't reach the reminder service. Check your connection and try again.");
   return data.publicKey;
 }
@@ -73,7 +73,7 @@ async function publicKey() {
 async function saveSubscription(sub, hour) {
   const j = sub.toJSON();
   const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
-  const { error } = await supabase.rpc("save_push_subscription", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_tz: tz, p_hour: hour });
+  const { error } = await (await getClient()).rpc("save_push_subscription", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_tz: tz, p_hour: hour });
   if (error) throw new Error(/not signed in/i.test(error.message) ? "Sign in to turn on reminders." : "Couldn't save reminders on this device. Try again.");
 }
 
@@ -109,7 +109,7 @@ export async function disablePush() {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
-      await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+      await (await getClient()).from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
       await sub.unsubscribe();
     }
   } finally {
@@ -120,7 +120,7 @@ export async function disablePush() {
 
 /** Server sends "it works" to every device of this account. */
 export async function sendTestPush() {
-  const { data, error } = await supabase.functions.invoke(FN, { body: { action: "test" } });
+  const { data, error } = await (await getClient()).functions.invoke(FN, { body: { action: "test" } });
   if (error || !data || !data.ok) throw new Error("The test didn't go through. Turn reminders off and on again, then retry.");
   return data;
 }
@@ -132,6 +132,7 @@ export async function syncDigests(data, forecast) {
   const days = buildDigests(data, forecast);
   const json = JSON.stringify(days);
   if (json === lastSent) return true;
+  const supabase = await getClient();
   const { data: s } = await supabase.auth.getSession();
   const uid = s && s.session && s.session.user && s.session.user.id;
   if (!uid) return false;

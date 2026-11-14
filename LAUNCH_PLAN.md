@@ -1098,3 +1098,36 @@
   **Open:** entry script is still 1.16 MB (data tables, planting form, Supabase, React); first balcony planting
   in November offers only garlic as "plant now" (correct, but a thin first run); desktop Pantry / Money /
   Animals are sparse when empty; Insights empty states are paragraphs.
+
+- [x] **Lighter startup script (2026-11-14, owner: "lighten up the start up script!").** Measured from the
+  build's source map, then everything the map does not need to start moved behind `import()`.
+  Startup JavaScript (the entry script plus what it imports statically): **1,157 → 709 kB (352 → 220 kB
+  gzip)**; it was 1,530 kB two days ago. What left the startup:
+  - **Sign-in library (Supabase), ~190 kB.** `lib/db.js` is now a small loader; the client is in
+    `lib/db-client.js` and callers use `await getClient()`. A visit with no session on the device and no auth
+    link in the address (the demo: most first visits) starts without it. It is fetched when a session is
+    stored, when the address carries an auth redirect (`lib/auth-url.js`, tested), or when the sign-in screen
+    opens. The auth listener attaches the moment the client exists, before the call that fetched it continues.
+  - **Assistant + preserving guide, ~62 kB.** Mounted by the first tap on Ask (which also opens it).
+  - **Area card with the crop card, planting form and seedling screens, ~70 kB.** `GroveZoneCard` is lazy.
+  - **Variety lists + livestock calendars, ~64 kB.** `getRegionalVarieties` / `getRegionalCalendar` moved as a
+    pair, code unchanged, to `lib/regional-detail.js`; livestock overrides to `data/regional-livestock.js`.
+  - **Week's weather with the town list, build mode, ~28 kB.**
+  The entry file itself is 315 kB; React (185 kB) and the crop tables (147 kB) are separate files loaded
+  alongside it, so a returning visitor keeps them cached across deploys (`vite.config.js` code splitting).
+  Background warm-up starts 3.5 s after start, area card first, and no longer waits for an idle moment that an
+  animating map may never give (the warm-up shipped on 13 Nov could starve on a slow phone). The service
+  worker registers 8 s after load, so its offline download (every screen and picture) no longer competes with
+  the map on a first visit. A test walks the static imports from `src/main.jsx` and fails if any of the heavy
+  modules is imported by the startup script again.
+  **Verified:** 301 + 3 tests, ESLint, build. Built app (no cloud): setup → planting → every page; area card,
+  crop card, Ask (opens on the first tap, closes, reopens), week, build mode — no console errors, no failed
+  requests. Built with the live Supabase address and public key: a fresh visit opens the demo with no sign-in
+  library fetched and no Supabase request; the sign-in screen fetches it and a wrong password gets the normal
+  message from the server; a stale stored session falls back cleanly; an expired email link shows its notice.
+  **NOT verified:** a real signed-in session (opening a saved farm, saving to the cloud), Google sign-in and a
+  real password-reset link were not run — there is no test account. The change there is mechanical
+  (`supabase.x` → `(await getClient()).x`), but it is the part to check by hand after deploy.
+  **Left in the startup on purpose:** the regional crop overrides (80 kB, 4 regions in one table). Loading
+  them on demand means every screen could briefly show Western Europe dates to a Mediterranean or US grower
+  if one path is missed; about 18 kB gzip was not worth that risk.

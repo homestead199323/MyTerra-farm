@@ -3,7 +3,8 @@ import PlantingControls from "./PlantingControls";
 import { Actions } from "../../components/ui";
 import { planPlanting, plantingInput } from "./planting-plan";
 import { axisOf } from "./farm-model";
-import { rCM, getRegionalVarieties } from "../../lib/regional";
+import { rCM } from "../../lib/regional";
+import { getRegionalVarieties } from "../../lib/regional-detail";
 import { expectedYield } from "../../lib/farm-calc";
 
 /**

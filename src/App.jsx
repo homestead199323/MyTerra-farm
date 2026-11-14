@@ -26,7 +26,21 @@ import { CROP_MAP } from "./data/crops";
 // migrateMemory last: it reads the pantry log that migratePantry normalises.
 const migrateProfile = (d) => migrateMemory(migratePantry(migratePlanned(migratePerennials(migrateProfileBase(d), CROP_MAP, todayLocalKey()), todayLocalKey())), todayLocalKey());
 // Same chain as the local/cloud load paths, for a backup file's raw object.
-const { Pantry, Financials, Manuals, Livestock, MapScreen, CropsScreen, TaskQueue, PlanScreen, ProgressScreen, InsightsScreen, FeedbackSurvey, AdminDashboard, SettingsPanel, AuthScreen } = PAGES;
+const { Pantry, Financials, Manuals, Livestock, MapScreen, CropsScreen, TaskQueue, PlanScreen, ProgressScreen, InsightsScreen, FeedbackSurvey, AdminDashboard, SettingsPanel, AuthScreen, AIAssistant } = PAGES;
+
+/* The assistant (with its knowledge of every crop, animal and preserving method) is fetched the first time
+   Ask is tapped — and warmed in the background before that — instead of riding in the startup script.
+   The tap that mounts it also opens it. */
+function AssistantHost({ data }) {
+  const [wanted, setWanted] = useState(false);
+  useEffect(() => {
+    const want = () => setWanted(true);
+    window.addEventListener("mt-assistant", want);
+    return () => window.removeEventListener("mt-assistant", want);
+  }, []);
+  if (!wanted) return null;
+  return <Suspense fallback={null}><AIAssistant data={data} startOpen/></Suspense>;
+}
 // While a screen's file arrives (a moment, the first time only): the page keeps its place instead of jumping.
 const PageWait = () => <div className="mt-page-wait" role="status" aria-label="Loading"><span/></div>;
 const migrateBackup = (d) => migrateYardLine(migrateProfile(migrateCompletions(migrateGamify(migratePlotSchema(migrateZones({...DEF, ...d, log: d.log||[], costs: d.costs||{items:[]}}))))));
@@ -34,7 +48,6 @@ import HomeV2 from "./features/home/HomeV2";
 import GameDock from "./features/home/GameDock";
 import SetupV2 from "./features/home/SetupV2";
 import { PAGES, warmPages } from "./app/pages";
-import AIAssistant from "./features/assistant/AIAssistant";
 import { isHomeV2 } from "./lib/home-v2";
 import { FeedbackPrompt } from "./features/feedback/FeedbackPrompt";
 import { BadgeCelebration } from "./components/BadgeCelebration";
@@ -352,7 +365,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   const isMobile = viewW < 768;
   // Map-first game home (spec 2026-11-12): the only home since 13 Nov 2026, on phone and desktop.
   useEffect(() => { isHomeV2(); }, []); // drops the old per-device switch
-  useEffect(() => { const t = setTimeout(warmPages, 6000); return () => clearTimeout(t); }, []); // after the map is up
+  useEffect(() => { const t = setTimeout(warmPages, 3500); return () => clearTimeout(t); }, []); // after the map is up
   useEffect(() => { document.body.classList.add("mt-home-v2"); return () => document.body.classList.remove("mt-home-v2"); }, []);
 
   // Flush pending save on tab close / navigate away
@@ -613,7 +626,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
       {showFeedbackPrompt && <FeedbackPrompt onOpen={() => { setShowFeedbackPrompt(false); setPage("feedback"); }} onDismiss={() => { setShowFeedbackPrompt(false); try { markFeedbackDismissed(); } catch(e) { console.warn("Could not save feedback dismissal state:", e); } }}/>}
       <BadgeCelebration queue={badgeQueue} onDismiss={dismissBadge}/>
       {!showOnboarding && (aiAllowed
-        ? <AIAssistant data={data} setData={setData} lift={page === "home"}/>
+        ? <AssistantHost data={data}/>
         : <LockedAssistantFab lift={page === "home"} onClick={openUpgrade}/>)}
       <Toaster/>
       <UpgradeSheet open={upgradeOpen} onClose={() => setUpgradeOpen(false)} ent={ent}/>

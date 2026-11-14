@@ -6,7 +6,6 @@ import { resolveEnvironment } from "../../lib/environment";
 import { isPlantZone } from "../farm/living/visuals";
 import { zoneGeometry, growthOf, animalZone, bedRows, layoutPlots } from "../quiet/farm-model";
 import { plantingRows, plantingBounds } from "../quiet/planting-plan";
-import GroveZoneCard from "./GroveZoneCard";
 import ZoneTaskPopup from "./ZoneTaskPopup";
 import { taskGlyph } from "./zone-tasks";
 import { isCoarse } from "./gestures";
@@ -16,6 +15,9 @@ import { srand } from "./sceneMath";
 import { TOY, GROUND_TONES, STAGE_HEX, pathTones } from "./palette";
 import { cameraOf, projectBox } from "./camera";
 const Grove3D = lazy(() => import("./Grove3D"));
+// The card that opens when an area is tapped (with the crop card, planting form and seedling screens behind it)
+// is fetched in the background after start (app/pages.js), not with the startup script.
+const GroveZoneCard = lazy(() => import("./GroveZoneCard"));
 
 const points = (ps) => ps.map((q) => `${q.xM},${q.yM}`).join(" ");
 // Short names (bed numbers) get a compact chip so neighbouring beds' labels don't merge into a bar.
@@ -1256,15 +1258,17 @@ export default function GroveScene({
         />
       )}
       {selectedZone && (
-        <GroveZoneCard
-          zone={selectedZone}
-          data={data}
-          setData={setData}
-          onClose={() => setSelected(null)}
-          onPlantInZone={onPlantInZone}
-          onEditLayout={onEditLayout}
-          onShowCrops={onShowCrops}
-        />
+        <Suspense fallback={null}>
+          <GroveZoneCard
+            zone={selectedZone}
+            data={data}
+            setData={setData}
+            onClose={() => setSelected(null)}
+            onPlantInZone={onPlantInZone}
+            onEditLayout={onEditLayout}
+            onShowCrops={onShowCrops}
+          />
+        </Suspense>
       )}
     </section>
   );

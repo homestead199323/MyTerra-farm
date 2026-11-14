@@ -58,3 +58,49 @@ test('sync: edits the cloud never got are kept when the app opens, unless anothe
 test('sync: a failed upload is retried with a growing pause, capped at a minute', () => {
   assert.deepEqual([0, 1, 2, 3, 4, 9].map(retryDelay), [5000, 10000, 20000, 40000, 60000, 60000]);
 });
+
+import { authInAddress } from '../src/lib/auth-url.js';
+test('auth: an address with a sign-in redirect needs the sign-in library at start; the app\'s own switches do not', () => {
+  assert.equal(authInAddress('#access_token=abc&refresh_token=def&type=signup', ''), true);
+  assert.equal(authInAddress('#type=recovery', ''), true);
+  assert.equal(authInAddress('#error=access_denied&error_description=Email+link+is+invalid', ''), true);
+  assert.equal(authInAddress('', '?code=1234'), true); // PKCE
+  assert.equal(authInAddress('', '?x=1&error_description=nope'), true);
+  // plain visits and the app's own links
+  assert.equal(authInAddress('', ''), false);
+  assert.equal(authInAddress('', '?signin'), false);
+  assert.equal(authInAddress('', '?signup'), false);
+  assert.equal(authInAddress('', '?demo'), false);
+  assert.equal(authInAddress('', '?mode=reset'), false);
+  assert.equal(authInAddress('#pricing', '?utm_source=tiktok&promo_code=x'), false);
+  assert.equal(authInAddress(undefined, undefined), false);
+});
+
+import { readFileSync } from 'node:fs';
+import { posix } from 'node:path';
+test('startup script: the heavy tables and the sign-in library stay out of what the map imports at start', () => {
+  // Walk the static imports from src/main.jsx (dynamic import() and React.lazy are the chunk boundaries).
+  // Paths are from the repo root, where `npm test` runs.
+  const has = (file) => { try { readFileSync('src/' + file); return true; } catch { return false; } };
+  const resolve = (from, spec) => {
+    const base = posix.normalize(posix.join(posix.dirname(from), spec));
+    return [base, base + '.js', base + '.jsx', base + '/index.js'].find((cand) => /\.[a-z]+$/.test(cand) && has(cand)) || null;
+  };
+  const seen = new Set(), queue = ['main.jsx'];
+  while (queue.length) {
+    const file = queue.pop();
+    if (seen.has(file)) continue;
+    seen.add(file);
+    if (!/\.(js|jsx)$/.test(file)) continue;
+    const src = readFileSync('src/' + file, 'utf8');
+    for (const m of src.matchAll(/^\s*(?:import|export)\s[^;]*?from\s*["'](\.[^"']+)["']|^\s*import\s*["'](\.[^"']+)["']/gm)) {
+      const hit = resolve(file, m[1] || m[2]);
+      if (hit) queue.push(hit);
+    }
+  }
+  assert.ok(seen.has('App.jsx') && seen.has('lib/regional.js') && seen.has('data/crops.js') && seen.size > 60, `the walk found the app (${seen.size} files)`);
+  for (const heavy of ['lib/db-client.js', 'data/varieties.js', 'data/preservation.js', 'data/recipes.js', 'data/livestock-calendar.js', 'data/regional-livestock.js', 'data/cities.js', 'lib/ai.js', 'lib/regional-detail.js', 'features/farm/Farm.jsx', 'features/farm/PlotOverlay.jsx', 'features/quiet/PlantingForm.jsx', 'features/nursery/NurseryUI.jsx', 'features/manuals/Manuals.jsx', 'features/grove/Grove3D.jsx']) {
+    assert.ok(has(heavy), `${heavy} exists`);
+    assert.equal(seen.has(heavy), false, `${heavy} is imported by the startup script again`);
+  }
+});

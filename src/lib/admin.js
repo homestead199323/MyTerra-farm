@@ -6,7 +6,7 @@
    verifies auth.uid() against the owner UUID server-side and raises
    `forbidden` for anyone else. Editing this file gains nothing.
    ═══════════════════════════════════════════ */
-import { supabase } from "./db";
+import { getClient } from "./db";
 import { getUser } from "./auth";
 
 // Owner account (cosmetic gate only — see note above).
@@ -26,7 +26,7 @@ export async function checkIsAdmin() {
 // Throws with the Supabase error message on failure ("forbidden" for
 // non-owners, network/timeout messages otherwise).
 export async function fetchAdminDashboard() {
-  const { data, error } = await supabase.rpc("admin_dashboard");
+  const { data, error } = await (await getClient()).rpc("admin_dashboard");
   if (error) throw new Error(error.message || "Failed to load dashboard");
   return data;
 }
