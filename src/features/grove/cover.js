@@ -35,6 +35,8 @@ export function coverInset(canvas, cover) {
 export function mergeInset(inset, bars, size) {
   const out = { top: 0, bottom: 0, left: 0, right: 0 }; if (inset) Object.assign(out, inset);
   if (bars && size?.h > 0) { out.top = Math.max(out.top, bars.top / size.h); if (!inset?.bottom) out.bottom = Math.max(out.bottom, bars.bottom / size.h); }
+  // a desktop home's side columns (px): each counts on a side the card does not already hide
+  if (bars && size?.w > 0) { if (bars.left && !inset?.left) out.left = bars.left / size.w; if (bars.right && !inset?.right) out.right = bars.right / size.w; }
   return out.top || out.bottom || out.left || out.right ? out : null;
 }
 

@@ -1912,7 +1912,7 @@ class FarmControls {
     // its length from outside the building; a back garden is framed on the garden and its patio, with the
     // house behind cropped by the top of the frame. `bars` (px) keeps the space clear of the phone's
     // full-screen controls.
-    const bars = this.bars, inset = bars ? { top: bars.top / this.size.h, bottom: bars.bottom / this.size.h, right: (bars.right || 0) / this.size.w } : undefined;
+    const bars = this.bars, inset = bars ? { top: bars.top / this.size.h, bottom: bars.bottom / this.size.h, right: (bars.right || 0) / this.size.w, left: (bars.left || 0) / this.size.w } : undefined;
     const v = homeView({ env: this.env, fW, fH, margin, aspect: this.size.w / this.size.h, fov: CAM.fov, az: CAM.az, el: CAM.el, patio: GARDEN_PATIO, inset });
     const t = new THREE.Vector3(v.target.x, 0, v.target.z), theta = v.theta, phi = v.phi, dist = v.dist;
     this.homeTurn = v.turn; this.homeFrac = v.frac; // share of the viewport height the space's own ground spans at the home view (harness check)
@@ -1927,7 +1927,7 @@ class FarmControls {
 
 /* ---------- component ---------- */
 export default function Grove3D(props) {
-  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, guideZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null, home = false, homeRight = 0, paused = false, rich = false, building = false, cropExtra = null } = props; // props.onEngine (build mode) is read through `latest` // home: the map IS the home screen (always full size, under the app's overlays, no exit)
+  const { data, zones, roads, crops, fW, fH, margin, env, pathTexture, roadWidth, tasksByZone = {}, selectedId, cardZoneId = null, guideZoneId = null, onZoneOpen, onBadge, onShowCrops, weather = null, skyOverride = null, home = false, homeRight = 0, homeLeft = 0, paused = false, rich = false, building = false, cropExtra = null } = props; // props.onEngine (build mode) is read through `latest` // home: the map IS the home screen (always full size, under the app's overlays, no exit)
   const liveSky = data.mapStyle?.liveSky !== "off", lat = typeof data.cityGeo?.lat === "number" ? data.cityGeo.lat : null, lng = typeof data.cityGeo?.lng === "number" ? data.cityGeo.lng : null; // "Live sky" setting; the town's geocode drives the sun
   const host = useRef(null), labels = useRef(null), tipRef = useRef(null), state = useRef(null), latest = useRef(props), fullRef = useRef(false), cropRef = useRef(null);
   const [full, setFull] = useState(() => home || HARNESS?.full === true);
@@ -2163,7 +2163,7 @@ export default function Grove3D(props) {
       interact: (on) => {
         if (!on) { // gesture over: if it ran slow, the map gets lighter from here on
           const next = pace.settle(dpr);
-          if (next !== dpr) { dpr = next; renderer.setPixelRatio(dpr); renderer.shadowMap.needsUpdate = true; saveRatio(dpr); }
+          if (next !== dpr) { dpr = next; renderer.setPixelRatio(dpr); renderer.shadowMap.needsUpdate = true; saveRatio(dpr); window.dispatchEvent(new Event("mt-map-slow")); } // the desktop home's glass panels go solid on a computer that struggles
         }
         st.requestRender();
       },
@@ -2219,6 +2219,14 @@ export default function Grove3D(props) {
         const zone = latest.current.zones.find((z) => String(z.id) === String(zoneId)); if (!zone) return false;
         setFocusId(String(zone.id)); latest.current.focusId = String(zone.id); // a card resizing before the next render reframes this area, not the last one
         controls.focusZone(zone, ms, wide); st.reactToZone?.(zone); st.requestRender(); return true;
+      },
+      // send the camera to one planting and open its crop panel (a row clicked in the desktop table): false when it has no row on the map
+      pickPlot: (plotId) => {
+        const hit = st.plotHits.find((h) => h.userData.plot && h.userData.plot.id === plotId); if (!hit) return false;
+        const row = hit.userData.plot, zone = latest.current.zones.find((z) => z.id === row.zoneId);
+        latest.current.pickRow?.(row);
+        if (zone) { setFocusId(String(zone.id)); latest.current.focusId = String(zone.id); controls.focusZone(zone); }
+        st.requestRender(); return true;
       },
       showAll: () => { setFocusId(""); st.reset(true); },
       onView:(f) => { st.viewSubs.add(f); return () => st.viewSubs.delete(f); },
@@ -2476,7 +2484,7 @@ export default function Grove3D(props) {
     fullRef.current = full; const st = state.current, el = host.current, isPreview = mobile && !full;
     setFocusId("");
     st?.controls?.setCooperative(!full);
-    if (st?.controls) st.controls.bars = full && (mobile || home) ? { top: 92, bottom: 108, right: home ? homeRight : 0 } : null; // the area chip + close button, and the control bar
+    if (st?.controls) st.controls.bars = full && (mobile || home) ? { top: 92, bottom: 108, right: home ? homeRight : 0, left: home ? homeLeft : 0 } : null; // the area chip + close button, and the control bar
     st?.controls?.setEnabled(!isPreview); // the preview tile takes no gestures: one tap opens full screen
     // Open on `click`, not `pointerup`: the browser fires click after pointerup, and if full screen were already
     // open by then the click would land on whatever full-screen control sits under the finger (Exit, the X).
@@ -2493,7 +2501,7 @@ export default function Grove3D(props) {
     window.addEventListener("keydown", key);
     if (st) { st.size(); st.reset(!isPreview); } // back to the tile: the whole farm, no animation
     return () => { window.removeEventListener("keydown", key); if (el) { el.removeEventListener("pointerdown", down); el.removeEventListener("pointercancel", cancel); el.removeEventListener("click", click); } if (full) { document.body.style.overflow = prev === "hidden" ? "" : prev; document.body.classList.remove("g3-full-open"); } };
-  }, [full, mobile, home, homeRight]);
+  }, [full, mobile, home, homeRight, homeLeft]);
   useEffect(() => { if (!hint) return; const t = setTimeout(() => latest.current.dismissHint?.(), 6000); return () => clearTimeout(t); }, [hint]);
   const wholeName = env === "farm" ? "Whole farm" : env === "balcony" ? "Whole balcony" : "Whole garden";
   const areaName = zones.find((zone) => String(zone.id) === focusId)?.name || wholeName;

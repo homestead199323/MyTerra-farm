@@ -48,3 +48,13 @@ test('cover: subscribers hear every change and can leave', () => {
   setCover(null); off(); setCover({ left: 0, top: 1, right: 2, bottom: 3 });
   assert.equal(seen.length, 2); assert.equal(seen[1], null); setCover(null);
 });
+
+test('cover: side columns on a desktop home count when an area is framed', () => {
+  const size = { w: 1440, h: 900 }, bars = { top: 92, bottom: 108, left: 296, right: 384 };
+  const open = mergeInset(null, bars, size);
+  assert.ok(Math.abs(open.left - 296 / 1440) < 1e-9); assert.ok(Math.abs(open.right - 384 / 1440) < 1e-9);
+  const withCard = mergeInset({ top: 0, bottom: 0, left: 0, right: .3 }, bars, size); // an area card already covers the right
+  assert.equal(withCard.right, .3); assert.ok(Math.abs(withCard.left - 296 / 1440) < 1e-9);
+  const phone = mergeInset(null, { top: 92, bottom: 108 }, { w: 390, h: 844 }); // no side bars: exactly as before
+  assert.equal(phone.left, 0); assert.equal(phone.right, 0);
+});

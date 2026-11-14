@@ -395,6 +395,7 @@ export default function GroveScene({
   onStartGuide,
   home = false,
   homeRight = 0,
+  homeLeft = 0,
   paused = false,
   rich = false,
   building = false,
@@ -688,7 +689,7 @@ export default function GroveScene({
           <Suspense fallback={<div style={{ width: "100%", aspectRatio: "1 / 0.64" }} />}>
             <Grove3D data={data} zones={zones} roads={allPaths} crops={cropMap} fW={fW} fH={fH} margin={margin} env={env}
               pathTexture={pathTexture} roadWidth={roadWidth} tasksByZone={guideZoneId == null ? tasksByZone : {}} selectedId={selectedId} cardZoneId={selected} guideZoneId={guideZoneId}
-              onZoneOpen={open} onBadge={setTaskZone} interactive={canInteract && !building} onUnavailable={() => setNoGL(true)} onShowCrops={onShowCrops} weather={weather} skyOverride={skyOverride} home={home} homeRight={homeRight} paused={paused} rich={rich} building={building} onEngine={onEngine} cropExtra={cropExtra} />
+              onZoneOpen={open} onBadge={setTaskZone} interactive={canInteract && !building} onUnavailable={() => setNoGL(true)} onShowCrops={onShowCrops} weather={weather} skyOverride={skyOverride} home={home} homeRight={homeRight} homeLeft={homeLeft} paused={paused} rich={rich} building={building} onEngine={onEngine} cropExtra={cropExtra} />
           </Suspense>
         ) : (
         <svg
