@@ -1131,3 +1131,28 @@
   **Left in the startup on purpose:** the regional crop overrides (80 kB, 4 regions in one table). Loading
   them on demand means every screen could briefly show Western Europe dates to a Mediterranean or US grower
   if one path is missed; about 18 kB gzip was not worth that risk.
+
+- [x] **Website media redo for the map-first app (2026-11-14, owner: "redo the videos/images of the website since we
+  changed the app quite a lot… easy to follow and show initial steps… promote the app to millennials").** Spec
+  `docs/superpowers/specs/2026-11-14-website-media-redo-design.md`, plan beside it, how to record in
+  `marketing/site-demos/README.md`. Owner picked "rebuild the page around the new media", paused recording at midday
+  while the desktop cards went in, then "finish it up" and "go live".
+  **The page.** Hero: same headline, 12 s loop balcony > backyard > farm. "Your first minute": one 35 s film on a
+  balcony in four parts (pick your space, the balcony appears in 3D, plant your first crop, tick your first job).
+  "Pick your space": three tabs, three 6 to 10 s clips each with one line of text (jobs per pot, growth preview,
+  pot crops; build mode, eggs, frost; farm check, milk to Money, orchard). Why MyTerra and Know-how keep their
+  text with nine new stills. "How it works" is gone (the film replaces it); `#demo`, `#how`, `#tour` still land on
+  a section. One pause state for every film and clip; reduced motion and data saver get pictures and a play
+  button and fetch no video.
+  **App fix in the same push.** Phones: the growth-preview legend sat behind the Next-job card and the preview
+  date under the top capsules (`home-v2.css`).
+  **Verified:** 312 + 3 tests, build. `check_media.py`: media ready (17 MB in the repo, was 23; at most 8.2 MB for
+  one visitor). `verify_site.js` on the built site, on the branch preview and on www.myterra.farm: all checks
+  passed at 1440, 390 and 320 px and with reduced motion. Live: deployment `dpl_2xio6JMQBxGPk4AK6zBm7GoHpGsv`
+  READY, HTML and `landing.js` byte-identical to the repo, all 46 `/landing/` files byte-identical, old files 404,
+  CSP / HSTS / X-Frame-Options present, the fix's CSS rule is in the live stylesheet.
+  **NOT verified:** a real iPhone in Safari, Firefox, Low Power Mode. The third Why card's wording ("what to pick
+  first", "holds back tender sowing", "watering comes off your list") dates from 12 Nov and was not re-tested.
+  **Open (app):** on phones the "N jobs completed" note sits on the Next-job card for a moment; a first crop saved
+  as "Already sown" leaves day one with "Nothing due"; a piece dropped in build mode into a full garden lands on
+  top of what is there.
