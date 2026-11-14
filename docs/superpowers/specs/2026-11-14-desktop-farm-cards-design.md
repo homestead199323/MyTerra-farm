@@ -50,8 +50,8 @@ home is exactly as today.
   the Edit button are hidden, and return when it closes (CSS `:has`).
 - The map frames the farm in the space between the two columns: the home view gets a left inset
   as well as the existing right one, and a focused area is framed clear of both.
-- Heights: the column shows as many of the chosen cards as fit above the map buttons
-  (4 at ≥ 860 px tall, 3 below that).
+- Heights: all chosen cards always show; under 800 px tall they use a tighter layout so four
+  still fit above the map buttons (a card the user chose is never hidden).
 
 ## The cards
 

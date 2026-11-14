@@ -1,0 +1,127 @@
+/* The desktop home: farm cards down the left, a tabbed table on the right, all in frosted glass.
+   Spec: docs/superpowers/specs/2026-11-14-desktop-farm-cards-design.md
+   `body.mt-desk` is set by HomeV2 on a wide, tall screen; `mt-solid` when this computer's map runs slow. */
+
+/* ── the glass ── */
+body.mt-desk{--dk-pct:58%;--dk-pct2:74%;--dk-blur:blur(22px) saturate(1.5);--dk-shadow:0 10px 30px rgba(16,24,18,.24),inset 0 1px 0 rgba(255,255,255,.4)}
+body.mt-desk.mt-solid{--dk-pct:93%;--dk-pct2:95%;--dk-blur:none}
+@media(prefers-reduced-transparency:reduce){body.mt-desk{--dk-pct:93%;--dk-pct2:95%;--dk-blur:none}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){body.mt-desk{--dk-pct:93%;--dk-pct2:95%;--dk-blur:none}}
+body.mt-desk .hv2,body.mt-desk .hv2-dock{
+  --hv2-glass:color-mix(in srgb,var(--color-card,#fff) var(--dk-pct),transparent);
+  --hv2-edge:color-mix(in srgb,var(--color-card,#fff) 55%,transparent);
+  --hv2-ink2:color-mix(in srgb,var(--color-text,#161b17) 78%,transparent);
+  --hv2-shadow:var(--dk-shadow);
+}
+body.mt-desk .hv2-cap,body.mt-desk .hv2-chip,body.mt-desk .hv2-dock,body.mt-desk .hv2-demo{-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur)}
+body.mt-desk .hv2.is-wide .g3-host.g3-home.g3-home.full .g3-ctl .g3-btn.g3-lbl{border-color:var(--hv2-edge);background:var(--hv2-glass);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur)}
+body.mt-desk .g3-host.g3-home.g3-home.full .g3-crop.is-rich{background:color-mix(in srgb,var(--g3-card) var(--dk-pct2),transparent);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur);box-shadow:var(--dk-shadow)}
+
+/* ── the cards ── */
+.dk-cards{position:fixed;z-index:30;left:calc(12px + env(safe-area-inset-left));top:calc(72px + env(safe-area-inset-top));width:272px;display:flex;flex-direction:column;gap:10px}
+.dk-card{--dk-tone:#128147;position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column;gap:8px;padding:14px 16px;border:1px solid var(--hv2-edge);border-radius:20px;background:var(--hv2-glass);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur);box-shadow:var(--dk-shadow);color:var(--hv2-ink);font:inherit;text-align:left;cursor:pointer;animation:dk-in .5s cubic-bezier(.2,.9,.3,1) both;transition:transform .18s ease,box-shadow .18s ease}
+button.dk-card:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(16,24,18,.3),inset 0 1px 0 rgba(255,255,255,.4)}
+.dk-card:focus-visible,.dk-edit:focus-visible,.dk-done:focus-visible,.dk-x:focus-visible,.dk-opt button:focus-visible,.dk-row:focus-visible,.dk-tabs button:focus-visible{outline:2px solid var(--hv2-green);outline-offset:2px}
+.dk-card.is-harvest{--dk-tone:#b86a12}.dk-card.is-rain,.dk-card.is-cold{--dk-tone:#2563c9}.dk-card.is-picked{--dk-tone:#7a4bc2}.dk-card.is-eggs{--dk-tone:#c2760c}
+.dk-card.is-growing,.dk-card.is-space{--dk-tone:#2f8f4e}.dk-card.is-money{--dk-tone:#0f7340}.dk-card.is-pantry{--dk-tone:#8a5a2b}.dk-card.is-time{--dk-tone:#4f5c55}
+.dk-label{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--hv2-ink2)}
+.dk-label i{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--dk-tone);color:#fff}
+.dk-main{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px}
+.dk-num{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.dk-num>span{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.dk-num b{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.dk-num em{font-style:normal;font-size:15px;font-weight:700;color:var(--hv2-ink2)}
+.dk-num small{font-size:13px;font-weight:600;line-height:1.2;color:var(--hv2-ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk-ring{flex:none}
+.dk-ring circle{fill:none;stroke:color-mix(in srgb,var(--hv2-ink) 14%,transparent);stroke-width:7}
+.dk-ring .dk-ring-on{stroke:var(--dk-tone);stroke-linecap:round;animation:dk-ring .9s cubic-bezier(.2,.9,.3,1) both}
+.dk-bars{flex:none;width:100px;display:flex;align-items:flex-end;gap:4px}
+.dk-bars>span{flex:1;display:grid;grid-template-rows:32px auto;gap:4px;justify-items:stretch}
+.dk-bars i{align-self:end;display:block;border-radius:3px;background:color-mix(in srgb,var(--hv2-ink) 20%,transparent);transform-origin:bottom;animation:dk-grow .6s cubic-bezier(.2,.9,.3,1) both}
+.dk-bars .is-on i{background:var(--dk-tone)}
+.dk-bars em{font-style:normal;font-size:10px;font-weight:650;line-height:1;text-align:center;color:var(--hv2-ink2)}
+.dk-crop{flex:none;display:inline-flex}
+.dk-meter{display:flex;gap:2px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--hv2-ink) 14%,transparent);overflow:hidden}
+.dk-meter i{display:block;height:100%;border-radius:3px;background:var(--dk-tone);animation:dk-wide .7s cubic-bezier(.2,.9,.3,1) both;transform-origin:left}
+.dk-card.is-harvest .dk-meter i{background:#d9a514}
+.dk-meter.is-split{background:none}
+.dk-meter.is-split i{flex:1 0 0}
+.dk-meter i.is-s1,.dk-meter i.is-s2,.dk-stage.is-s0 i,.dk-stage.is-s1 i,.dk-stage.is-s2 i{background:#a9d68b}
+.dk-meter i.is-s3,.dk-stage.is-s3 i{background:#2f8f4e}
+.dk-meter i.is-s4,.dk-stage.is-s4 i{background:#d9a514}
+.dk-meter i.is-s5,.dk-stage.is-s5 i{background:#f2c230}
+
+/* editing: dashed cards with a remove button, a free slot, and the picker beside the column */
+.dk-card.is-edit{border:2px dashed var(--hv2-green);padding:13px 15px;cursor:grab;animation:none}
+.dk-card.is-drag{opacity:.55}
+.dk-x{position:absolute;right:-9px;top:-9px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:14px;background:var(--hv2-ink);color:var(--color-card,#fff);cursor:pointer;box-shadow:0 3px 8px rgba(16,24,18,.3)}
+.dk-slot{box-sizing:border-box;height:84px;display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed rgba(255,255,255,.9);border-radius:20px;background:rgba(16,24,18,.3);color:#fff;font-size:14px;font-weight:700}
+.dk-edit,.dk-done{align-self:flex-start;height:40px;display:inline-flex;align-items:center;gap:8px;padding:0 16px 0 12px;border:1px solid var(--hv2-edge);border-radius:20px;background:var(--hv2-glass);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur);box-shadow:var(--dk-shadow);color:var(--hv2-ink);font:700 13.5px/1 Inter,-apple-system,sans-serif;cursor:pointer}
+.dk-done{border-color:transparent;background:var(--hv2-green);color:var(--hv2-on-green);-webkit-backdrop-filter:none;backdrop-filter:none}
+.dk-edit-row{display:flex;align-items:center;gap:12px}
+.dk-edit-row em{font-style:normal;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(16,24,18,.7)}
+.dk-picker{position:fixed;z-index:31;left:calc(300px + env(safe-area-inset-left));top:calc(72px + env(safe-area-inset-top));width:330px;max-height:calc(100% - 184px);overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding:12px 10px;border:1px solid var(--hv2-edge);border-radius:24px;background:color-mix(in srgb,var(--color-card,#fff) var(--dk-pct2),transparent);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur);box-shadow:var(--dk-shadow);color:var(--hv2-ink);animation:hv2-pop .22s ease both}
+.dk-picker header{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 2px 10px}
+.dk-picker h2{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.dk-picker header b{font-size:13px;font-weight:700;color:var(--hv2-ink2)}
+.dk-picker h3{margin:10px 0 4px;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--hv2-ink2)}
+.dk-picker ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.dk-picker p{margin:0;padding:18px 0 10px;text-align:center;font-size:14px;font-weight:600;color:var(--hv2-ink2)}
+.dk-opt{--dk-tone:#128147;display:flex;align-items:center;gap:12px;min-height:56px;padding:4px 4px 4px 10px;border-radius:16px}
+.dk-opt.is-harvest{--dk-tone:#b86a12}.dk-opt.is-rain,.dk-opt.is-cold{--dk-tone:#2563c9}.dk-opt.is-picked{--dk-tone:#7a4bc2}.dk-opt.is-eggs{--dk-tone:#c2760c}
+.dk-opt.is-growing,.dk-opt.is-space{--dk-tone:#2f8f4e}.dk-opt.is-money{--dk-tone:#0f7340}.dk-opt.is-pantry{--dk-tone:#8a5a2b}.dk-opt.is-time{--dk-tone:#4f5c55}
+.dk-opt>i{width:34px;height:34px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;background:var(--dk-tone);color:#fff}
+.dk-opt>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dk-opt strong{font-size:14.5px;font-weight:700;line-height:1.15}
+.dk-opt small{font-size:12.5px;font-weight:600;line-height:1.15;color:var(--hv2-ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk-opt button{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:22px;background:var(--hv2-green);color:var(--hv2-on-green);cursor:pointer}
+.dk-opt button:disabled{background:color-mix(in srgb,var(--hv2-ink) 10%,transparent);color:var(--hv2-ink2);cursor:default}
+/* a crop's own panel opens where the cards are: they step aside until it closes */
+.hv2:has(.g3-crop.is-rich) .dk-cards,.hv2:has(.g3-crop.is-rich) .dk-picker{display:none}
+
+/* ── the tabbed panel ── */
+.hv2-panel.is-docked.dk-panel{width:364px;background:var(--hv2-glass);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur);box-shadow:var(--dk-shadow)}
+.dk-tabs{flex:none;display:flex;align-items:center;gap:4px;padding:8px 6px 6px 8px}
+.dk-tabs>div{flex:1;min-width:0;display:flex;gap:4px;padding:4px;border-radius:18px;background:color-mix(in srgb,var(--hv2-ink) 9%,transparent)}
+.dk-tabs>div button{flex:1;min-width:0;height:40px;display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:14px;background:transparent;color:var(--hv2-ink2);font:700 13.5px/1 Inter,-apple-system,sans-serif;cursor:pointer;transition:none}
+.dk-tabs>div button b{font-size:12px;font-weight:700;opacity:.8}
+.dk-tabs>div button[aria-selected=true]{background:var(--hv2-ink);color:var(--color-card,#fff)}
+.dk-jobs-head{flex:none;display:flex;align-items:center;gap:10px;min-height:48px;padding:0 10px 4px 14px}
+.dk-jobs-head>b{font-size:15px;font-weight:700}
+.dk-jobs-head .hv2-bar{flex:1;width:auto}
+.dk-panel .hv2-row{border-top-color:color-mix(in srgb,var(--hv2-ink) 10%,transparent)}
+.dk-cols,.dk-row{display:grid;grid-template-columns:minmax(0,1fr) 98px 50px;gap:8px;align-items:center}
+.dk-cols{flex:none;padding:2px 18px 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--hv2-ink2)}
+.dk-cols span:last-child,.dk-row>b{text-align:right}
+.hv2-panel-list.dk-list{padding:0 8px;display:flex;flex-direction:column;gap:2px}
+.dk-row{width:100%;box-sizing:border-box;min-height:52px;padding:5px 10px;border:0;border-radius:14px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:background .14s ease}
+.dk-row.is-animal{grid-template-columns:minmax(0,1fr) 50px}
+.dk-row:hover{background:color-mix(in srgb,var(--hv2-ink) 7%,transparent)}
+.dk-row.is-on{background:color-mix(in srgb,var(--hv2-green) 18%,transparent)}
+.dk-row-main{min-width:0;display:flex;align-items:center;gap:10px}
+.dk-art{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center}
+.dk-row .hv2-row-text small{display:flex;align-items:center;gap:4px}
+.dk-row.is-on .hv2-row-text small{color:var(--hv2-ink);font-weight:700}
+.dk-row>b{font-size:14.5px;font-weight:800;white-space:nowrap}
+.dk-row>b.is-ready{color:#8a5a00}
+[data-theme=dark] .dk-row>b.is-ready{color:#f2c230}
+@media(prefers-color-scheme:dark){html:not([data-theme=light]) .dk-row>b.is-ready{color:#f2c230}}
+.dk-stage{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap}
+.dk-stage i{width:9px;height:9px;flex:none;border-radius:5px}
+
+/* shorter laptop screens: four cards still fit above the map's buttons */
+@media(max-height:800px){
+  .dk-cards{gap:8px}
+  .dk-card{gap:5px;padding:10px 14px}
+  .dk-card.is-edit{padding:9px 13px}
+  .dk-main{min-height:46px}
+  .dk-num b{font-size:28px}
+  .dk-slot{height:60px}
+}
+/* the growth preview's slider needs the lower left on a shorter screen: the cards step aside while it is open */
+@media(max-height:860px){.hv2:has(.g3-time) .dk-cards,.hv2:has(.g3-time) .dk-picker{display:none}}
+@keyframes dk-in{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes dk-grow{from{transform:scaleY(0)}to{transform:none}}
+@keyframes dk-wide{from{transform:scaleX(0)}to{transform:none}}
+@keyframes dk-ring{from{stroke-dasharray:0 132}}
+@media(prefers-reduced-motion:reduce){.dk-card,.dk-bars i,.dk-meter i,.dk-ring .dk-ring-on,.dk-picker{animation:none!important}button.dk-card:hover{transform:none}}

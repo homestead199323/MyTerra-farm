@@ -161,13 +161,18 @@ export function suggestedIds(ctx) {
 }
 
 /** The cards on screen: the user's own list once they have edited it (cleaned), else the suggestion. */
-export function shownIds(data, ctx) {
+export function shownCards(data, ctx) {
   const stored = data && data.deskCards;
-  if (!Array.isArray(stored)) return suggestedIds(ctx);
+  if (!Array.isArray(stored)) return suggestedIds(ctx).map((id) => cardValue(id, ctx));
   const out = [];
-  stored.forEach((id) => { if (CARD_IDS.includes(id) && !out.includes(id) && cardValue(id, ctx).available) out.push(id); });
-  return out.slice(0, MAX_CARDS);
+  stored.forEach((id) => {
+    if (out.length >= MAX_CARDS || !CARD_IDS.includes(id) || out.some((c) => c.id === id)) return;
+    const c = cardValue(id, ctx);
+    if (c.available) out.push(c);
+  });
+  return out;
 }
+export const shownIds = (data, ctx) => shownCards(data, ctx).map((c) => c.id);
 
 export const addCard = (ids, id) => (!CARD_IDS.includes(id) || ids.includes(id) || ids.length >= MAX_CARDS ? ids : [...ids, id]);
 export const removeCard = (ids, id) => ids.filter((x) => x !== id);
@@ -177,6 +182,3 @@ export function moveCard(ids, from, to) {
   out.splice(to, 0, it);
   return out;
 }
-
-/** How many cards fit above the map's own buttons on a screen this tall. */
-export const visibleCount = (height) => (height >= 860 ? 4 : 3);

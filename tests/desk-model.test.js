@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_CARDS, CARD_IDS, cardValue, allCards, suggestedIds, shownIds, addCard, removeCard, moveCard, plantingRows, animalRows, visibleCount } from '../src/features/home/desk-model.js';
+import { MAX_CARDS, CARD_IDS, cardValue, allCards, suggestedIds, shownIds, addCard, removeCard, moveCard, plantingRows, animalRows } from '../src/features/home/desk-model.js';
 import { DEF } from '../src/app/state.js';
 import { CROP_MAP } from '../src/data/crops.js';
 import { fixture } from './fixture.js';
@@ -99,5 +99,4 @@ test('desk cards: add, remove and move never go past four or repeat', () => {
   assert.deepEqual(removeCard(['jobs', 'rain'], 'jobs'), ['rain']);
   assert.deepEqual(moveCard(['a', 'b', 'c'], 0, 2), ['b', 'c', 'a']);
   assert.deepEqual(moveCard(['a', 'b', 'c'], 2, 9), ['a', 'b', 'c']);
-  assert.equal(visibleCount(900), 4); assert.equal(visibleCount(859), 3);
 });

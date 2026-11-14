@@ -18,18 +18,25 @@ import { RemindersPrompt } from "../settings/Reminders";
 import { isPlantZone } from "../farm/living/visuals";
 import { dueToday, trackDay, jobsProgress, showDayDone, rowNote } from "./home-model";
 import { cueState, endCues } from "./setup-model";
+import { useWideStage } from "../../lib/home-v2";
+import { rCM } from "../../lib/regional";
+import { readRatio } from "../grove/quality";
 import "./home-v2.css";
+import "./desk.css";
 
 // Opened on demand (the week's weather with its town list, and build mode): fetched in the background after start.
 const WeatherWeek = lazy(() => import("../grove/WeatherWeek"));
 const BuildMode = lazy(() => import("./BuildMode"));
+// Desktop only (cards down the left, a tabbed table on the right): phones never fetch them.
+const DeskCards = lazy(() => import("./DeskCards"));
+const DeskPanel = lazy(() => import("./DeskPanel"));
 
 /* The map-first home (spec: docs/superpowers/specs/2026-11-12-map-first-home-design.md).
    The 3D map is the screen; three controls float on it: weather + streak, the jobs chip, and the
    dock (GameDock, rendered by App). Area markers and their job popup come from GroveScene. */
 
-const DAY_KEY = "mt_day", DONE_KEY = "mt_day_done", OPEN_KEY = "mt_jobs_open";
-const PANEL_W = 384;
+const DAY_KEY = "mt_day", DONE_KEY = "mt_day_done", OPEN_KEY = "mt_jobs_open", TAB_KEY = "mt_desk_tab";
+const PANEL_W = 384, CARDS_W = 296, DESK_MIN_H = 700;
 const NO_MARKERS = {}; // the docked jobs list on a wide screen: the map keeps its farm clear of it
 function stored(key, json) {
   try {
@@ -131,6 +138,30 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   const [open, setOpen] = useState(() => stored(OPEN_KEY) !== "0"), [modal, setModal] = useState(false), [week, setWeek] = useState(false);
   const [build, setBuild] = useState(false), [engine, setEngine] = useState(null);
   const panel = wide ? open : modal;
+  // Desktop (a wide, tall enough screen): cards down the left, the jobs list becomes a tabbed table.
+  const wideStage = useWideStage();
+  const [tall, setTall] = useState(() => window.innerHeight >= DESK_MIN_H);
+  useEffect(() => {
+    const size = () => setTall(window.innerHeight >= DESK_MIN_H);
+    window.addEventListener("resize", size);
+    return () => window.removeEventListener("resize", size);
+  }, []);
+  const desk = wide && wideStage && tall;
+  const [tab, setTabState] = useState(() => stored(TAB_KEY) || "jobs"), [sel, setSel] = useState(null);
+  const setTab = (next) => { setTabState(next); store(TAB_KEY, next); };
+  // Glass over the live map is only kept where the map runs smoothly: a computer that had to lower the
+  // map's sharpness gets solid panels instead.
+  const [solid, setSolid] = useState(() => readRatio() != null);
+  useEffect(() => {
+    const slow = () => setSolid(true);
+    window.addEventListener("mt-map-slow", slow);
+    return () => window.removeEventListener("mt-map-slow", slow);
+  }, []);
+  useEffect(() => {
+    document.body.classList.toggle("mt-desk", desk); document.body.classList.toggle("mt-solid", desk && solid);
+    return () => { document.body.classList.remove("mt-desk"); document.body.classList.remove("mt-solid"); };
+  }, [desk, solid]);
+  const cropMap = useMemo(() => rCM(data.region), [data.region]);
   // A page opened over the farm: the map waits underneath with nothing floating on it.
   useEffect(() => { if (covered) { setModal(false); setWeek(false); setTaskZone(null); setBuild(false); setCheck(false); setVisit(null); } }, [covered]);
   // The dock's Build button starts build mode here, on the map.
@@ -160,7 +191,7 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
     const next = trackDay(day, today, due.length, ticked);
     if (next !== day) { setDay(next); store(DAY_KEY, JSON.stringify(next)); }
   }, [day, today, due.length, ticked]);
-  const progress = jobsProgress(day && day.day === today ? day : null, due.length);
+  const progress = useMemo(() => jobsProgress(day && day.day === today ? day : null, due.length), [day, today, due.length]);
   // Phones: the next job sits under the map, not only behind the count (review 2026-11-12).
   const upNext = useMemo(() => {
     if (due.length) return { t: due[0], when: "" };
@@ -231,15 +262,32 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
     );
   };
 
-  const jobsList = (
-    <section className={`hv2-panel${wide ? " is-docked" : ""}`} role={wide ? "region" : "dialog"} aria-modal={wide ? undefined : "true"} aria-label="Today's jobs">
-      <header className="hv2-panel-head">
-        <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
-        <h2>Today’s jobs</h2>
-        <b>{progress.done}/{progress.total}</b>
-        {due.length > 0 && <button type="button" className="hv2-walk" onClick={beginCheck}><Footprints size={15} strokeWidth={2.4} />{resumable ? "Resume check" : "Farm check"}</button>}
-        {wide && <button type="button" className="hv2-collapse" aria-label="Hide today's jobs" onClick={() => setPanel(false)}><ChevronUp size={20} /></button>}
-      </header>
+  // A card or a table row clicked on the desktop home: the camera goes to it, or its screen opens.
+  function goTarget(t) {
+    if (!t) return;
+    if (t.type === "tab") { setPanel(true); setTab(t.tab); return; }
+    if (t.type === "page") { setPage(t.page); return; }
+    if (t.type === "week") { setWeek(true); return; }
+    setTaskZone(null);
+    if (t.type === "plot") {
+      setSel({ type: "plot", id: t.plotId });
+      if (engine && !engine.pickPlot(t.plotId) && t.zoneId) engine.focusZone(t.zoneId); // no row on the map: its area
+    } else if (t.type === "zone") {
+      setSel(t.animalId ? { type: "animal", id: t.animalId } : null);
+      if (engine) engine.focusZone(t.zoneId);
+    }
+  }
+  // The row stays marked until the map itself is touched.
+  useEffect(() => {
+    if (!engine || !engine.canvas || !sel) return undefined;
+    const clear = () => setSel(null), el = engine.canvas;
+    el.addEventListener("pointerdown", clear);
+    return () => el.removeEventListener("pointerdown", clear);
+  }, [engine, sel]);
+
+  const walkButton = due.length > 0 && <button type="button" className="hv2-walk" onClick={beginCheck}><Footprints size={15} strokeWidth={2.4} />{resumable ? "Resume check" : "Farm check"}</button>;
+  const jobsBody = (
+    <>
       <div className="hv2-panel-list">
         {due.length === 0
           ? <p className="hv2-none">{fresh ? "Nothing planted yet" : "Nothing due"}</p>
@@ -258,12 +306,26 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
       <footer className="hv2-panel-foot">
         <button type="button" onClick={() => { setModal(false); setPage("tasks"); }}>All tasks <ArrowRight size={15} /></button>
       </footer>
+    </>
+  );
+  const jobsList = (
+    <section className={`hv2-panel${wide ? " is-docked" : ""}`} role={wide ? "region" : "dialog"} aria-modal={wide ? undefined : "true"} aria-label="Today's jobs">
+      <header className="hv2-panel-head">
+        <span className="hv2-ico"><ListChecks size={17} strokeWidth={2.2} /></span>
+        <h2>Today’s jobs</h2>
+        <b>{progress.done}/{progress.total}</b>
+        {walkButton}
+        {wide && <button type="button" className="hv2-collapse" aria-label="Hide today's jobs" onClick={() => setPanel(false)}><ChevronUp size={20} /></button>}
+      </header>
+      {jobsBody}
     </section>
   );
+  const deskCards = desk && (data.zones || []).length > 0; // an empty space has nothing to count yet
+  const cardsShown = deskCards && !(Array.isArray(data.deskCards) && data.deskCards.length === 0); // the user may keep none
 
   return (
     <div className={`hv2${wide ? " is-wide" : ""}${covered ? " is-covered" : ""}${build ? " is-build" : ""}`}>
-      <GroveScene home homeRight={wide && (open || busy) && !build ? PANEL_W : 0} paused={covered} rich={wide} building={build} onEngine={setEngine} cropExtra={cropJobs}
+      <GroveScene home homeRight={wide && (open || busy) && !build ? PANEL_W : 0} homeLeft={cardsShown && !build ? CARDS_W : 0} paused={covered} rich={wide} building={build} onEngine={setEngine} cropExtra={cropJobs}
         guideZoneId={!quiet && !busy && cue && cue.current === "plant" && firstBed ? firstBed.id : null} data={data} setData={setData} weather={weather} tasksByZone={busy ? NO_MARKERS : markers} onOpenTasks={() => setPage("tasks")} taskZoneId={taskZone} onTaskZone={setTaskZone}
         showEditButton={false} showHelperText={false} noBorder onPlantInZone={(zone) => setPage("crops", { zone })} onShowCrops={() => setPage("crops")}
         onEditLayout={() => setPage("map", { edit: true })} onStartGuide={() => setData({ ...data, setupDone: false })} />
@@ -304,7 +366,14 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
         <div className="hv2-scrim" onClick={function (e) { if (e.target === e.currentTarget) setModal(false); }}>{jobsList}</div>,
         document.body,
       )}
-      {panel && wide && !quiet && !busy && jobsList}
+      {panel && wide && !desk && !quiet && !busy && jobsList}
+      {desk && !quiet && !busy && (
+        <Suspense fallback={null}>
+          {deskCards && <DeskCards data={data} setData={setData} tasks={tasks} forecast={forecast} progress={progress} todayKey={today} crops={cropMap} onTarget={goTarget} />}
+          {panel && <DeskPanel data={data} crops={cropMap} todayKey={today} tab={tab} setTab={setTab} sel={sel} jobsLeft={progress.left} onCollapse={() => setPanel(false)} onTarget={goTarget} setPage={setPage}
+            jobsHead={<div className="dk-jobs-head"><b>{progress.done}/{progress.total}</b><Bar done={progress.done} total={progress.total} />{walkButton}</div>} jobsBody={jobsBody} />}
+        </Suspense>
+      )}
 
       {build && !covered && <Suspense fallback={null}><BuildMode data={data} setData={setData} engine={engine} wide={wide} onDone={() => setBuild(false)} onDesigner={() => { setBuild(false); setPage("map", { edit: true }); }} /></Suspense>}
 
