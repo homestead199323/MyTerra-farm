@@ -42,3 +42,8 @@ export function mergeInset(inset, bars, size) {
 
 /** Which form the area card takes: a bottom sheet on phones and narrow windows, a side panel otherwise. */
 export const sheetMode = (width, coarse) => (coarse || width < 760 ? "sheet" : "panel");
+
+/** The area card's outside-click check. A tap on another area of the 3D map opens that area on pointer-up,
+    so by the time its click arrives the card already shows the new area: that tap swapped the card and must
+    not close it. `atDown`: the card's title when the pointer went down (null: none seen), `atClick`: now. */
+export const tapSwappedCard = (atDown, atClick) => atDown != null && atClick !== atDown;

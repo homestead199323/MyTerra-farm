@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { coverInset, mergeInset, sheetMode, setCover, getCover, onCover } from '../src/features/grove/cover.js';
+import { coverInset, mergeInset, sheetMode, setCover, getCover, onCover, tapSwappedCard } from '../src/features/grove/cover.js';
 import { fitView } from '../src/features/grove/home-view.js';
 
 const phone = { left: 0, top: 0, right: 390, bottom: 844 };
@@ -57,4 +57,11 @@ test('cover: side columns on a desktop home count when an area is framed', () =>
   assert.equal(withCard.right, .3); assert.ok(Math.abs(withCard.left - 296 / 1440) < 1e-9);
   const phone = mergeInset(null, { top: 92, bottom: 108 }, { w: 390, h: 844 }); // no side bars: exactly as before
   assert.equal(phone.left, 0); assert.equal(phone.right, 0);
+});
+
+test('area card: a tap that already swapped the card to another area must not close it', () => {
+  // On the 3D map an area opens on pointer-up, before the click event reaches the card's outside-click check.
+  assert.equal(tapSwappedCard('Home', 'Chicken coop'), true);   // the tap opened another area: keep the new card
+  assert.equal(tapSwappedCard('Home', 'Home'), false);          // a tap on empty ground: the usual close applies
+  assert.equal(tapSwappedCard(null, 'Home'), false);            // no pointer-down seen (keyboard): the usual check
 });
