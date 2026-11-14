@@ -68,22 +68,24 @@
     }
   }
 
-  // ── Demo videos: one portrait film per space. Each loads only when its tab is showing and near the
-  //    screen, plays while in view, and marks the chapter it is on. ──
-  var players = Array.prototype.slice.call(document.querySelectorAll(".demo-player"));
-  var demoPaused = reduceMotion || saveData; // one choice for all three: pausing one keeps the others still
+  // ── The film and the clips. Each one loads only when it is near the screen, plays while it is in view
+  //    and stops when it leaves (a hidden tab never intersects). One pause button state for all of them:
+  //    pausing one keeps every other one still, and so do "reduce motion" and data saver. ──
+  var stilled = reduceMotion || saveData;
+  var players = [];
   function setupPlayer(box) {
     var video = box.querySelector("video");
     var toggle = box.querySelector(".demo-toggle");
-    var panel = box.parentNode.parentNode;
-    var chaps = Array.prototype.slice.call(panel.querySelectorAll(".chap"));
+    var isClip = box.classList.contains("loop-player");
+    var scope = isClip ? box : box.parentNode;
+    var chaps = Array.prototype.slice.call(scope.querySelectorAll(".chap"));
     var times = chaps.map(function (c) { return parseFloat(c.getAttribute("data-t")) || 0; });
     var loaded = false, inView = false, current = 0, pendingSeek = null;
     if (!video) return null;
     video.muted = true;
     function sync() {
       box.classList.toggle("paused", video.paused);
-      if (toggle) toggle.setAttribute("aria-label", (video.paused ? "Play the " : "Pause the ") + toggle.getAttribute("data-label") + " demo");
+      if (toggle) toggle.setAttribute("aria-label", (video.paused ? "Play the " : "Pause the ") + (isClip ? "clips" : toggle.getAttribute("data-label")));
     }
     function poster() {
       var src = video.getAttribute("data-poster");
@@ -115,17 +117,15 @@
     video.addEventListener("loadedmetadata", function () { if (pendingSeek != null) { try { video.currentTime = pendingSeek; } catch (e) { /* ignore */ } pendingSeek = null; } });
     video.addEventListener("play", sync);
     video.addEventListener("pause", sync);
-    video.addEventListener("timeupdate", function () {
+    if (chaps.length) video.addEventListener("timeupdate", function () {
       var t = video.currentTime + 0.05, i = 0;
       for (var k = 0; k < times.length; k++) if (t >= times[k]) i = k;
       mark(i);
     });
-    if (toggle) toggle.addEventListener("click", function () {
-      if (video.paused) { demoPaused = false; play(); } else { demoPaused = true; video.pause(); }
-    });
+    if (toggle) toggle.addEventListener("click", function () { setStilled(!video.paused); });
     chaps.forEach(function (c, i) {
       c.addEventListener("click", function () {
-        demoPaused = false; load(); seek(times[i]); mark(i);
+        setStilled(false); load(); seek(times[i]); mark(i);
         // on a phone the list sits under the film: bring the film back on screen, where it plays
         var r = box.getBoundingClientRect(), h = window.innerHeight || document.documentElement.clientHeight;
         var seen = (Math.min(r.bottom, h) - Math.max(r.top, 0)) / (r.height || 1);
@@ -134,35 +134,39 @@
     });
     sync();
     if (hasIO) {
-      // a hidden tab never intersects, so only the demo on screen is fetched and played
-      // the still picture a little ahead of time, the film itself only when it is about to be seen
+      // the still picture a little ahead of time, the video itself only when it is about to be seen
+      // (a clip further along a swipe row is clipped by the row, so it never "nears" on its own: its neighbour brings its picture)
       new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) { if (entry.isIntersecting) poster(); });
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          poster();
+          var row = isClip && box.closest ? box.closest(".loops") : null;
+          if (row) Array.prototype.forEach.call(row.querySelectorAll("video[data-poster]"), function (v) { if (!v.getAttribute("poster")) v.setAttribute("poster", v.getAttribute("data-poster")); });
+        });
       }, { rootMargin: "700px 0px" }).observe(box);
       new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) { if (entry.isIntersecting) load(); });
+        entries.forEach(function (entry) { if (entry.isIntersecting && !stilled) load(); });
       }, { rootMargin: "200px 0px" }).observe(box);
       new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
           inView = entry.isIntersecting;
-          if (inView) { if (!demoPaused && video.paused) play(); }
+          if (inView) { if (!stilled && video.paused) play(); }
           else if (!video.paused) video.pause();
         });
-      }, { threshold: 0.45 }).observe(box);
+      }, { threshold: isClip ? 0.6 : 0.45 }).observe(box);
     } else { poster(); }
     return {
       box: box,
-      restart: function () { demoPaused = false; load(); seek(0); mark(0); play(); },
+      follow: function () { if (stilled) { if (!video.paused) video.pause(); } else if (inView || !hasIO) play(); },
+      restart: function () { setStilled(false); load(); seek(0); mark(0); play(); },
       stop: function () { if (!video.paused) video.pause(); }
     };
   }
-  var demos = players.map(setupPlayer).filter(Boolean);
-  function activeDemo() {
-    for (var i = 0; i < demos.length; i++) if (demos[i].box.offsetParent !== null) return demos[i];
-    return demos[0] || null;
-  }
+  function setStilled(v) { stilled = v; players.forEach(function (pl) { pl.follow(); }); }
+  players = Array.prototype.slice.call(document.querySelectorAll(".demo-player, .loop-player")).map(setupPlayer).filter(Boolean);
+  var film = players.filter(function (pl) { return pl.box.classList.contains("demo-player"); })[0] || null;
   var demoBtn = document.getElementById("demoBtn");
-  if (demoBtn) demoBtn.addEventListener("click", function () { var d = activeDemo(); if (d) d.restart(); });
+  if (demoBtn) demoBtn.addEventListener("click", function () { if (film) film.restart(); });
 
   // ── In-page links: smooth scroll, close the menu ──
   document.querySelectorAll('a[href^="#"]').forEach(function (link) {
@@ -174,7 +178,7 @@
       event.preventDefault();
       setMenu(false);
       if (href === "#top") window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-      else (href === "#demo" && target.querySelector(".tabs") || target).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      else (href === "#first" && target.querySelector(".demo-grid") || href === "#spaces" && target.querySelector(".tabs") || target).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
       if (history.replaceState) history.replaceState(null, "", href === "#top" ? location.pathname : href);
     });
   });
@@ -189,8 +193,8 @@
       var panel = document.getElementById(t.getAttribute("aria-controls"));
       if (panel) panel.hidden = !on;
     });
-    // the demo that just went out of sight stops; the new one starts through its own observer
-    demos.forEach(function (d) { if (d.box.offsetParent === null) d.stop(); });
+    // the clips that just went out of sight stop; the new ones start through their own observers
+    players.forEach(function (pl) { if (pl.box.offsetParent === null) pl.stop(); });
     if (focus) tab.focus();
   }
   tabs.forEach(function (tab, i) {

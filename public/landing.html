@@ -21,7 +21,7 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="MyTerra's 3D farm map with the line Everyone can be a farmer">
-    <meta property="og:video" content="https://www.myterra.farm/landing/demo-balcony.mp4">
+    <meta property="og:video" content="https://www.myterra.farm/landing/first-minute.mp4">
     <meta property="og:video:type" content="video/mp4">
     <meta property="og:video:width" content="720">
     <meta property="og:video:height" content="1280">
@@ -43,9 +43,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="preload" as="image" href="/landing/hero4-h.webp" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
-    <link rel="preload" as="image" href="/landing/hero4-v.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
-    <noscript><style>.demo-player{background-image:url(/landing/demo-balcony-poster.webp)}.demo-player[data-demo="backyard"]{background-image:url(/landing/demo-backyard-poster.webp)}.demo-player[data-demo="farm"]{background-image:url(/landing/demo-farm-poster.webp)}.demo-toggle{display:none}.panel[hidden]{display:block;margin-top:56px}</style></noscript>
+    <link rel="preload" as="image" href="/landing/hero5-h.webp" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
+    <link rel="preload" as="image" href="/landing/hero5-v.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
+    <noscript><style>.demo-player{background-image:url(/landing/first-minute-poster.webp)}.demo-toggle,.loop-toggle{display:none}.panel[hidden]{display:block;margin-top:56px}</style></noscript>
 
     <style>
         /* ═══ TOKENS — matched to the app (Inter, MyTerra green, the amber of the in-app job buttons) ═══ */
@@ -127,7 +127,7 @@
 
         /* ═══ HERO — real 3D map footage from the app, behind the headline ═══ */
         .hero { position: relative; min-height: 100svh; min-height: min(100svh, 960px); color: #fff; background: var(--forest); overflow: hidden; display: flex; align-items: center; isolation: isolate; }
-        .hero-media { position: absolute; inset: 0; z-index: -2; background: var(--forest) url(/landing/hero4-h.webp) 60% 50% / cover no-repeat; }
+        .hero-media { position: absolute; inset: 0; z-index: -2; background: var(--forest) url(/landing/hero5-h.webp) 60% 50% / cover no-repeat; }
         .hero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 50%; opacity: 0; transition: opacity 1s ease; }
         .hero-media video.on { opacity: 1; }
         .hero-shade { position: absolute; inset: 0; z-index: -1; background:
@@ -205,6 +205,20 @@
         .chap[aria-current="true"] .n { background: var(--amber); color: var(--amber-ink); }
         .chap[aria-current="true"] b { color: #fff; }
         .chap[aria-current="true"] small { color: rgba(255,255,255,.82); }
+
+        /* ═══ SPACES: three short clips per space ═══ */
+        .demo-2 { background: linear-gradient(180deg, var(--forest-2) 0%, var(--forest) 100%); padding-top: 72px; }
+        .demo-2::before { display: none; }
+        .loops { display: grid; grid-template-columns: repeat(3, minmax(0, 264px)); gap: 44px; justify-content: center; }
+        .loop { text-align: center; }
+        .loop-player { position: relative; aspect-ratio: 9 / 16; margin: 8px; border-radius: 32px; overflow: hidden; background: #0a2a1c center / cover no-repeat; box-shadow: 0 0 0 7px #0d1210, 0 0 0 8px rgba(255,255,255,.12), 0 34px 70px rgba(0,0,0,.45); }
+        .loop-player video { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .loop-toggle { width: 44px; height: 44px; right: 10px; bottom: 10px; }
+        .loop-toggle svg { width: 17px; height: 17px; }
+        .loop figcaption { margin-top: 26px; }
+        .loop figcaption b { display: block; font-size: 18.5px; letter-spacing: -0.02em; line-height: 1.3; color: #fff; }
+        .loop figcaption span { display: block; margin-top: 6px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,.72); }
+        .loops-cta { margin-top: 44px; text-align: center; }
 
         /* ═══ HOW IT WORKS ═══ */
         .steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
@@ -349,6 +363,7 @@
             .hero-grid { grid-template-columns: 1fr; }
             .hero-stage { display: none; }
             .demo-grid { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+            .loops { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
             .demo-player { max-width: min(100%, 372px, calc(78svh * 9 / 16)); margin: 0 auto; }
             .demo-copy { max-width: 520px; margin: 0 auto; width: 100%; }
             .faq-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -357,7 +372,7 @@
         /* portrait screens: the vertical versions of the footage */
         @media (max-aspect-ratio: 4/5) {
             .hero { align-items: flex-end; min-height: 100svh; }
-            .hero-media { background-image: url(/landing/hero4-v.webp); background-position: 50% 30%; }
+            .hero-media { background-image: url(/landing/hero5-v.webp); background-position: 50% 30%; }
             .hero-media video { object-position: 50% 30%; }
             .hero-shade { background:
                 linear-gradient(0deg, rgba(4,24,15,.96) 0%, rgba(4,24,15,.86) 34%, rgba(4,24,15,.3) 62%, rgba(4,24,15,.15) 100%),
@@ -393,6 +408,12 @@
             .steps.rail { grid-template-columns: none; }
             .step .shot { height: 250px; }
             .trio.rail { grid-template-columns: none; gap: 14px; }
+            .loops.rail { grid-template-columns: none; gap: 6px; justify-content: flex-start; }
+            .loops.rail > figure { flex-basis: 70%; }
+            .loop figcaption { margin-top: 20px; padding: 0 6px; }
+            .loops-cta { margin-top: 26px; }
+            .loops-cta .btn { width: 100%; }
+            .demo-2 { padding-top: 56px; }
             .trio.rail > figure { flex-basis: 74%; }
             .tabs { width: 100%; }
             .tab { flex: 1; padding: 0 10px; font-size: 14.5px; }
@@ -444,9 +465,9 @@
             MyTerra
         </a>
         <nav class="nav-links" aria-label="Page sections">
-            <a href="#demo">Demos</a>
+            <a href="#first">First minute</a>
+            <a href="#spaces">Your space</a>
             <a href="#why">Why MyTerra</a>
-            <a href="#how">How it works</a>
             <a href="#knowhow">Know-how</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
@@ -460,9 +481,9 @@
         </div>
     </div>
     <nav class="mobile-menu" id="mobileMenu" aria-label="Menu">
-        <a href="#demo">Demos</a>
+        <a href="#first">First minute</a>
+        <a href="#spaces">Your space</a>
         <a href="#why">Why MyTerra</a>
-        <a href="#how">How it works</a>
         <a href="#knowhow">Know-how</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
@@ -474,7 +495,7 @@
 <!-- HERO -->
 <section class="hero" id="top">
     <div class="hero-media" aria-hidden="true">
-        <video id="heroVideo" muted loop playsinline preload="none" data-h="/landing/hero4-h.mp4" data-hw="/landing/hero4-h.webm" data-v="/landing/hero4-v.mp4" data-vw="/landing/hero4-v.webm" tabindex="-1"></video>
+        <video id="heroVideo" muted loop playsinline preload="none" data-h="/landing/hero5-h.mp4" data-hw="/landing/hero5-h.webm" data-v="/landing/hero5-v.mp4" data-vw="/landing/hero5-v.webm" tabindex="-1"></video>
     </div>
     <div class="hero-shade" aria-hidden="true"></div>
     <div class="container hero-grid">
@@ -487,9 +508,9 @@
                     Try it now — no sign-up
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
-                <a href="#demo" class="btn btn-glass" id="demoBtn" data-umami-event="demo-play">
+                <a href="#first" class="btn btn-glass" id="demoBtn" data-umami-event="demo-play">
                     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
-                    Watch the demo
+                    Watch the first minute
                 </a>
             </div>
             <ul class="hero-trust" aria-label="What you get">
@@ -500,102 +521,165 @@
             <p class="hero-demo">Want to keep your farm? <a href="/app?signup" data-umami-event="cta-trial">Start the 7-day Pro trial</a> — no card.</p>
         </div>
         <div class="hero-stage" aria-hidden="true">
-            <div class="phone"><img src="/landing/p4-coop.webp" width="720" height="1558" decoding="async" alt=""></div>
+            <div class="phone"><img src="/landing/s5-hero.webp" width="720" height="1558" decoding="async" alt=""></div>
             <div class="chip chip-1"><span class="ico">🥚</span><span><b>+3 eggs to the pantry</b><small>Chicken coop · just now</small></span></div>
             <div class="chip chip-2 g"><span class="ico">🥬</span><span><b>Lettuce · sow now</b><small>Quick win · food in ~6 weeks</small></span></div>
         </div>
     </div>
-    <p class="hero-note">Real app footage · demo farm</p>
+    <p class="hero-note">Real app footage · demo gardens</p>
 </section>
 
-<!-- DEMOS -->
-<section class="demo dark" id="demo" aria-labelledby="demoTitle">
-    <span id="spaces" aria-hidden="true"></span><span id="tour" aria-hidden="true"></span>
+<!-- FIRST MINUTE -->
+<section class="demo dark" id="first" aria-labelledby="firstTitle">
+    <span id="demo" aria-hidden="true"></span><span id="how" aria-hidden="true"></span><span id="tour" aria-hidden="true"></span>
     <div class="container">
         <div class="sec-head reveal">
-            <span class="eyebrow">See it in action</span>
-            <h2 id="demoTitle">Balcony, backyard or farm. Watch yours.</h2>
-            <p>Three short demos, recorded straight from the app. Pick your space and see what MyTerra does for it.</p>
+            <span class="eyebrow">Your first minute</span>
+            <h2 id="firstTitle">From nothing to your first job in about a minute.</h2>
+            <p>No manual and no account. Pick your space, and MyTerra draws it, helps you plant something and tells you what to do today.</p>
         </div>
-        <div class="tabs reveal" role="tablist" aria-label="Choose a demo">
+        <div class="demo-grid">
+            <div class="demo-player paused" data-demo="first">
+                <video muted loop playsinline preload="none" width="720" height="1280" data-mp4="/landing/first-minute.mp4" data-webm="/landing/first-minute.webm" data-poster="/landing/first-minute-poster.webp" aria-describedby="firstText"></video>
+                <button type="button" class="demo-toggle" aria-label="Play the first-minute film" data-label="first-minute film">
+                    <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                    <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                </button>
+            </div>
+            <div class="demo-copy">
+                <h3>On a balcony</h3>
+                <span class="size">A few pots count · FILM-SECONDS seconds</span>
+                <ol class="chapters" aria-label="Parts of the film">
+                        <li><button type="button" class="chap" data-t="0.00" aria-current="true" data-umami-event="first-chapter" data-umami-event-chapter="setup"><span class="n" aria-hidden="true">1</span><span class="tx"><b>Pick your space</b><small>Three taps. No account, no card.</small></span></button></li>
+                        <li><button type="button" class="chap" data-t="5.00" data-umami-event="first-chapter" data-umami-event-chapter="map"><span class="n" aria-hidden="true">2</span><span class="tx"><b>Your balcony appears in 3D</b><small>Drawn for you, with a pointer to where you start.</small></span></button></li>
+                        <li><button type="button" class="chap" data-t="10.00" data-umami-event="first-chapter" data-umami-event-chapter="plant"><span class="n" aria-hidden="true">3</span><span class="tx"><b>Plant your first crop</b><small>Pick one. It works out how many fit and what you will harvest.</small></span></button></li>
+                        <li><button type="button" class="chap" data-t="23.90" data-umami-event="first-chapter" data-umami-event-chapter="job"><span class="n" aria-hidden="true">4</span><span class="tx"><b>Tick your first job</b><small>It tells you what to do today. Tick it and the day is done.</small></span></button></li>
+                </ol>
+                <a href="/app" class="btn btn-amber" data-umami-event="cta-first">Try it now — no sign-up <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            </div>
+        </div>
+        <p class="sr-only" id="firstText">A FILM-SECONDS-second film of a new visitor using MyTerra on a balcony, recorded from the app, in 4 parts. 1. Pick your space: Three taps. No account, no card. 2. Your balcony appears in 3D: Drawn for you, with a pointer to where you start. 3. Plant your first crop: Pick one. It works out how many fit and what you will harvest. 4. Tick your first job: It tells you what to do today. Tick it and the day is done. Everyone can be a farmer. Try the app at myterra.farm, no sign-up and no card.</p>
+        <p class="note">Real app footage. A demo balcony, simulated dates.</p>
+    </div>
+</section>
+
+<!-- SPACES -->
+<section class="demo demo-2 dark" id="spaces" aria-labelledby="spacesTitle">
+    <div class="container">
+        <div class="sec-head reveal">
+            <span class="eyebrow">Pick your space</span>
+            <h2 id="spacesTitle">Balcony, backyard or farm. Watch yours.</h2>
+            <p>Short clips, recorded straight from the app. Each one shows a single thing MyTerra does for that space.</p>
+        </div>
+        <div class="tabs reveal" role="tablist" aria-label="Choose your space">
             <button type="button" class="tab" role="tab" id="tab-balcony" aria-selected="true" aria-controls="panel-balcony" data-umami-event="env-tab" data-umami-event-env="balcony"><span class="em" aria-hidden="true">🏙️</span>Balcony</button>
             <button type="button" class="tab" role="tab" id="tab-backyard" aria-selected="false" aria-controls="panel-backyard" tabindex="-1" data-umami-event="env-tab" data-umami-event-env="backyard"><span class="em" aria-hidden="true">🏡</span>Backyard</button>
             <button type="button" class="tab" role="tab" id="tab-farm" aria-selected="false" aria-controls="panel-farm" tabindex="-1" data-umami-event="env-tab" data-umami-event-env="farm"><span class="em" aria-hidden="true">🌾</span>Farm</button>
         </div>
         <div class="panel" id="panel-balcony" role="tabpanel" aria-labelledby="tab-balcony">
-            <div class="demo-grid">
-                <div class="demo-player paused" data-demo="balcony">
-                    <video muted loop playsinline preload="none" width="720" height="1280" data-mp4="/landing/demo-balcony.mp4" data-webm="/landing/demo-balcony.webm" data-poster="/landing/demo-balcony-poster.webp" aria-describedby="demoText-balcony"></video>
-                    <button type="button" class="demo-toggle" aria-label="Play the balcony demo" data-label="balcony">
-                        <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
-                        <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
-                    </button>
-                </div>
-                <div class="demo-copy">
-                    <h3>Balcony</h3>
-                    <span class="size">A few pots count · 48 seconds</span>
-                    <ol class="chapters" aria-label="Parts of the balcony demo">
-                        <li><button type="button" class="chap" data-t="0.00" aria-current="true" data-umami-event="demo-chapter" data-umami-event-env="balcony" data-umami-event-chapter="setup"><span class="n" aria-hidden="true">1</span><span class="tx"><b>Tell it about your balcony</b><small>How big, how sunny, how much time. It matches plants that are happy in pots.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="8.93" data-umami-event="demo-chapter" data-umami-event-env="balcony" data-umami-event-chapter="map"><span class="n" aria-hidden="true">2</span><span class="tx"><b>Your balcony in 3D, at real size</b><small>Every pot, trough and railing planter. Tap one to fly in.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="16.03" data-umami-event="demo-chapter" data-umami-event-env="balcony" data-umami-event-chapter="jobs"><span class="n" aria-hidden="true">3</span><span class="tx"><b>Each planter has its own jobs</b><small>Tap a badge and tick it off. Harvests go straight into your pantry.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="23.63" data-umami-event="demo-chapter" data-umami-event-env="balcony" data-umami-event-chapter="diary"><span class="n" aria-hidden="true">4</span><span class="tx"><b>A diary for every plant</b><small>Watered, fed, a problem, a note or a photo. One tap each.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="30.33" data-umami-event="demo-chapter" data-umami-event-env="balcony" data-umami-event-chapter="calendar"><span class="n" aria-hidden="true">5</span><span class="tx"><b>Know what to sow this month</b><small>A calendar filtered for pots, with windowsill crops like cress and pea shoots.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="37.23" data-umami-event="demo-chapter" data-umami-event-env="balcony" data-umami-event-chapter="growth"><span class="n" aria-hidden="true">6</span><span class="tx"><b>See it grow before you plant</b><small>Slide the growth preview weeks ahead and watch every pot fill in and ripen.</small></span></button></li>
-                    </ol>
-                    <a href="/app" class="btn btn-amber" data-umami-event="cta-demo" data-umami-event-env="balcony">Try it on your balcony <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-                </div>
+            <div class="loops rail">
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="b-jobs">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-b-jobs.mp4" data-webm="/landing/loop-b-jobs.webm" data-poster="/landing/loop-b-jobs-poster.webp" aria-label="A balcony on the 3D map: a tap on the railing planters opens their jobs, the strawberries are picked and the plants watered"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Each pot has its own jobs</b><span>Tap the badge, water, pick. Harvests go to your pantry.</span></figcaption>
+                </figure>
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="b-growth">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-b-growth.mp4" data-webm="/landing/loop-b-growth.webm" data-poster="/landing/loop-b-growth-poster.webp" aria-label="The growth preview on a balcony: today, one month ahead and two months ahead, the tomatoes and strawberries growing and ripening"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Watch it grow before you plant</b><span>Slide weeks ahead and see every pot fill in.</span></figcaption>
+                </figure>
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="b-pots">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-b-pots.mp4" data-webm="/landing/loop-b-pots.webm" data-poster="/landing/loop-b-pots-poster.webp" aria-label="Planting on a balcony: the crop list offers pot crops, lettuce is chosen and the app works out how many plants fit"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Only what really grows in pots</b><span>Herbs, salad, tomatoes, peppers. Nothing that needs a field.</span></figcaption>
+                </figure>
             </div>
-            <p class="sr-only" id="demoText-balcony">A 48-second demo of MyTerra for a balcony, recorded from the app, in 6 parts. 1. Tell it about your balcony: How big, how sunny, how much time. It matches plants that are happy in pots. 2. Your balcony in 3D, at real size: Every pot, trough and railing planter. Tap one to fly in. 3. Each planter has its own jobs: Tap a badge and tick it off. Harvests go straight into your pantry. 4. A diary for every plant: Watered, fed, a problem, a note or a photo. One tap each. 5. Know what to sow this month: A calendar filtered for pots, with windowsill crops like cress and pea shoots. 6. See it grow before you plant: Slide the growth preview weeks ahead and watch every pot fill in and ripen. Everyone can be a farmer. Try the app at myterra.farm, no sign-up and no card.</p>
+            <div class="loops-cta"><a href="/app" class="btn btn-amber" data-umami-event="cta-demo" data-umami-event-env="balcony">Try it on your balcony <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
         </div>
         <div class="panel" id="panel-backyard" role="tabpanel" aria-labelledby="tab-backyard" hidden>
-            <div class="demo-grid">
-                <div class="demo-player paused" data-demo="backyard">
-                    <video muted loop playsinline preload="none" width="720" height="1280" data-mp4="/landing/demo-backyard.mp4" data-webm="/landing/demo-backyard.webm" data-poster="/landing/demo-backyard-poster.webp" aria-describedby="demoText-backyard"></video>
-                    <button type="button" class="demo-toggle" aria-label="Play the backyard demo" data-label="backyard">
-                        <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
-                        <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
-                    </button>
-                </div>
-                <div class="demo-copy">
-                    <h3>Backyard</h3>
-                    <span class="size">Beds, greenhouse, a few hens · 51 seconds</span>
-                    <ol class="chapters" aria-label="Parts of the backyard demo">
-                        <li><button type="button" class="chap" data-t="0.00" aria-current="true" data-umami-event="demo-chapter" data-umami-event-env="backyard" data-umami-event-chapter="setup"><span class="n" aria-hidden="true">1</span><span class="tx"><b>Tell it what you already have</b><small>Greenhouse, coop, beds: all on your starter map, with a first bed sized for your time.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="8.87" data-umami-event="demo-chapter" data-umami-event-env="backyard" data-umami-event-chapter="plant"><span class="n" aria-hidden="true">2</span><span class="tx"><b>It works out how many plants fit</b><small>Pick a crop for the bed you tapped. Spacing, rows and the expected harvest are filled in.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="20.07" data-umami-event="demo-chapter" data-umami-event-env="backyard" data-umami-event-chapter="seeds"><span class="n" aria-hidden="true">3</span><span class="tx"><b>Start seeds in trays</b><small>It picks the tray, counts the weeks and tells you when to plant out.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="27.87" data-umami-event="demo-chapter" data-umami-event-env="backyard" data-umami-event-chapter="layout"><span class="n" aria-hidden="true">4</span><span class="tx"><b>Rearrange your garden any time</b><small>Tap to add a bed, a herb garden or a greenhouse, then drag it into place.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="36.57" data-umami-event="demo-chapter" data-umami-event-env="backyard" data-umami-event-chapter="hens"><span class="n" aria-hidden="true">5</span><span class="tx"><b>Collect the eggs with one tap</b><small>Daily care sits on the coop. Eggs are counted into your pantry.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="43.07" data-umami-event="demo-chapter" data-umami-event-env="backyard" data-umami-event-chapter="weather"><span class="n" aria-hidden="true">6</span><span class="tx"><b>Frost, heat and storm warnings</b><small>The 7-day forecast is checked against what you grow, so you hear about it first.</small></span></button></li>
-                    </ol>
-                    <a href="/app" class="btn btn-amber" data-umami-event="cta-demo" data-umami-event-env="backyard">Try it in your garden <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-                </div>
+            <div class="loops rail">
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="y-build">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-y-build.mp4" data-webm="/landing/loop-y-build.webm" data-poster="/landing/loop-y-build-poster.webp" aria-label="Build mode on a backyard map: a raised bed is dragged from the tray onto the lawn"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Lay it out like a game</b><span>Drag a bed, a greenhouse or a coop onto your garden.</span></figcaption>
+                </figure>
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="y-eggs">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-y-eggs.mp4" data-webm="/landing/loop-y-eggs.webm" data-poster="/landing/loop-y-eggs-poster.webp" aria-label="The chicken coop on the map: its jobs open, the eggs are collected and counted into the pantry"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Eggs, counted for you</b><span>Tick the coop’s jobs. The eggs land in your pantry.</span></figcaption>
+                </figure>
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="y-frost">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-y-frost.mp4" data-webm="/landing/loop-y-frost.webm" data-poster="/landing/loop-y-frost-poster.webp" aria-label="A frosty week in the forecast: the app lists the frost nights and the job to protect the crops at risk"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Weather that knows what you grow</b><span>Frost coming? It names the beds to cover.</span></figcaption>
+                </figure>
             </div>
-            <p class="sr-only" id="demoText-backyard">A 51-second demo of MyTerra for a backyard, recorded from the app, in 6 parts. 1. Tell it what you already have: Greenhouse, coop, beds: all on your starter map, with a first bed sized for your time. 2. It works out how many plants fit: Pick a crop for the bed you tapped. Spacing, rows and the expected harvest are filled in. 3. Start seeds in trays: It picks the tray, counts the weeks and tells you when to plant out. 4. Rearrange your garden any time: Tap to add a bed, a herb garden or a greenhouse, then drag it into place. 5. Collect the eggs with one tap: Daily care sits on the coop. Eggs are counted into your pantry. 6. Frost, heat and storm warnings: The 7-day forecast is checked against what you grow, so you hear about it first. Everyone can be a farmer. Try the app at myterra.farm, no sign-up and no card.</p>
+            <div class="loops-cta"><a href="/app" class="btn btn-amber" data-umami-event="cta-demo" data-umami-event-env="backyard">Try it in your garden <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
         </div>
         <div class="panel" id="panel-farm" role="tabpanel" aria-labelledby="tab-farm" hidden>
-            <div class="demo-grid">
-                <div class="demo-player paused" data-demo="farm">
-                    <video muted loop playsinline preload="none" width="720" height="1280" data-mp4="/landing/demo-farm.mp4" data-webm="/landing/demo-farm.webm" data-poster="/landing/demo-farm-poster.webp" aria-describedby="demoText-farm"></video>
-                    <button type="button" class="demo-toggle" aria-label="Play the farm demo" data-label="farm">
-                        <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
-                        <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
-                    </button>
-                </div>
-                <div class="demo-copy">
-                    <h3>Farm</h3>
-                    <span class="size">Orchard, paddocks, hives · 49 seconds</span>
-                    <ol class="chapters" aria-label="Parts of the farm demo">
-                        <li><button type="button" class="chap" data-t="0.00" aria-current="true" data-umami-event="demo-chapter" data-umami-event-env="farm" data-umami-event-chapter="map"><span class="n" aria-hidden="true">1</span><span class="tx"><b>Your whole farm on one map</b><small>Orchard, paddock, hives, greenhouse. Pick an area and fly to it.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="8.40" data-umami-event="demo-chapter" data-umami-event-env="farm" data-umami-event-chapter="milk"><span class="n" aria-hidden="true">2</span><span class="tx"><b>One tap: milk goes to the pantry</b><small>Daily care for 14 kinds of animals. Tick a job and the amount is logged.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="14.70" data-umami-event="demo-chapter" data-umami-event-env="farm" data-umami-event-chapter="orchard"><span class="n" aria-hidden="true">3</span><span class="tx"><b>Fruit trees crop year after year</b><small>Pick the cherries, log the kilos. The trees stay on the map for next season.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="20.50" data-umami-event="demo-chapter" data-umami-event-env="farm" data-umami-event-chapter="animals"><span class="n" aria-hidden="true">4</span><span class="tx"><b>Animals, grouped by where they live</b><small>Each group keeps its feeding, housing and health guide a tap away.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="26.90" data-umami-event="demo-chapter" data-umami-event-env="farm" data-umami-event-chapter="sell"><span class="n" aria-hidden="true">5</span><span class="tx"><b>Sell the surplus, track the money</b><small>Pantry stock, sales and costs in one place.</small></span></button></li>
-                        <li><button type="button" class="chap" data-t="36.30" data-umami-event="demo-chapter" data-umami-event-env="farm" data-umami-event-chapter="walk"><span class="n" aria-hidden="true">6</span><span class="tx"><b>Morning walk: every job in order</b><small>One stop at a time. The map shows where to go next.</small></span></button></li>
-                    </ol>
-                    <a href="/app" class="btn btn-amber" data-umami-event="cta-demo" data-umami-event-env="farm">Try it on your farm <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-                </div>
+            <div class="loops rail">
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="f-check">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-f-check.mp4" data-webm="/landing/loop-f-check.webm" data-poster="/landing/loop-f-check-poster.webp" aria-label="The farm check on a small farm: the map moves from one area to the next as each job is ticked"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>A morning round, one stop at a time</b><span>The farm check walks you from job to job on the map.</span></figcaption>
+                </figure>
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="f-milk">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-f-milk.mp4" data-webm="/landing/loop-f-milk.webm" data-poster="/landing/loop-f-milk-poster.webp" aria-label="Goat milking is ticked, the milk appears in the pantry, a sale is logged and shows under Money"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>From the goat to the ledger</b><span>Milk goes to the pantry. Sell it and Money adds it up.</span></figcaption>
+                </figure>
+                <figure class="loop">
+                    <div class="loop-player paused" data-loop="f-orchard">
+                        <video muted loop playsinline preload="none" width="540" height="960" data-mp4="/landing/loop-f-orchard.mp4" data-webm="/landing/loop-f-orchard.webm" data-poster="/landing/loop-f-orchard-poster.webp" aria-label="The orchard on the map: cherries are picked and logged, the trees stay in place"></video>
+                        <button type="button" class="demo-toggle loop-toggle" aria-label="Play the clips" data-umami-event="loop-toggle">
+                            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+                            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5.2a1.6 1.6 0 0 1 2.4-1.4l10 6.2a1.6 1.6 0 0 1 0 2.8l-10 6.2A1.6 1.6 0 0 1 7 17.6z"/></svg>
+                        </button>
+                    </div>
+                    <figcaption><b>Trees that crop every year</b><span>Pick, log the kilos. The trees stay for next season.</span></figcaption>
+                </figure>
             </div>
-            <p class="sr-only" id="demoText-farm">A 49-second demo of MyTerra for a farm, recorded from the app, in 6 parts. 1. Your whole farm on one map: Orchard, paddock, hives, greenhouse. Pick an area and fly to it. 2. One tap: milk goes to the pantry: Daily care for 14 kinds of animals. Tick a job and the amount is logged. 3. Fruit trees crop year after year: Pick the cherries, log the kilos. The trees stay on the map for next season. 4. Animals, grouped by where they live: Each group keeps its feeding, housing and health guide a tap away. 5. Sell the surplus, track the money: Pantry stock, sales and costs in one place. 6. Morning walk: every job in order: One stop at a time. The map shows where to go next. Everyone can be a farmer. Try the app at myterra.farm, no sign-up and no card.</p>
+            <div class="loops-cta"><a href="/app" class="btn btn-amber" data-umami-event="cta-demo" data-umami-event-env="farm">Try it on your farm <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
         </div>
         <p class="note">Real app footage. Demo gardens, not customer data.</p>
     </div>
@@ -616,7 +700,7 @@
                     <p>Your jobs are written for you every morning: what to water, feed, sow and pick, where it is and how many minutes it takes. Add your own jobs next to them.</p>
                     <p class="usp-vs"><b>Most farm apps</b><span>A record book. You type in every task yourself.</span></p>
                 </div>
-                <div class="usp-shot"><div class="screen"><img src="/landing/why-jobs.webp" width="720" height="997" loading="lazy" decoding="async" alt="Tasks screen of a demo garden: today's harvests of radish, zucchini and parsley, then the daily routine at the chicken coop (feed, water, collect eggs), each with a place and minutes"></div></div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/s5-why-jobs.webp" width="720" height="997" loading="lazy" decoding="async" alt="Tasks screen of a demo garden: today's harvests of radish, zucchini and parsley, then the daily routine at the chicken coop (feed, water, collect eggs), each with a place and minutes"></div></div>
             </article>
             <article class="usp-card reveal">
                 <div class="usp-text">
@@ -624,7 +708,7 @@
                     <p>Your balcony, garden or farm drawn at real size. Plants grow on the map as they grow outside, badges show where a job is waiting, and you can look months ahead before you plant.</p>
                     <p class="usp-vs"><b>Most garden planners</b><span>A flat grid of squares.</span></p>
                 </div>
-                <div class="usp-shot"><div class="screen"><img src="/landing/why-map.webp" width="720" height="997" loading="lazy" decoding="async" alt="Full-screen 3D map of a demo backyard: house, greenhouse, raised beds, herb bed, veg patch, fruit trees and chicken coop, each with a badge counting its waiting jobs"></div></div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/s5-why-map.webp" width="720" height="997" loading="lazy" decoding="async" alt="Full-screen 3D map of a demo backyard: house, greenhouse, raised beds, herb bed, veg patch, fruit trees and chicken coop, each with a badge counting its waiting jobs"></div></div>
             </article>
             <article class="usp-card reveal">
                 <div class="usp-text">
@@ -632,7 +716,7 @@
                     <p>Frost on Saturday? MyTerra tells you which beds to cover and what to pick first, and holds back tender sowing. Rain today? Watering comes off your list.</p>
                     <p class="usp-vs"><b>Most apps</b><span>A forecast. You work out the rest.</span></p>
                 </div>
-                <div class="usp-shot"><div class="screen"><img src="/landing/why-frost.webp" width="720" height="997" loading="lazy" decoding="async" alt="Today screen in a frosty week: frost early Saturday at minus 1 and Sunday at 0 degrees, a job to protect 5 crops in the veg patch and herb bed, and a job to pick basil before the frost"></div></div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/s5-why-frost.webp" width="720" height="997" loading="lazy" decoding="async" alt="Today screen in a frosty week: frost early Saturday at minus 1 and Sunday at 0 degrees, a job to protect 5 crops in the veg patch and herb bed, and a job to pick basil before the frost"></div></div>
             </article>
             <article class="usp-card reveal">
                 <div class="usp-text">
@@ -640,7 +724,7 @@
                     <p>Collect the eggs and they land in your pantry. Sell a dozen and it is logged under Money. Vegetables, fruit trees, hens, goats and bees, all in one place.</p>
                     <p class="usp-vs"><b>Most other apps</b><span>Garden planners skip the animals. Livestock apps skip the garden.</span></p>
                 </div>
-                <div class="usp-shot"><div class="screen"><img src="/landing/why-all.webp" width="720" height="997" loading="lazy" decoding="async" alt="Animals screen of a demo farm: a goat paddock with three goats and a Milk button, a hen house with a laying flock of eight and a Collect Eggs button, and beehives"></div></div>
+                <div class="usp-shot"><div class="screen"><img src="/landing/s5-why-all.webp" width="720" height="997" loading="lazy" decoding="async" alt="Animals screen of a demo farm: a goat paddock with three goats and a Milk button, a hen house with a laying flock of eight and a Collect Eggs button, and beehives"></div></div>
             </article>
         </div>
         <div class="band">
@@ -653,44 +737,6 @@
             <a href="/app" class="btn btn-amber" data-umami-event="cta-why">Try it now — no sign-up <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
             <p>Compared with widely used garden planners and farm record apps, November 2026. Real app screens, demo gardens.</p>
         </div>
-    </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section class="sec" id="how" aria-labelledby="howTitle">
-    <div class="container">
-        <div class="sec-head reveal">
-            <span class="eyebrow">How it works</span>
-            <h2 id="howTitle">From zero to harvest, one small job at a time.</h2>
-            <p>No manuals to read first. MyTerra asks what it needs to know and turns it into a plan you can follow on your phone.</p>
-        </div>
-        <div class="steps rail">
-            <article class="step reveal">
-                <span class="step-num">1</span>
-                <h3>Tell it about your space</h3>
-                <p>Where you grow, how big, how sunny, how much time you have. Plain questions, no jargon.</p>
-                <div class="shot"><div class="phone sm"><img src="/landing/p4-ob-where.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Set-up question: Where will you grow? Balcony or patio, backyard or garden, smallholding or farm, with Backyard selected"></div></div>
-            </article>
-            <article class="step reveal">
-                <span class="step-num">2</span>
-                <h3>Get a plan that fits</h3>
-                <p>Plants matched to your answers, a first bed sized for your time and your space drawn in 3D.</p>
-                <div class="shot"><div class="phone sm"><img src="/landing/p4-ob-map.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Here's your starter map: an 8 by 5 metre garden in 3D with a 2 by 1.2 metre raised bed of spinach and broad bean, rhubarb planned for later"></div></div>
-            </article>
-            <article class="step reveal">
-                <span class="step-num">3</span>
-                <h3>Tap the map. Tick off the jobs.</h3>
-                <p>Badges show what's waiting. One tap logs eggs, milk and harvests straight into your pantry.</p>
-                <div class="shot"><div class="phone sm"><img src="/landing/p4-coop.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Chicken coop pop-up with four jobs: collect eggs, feed, water and clean the housing, the first ticked off with plus three eggs"></div></div>
-            </article>
-            <article class="step reveal">
-                <span class="step-num">4</span>
-                <h3>See it grow before you plant</h3>
-                <p>Slide the growth preview weeks ahead and watch every bed sprout, fill in and ripen.</p>
-                <div class="shot"><div class="phone sm"><img src="/landing/p4-growth.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Growth preview 70 days ahead: the garden map with beds filled in and a legend of growth stages"></div></div>
-            </article>
-        </div>
-        <p class="note">Real app screens. Demo gardens, not customer data.</p>
     </div>
 </section>
 
@@ -712,19 +758,19 @@
         </div>
         <div class="trio rail">
             <figure class="reveal">
-                <div class="phone"><img src="/landing/p4-ob-plants.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Your matched plants: spinach and broad bean to sow now and rhubarb to plan ahead are picked, with blackberry and pea as other options"></div>
-                <figcaption><b>Plants matched to you</b><span>Picked for your space, light and experience. Change them any time.</span></figcaption>
+                <div class="phone"><img src="/landing/s5-kh-fit.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Your matched plants: spinach and broad bean to sow now and rhubarb to plan ahead are picked, with blackberry and pea as other options"></div>
+                <figcaption><b>Crops that fit your space</b><span>A balcony gets pot crops, a garden gets beds. Nothing you cannot grow there.</span></figcaption>
             </figure>
             <figure class="reveal">
-                <div class="phone"><img src="/landing/p4-plan.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Plan screen for a balcony: spinach is good to sow in October, and a season timeline shows when the basil, tomatoes, lettuce and hot peppers will be ready"></div>
+                <div class="phone"><img src="/landing/s5-kh-sow.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Plan screen for a balcony: spinach is good to sow in October, and a season timeline shows when the basil, tomatoes, lettuce and hot peppers will be ready"></div>
                 <figcaption><b>What to sow this month</b><span>Fresh picks for your region, and when each plant is ready.</span></figcaption>
             </figure>
             <figure class="reveal">
-                <div class="phone"><img src="/landing/p4-guide.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Garlic guide: planting calendar, companions, watering and step-by-step instructions"></div>
+                <div class="phone"><img src="/landing/s5-kh-guide.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Garlic guide: planting calendar, companions, watering and step-by-step instructions"></div>
                 <figcaption><b>A guide for every crop</b><span>From soil prep to storage, step by step.</span></figcaption>
             </figure>
             <figure class="reveal">
-                <div class="phone"><img src="/landing/p4-assistant.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Farm assistant answering When should I plant garlic? with a growing guide, working offline"></div>
+                <div class="phone"><img src="/landing/s5-kh-ask.webp" width="720" height="1558" loading="lazy" decoding="async" alt="Farm assistant answering When should I plant garlic? with a growing guide, working offline"></div>
                 <figcaption><b>Ask the farm assistant</b><span>Instant answers, even with no signal.</span></figcaption>
             </figure>
         </div>
@@ -815,7 +861,7 @@
             </details>
             <details>
                 <summary>How does MyTerra decide what I should do?</summary>
-                <p>It combines your answers (space, sun, experience, time) with its crop and animal data, your region's planting calendar, the dates you planted things and your local forecast from Open-Meteo. It's guidance, not a guarantee: soil, weather and pests vary, so use your own judgement for big decisions.</p>
+                <p>It combines your space, its size and your region with its crop and animal data, your region's planting calendar, the dates you planted things and your local forecast from Open-Meteo. It's guidance, not a guarantee: soil, weather and pests vary, so use your own judgement for big decisions.</p>
             </details>
             <details>
                 <summary>Which regions does it cover?</summary>

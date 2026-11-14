@@ -10,6 +10,25 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-14-website-media-redo-design.md`
 
+## Status — 14 November 2026, 13:00
+
+Recording was stopped by Dervis the same day: he is changing visuals in the app, so no film, clip or still is to be
+made until he says the app is ready. Done so far, on branch `website-media-redo` (not pushed, not on `main`):
+
+- [x] Task 1 — app fix (growth panel and its date on phones). Commit `Growth preview on phones…`. Old pantry-icon bug: already fixed.
+- [x] Task 2 — pipeline runs in place; `finger.py`; demo gardens build with the 14 Nov app (states are not in git: run `mk.js`).
+- [~] Task 3 — `first_minute.js` rehearsed start to finish and works (setup → map → lettuce, plan for today → job → "Day done!"). Not filmed.
+- [~] Task 4 — `record_loop.js`, `loops_compose.py` written; `loops.js` is a DRAFT, not rehearsed.
+- [~] Task 5 — `hero.js`, `hero_compose.py` DRAFT, not run.
+- [~] Task 6 — `stills.js` shot list DRAFT, `stills_web.py` written, not run.
+- [x] Task 7 — the page, built and tested with stand-ins (`placeholders.sh`). Old media removed from the branch.
+- [x] Task 8 — `verify_site.js` and `check_media.py`: on the built site every check passes except the FILM-SECONDS
+  token, which `apply_times.py` fills once the film exists.
+- [ ] Task 9 — show, then ship.
+
+Still to do at media time, besides recording: rewrite the `alt` text of the nine stills in `landing.html` to describe
+the new pictures; re-check each clip's line on the page against what the clip shows.
+
 ## Global Constraints
 
 - Only what the live app does, with the numbers the app shows. Demo gardens, never customer data.
