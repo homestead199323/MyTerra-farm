@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { publishDockHeight } from "./dock";
 import { X, Minus, Plus, ArrowRight, Check } from "lucide-react";
 import { ZT_MAP } from "../../data/zones";
 import { applyTaskCompletion } from "../quiet/complete-task";
@@ -129,6 +130,18 @@ export default function ZoneTaskPopup({ zone, tasks, data, setData, onClose, onO
     const key = (e) => e.key === "Escape" && closeRef.current();
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
+  }, []);
+  // Desktop home: the card is docked in the side column with no backdrop (desk.css). The panel under it
+  // needs its height, and a click on the map closes it (the backdrop used to take that click).
+  useEffect(() => {
+    const el = sheet.current, stop = publishDockHeight(el), t0 = performance.now();
+    const outside = (e) => {
+      if (!el || e.timeStamp < t0 + 120 || el.contains(e.target) || !el.parentElement || getComputedStyle(el.parentElement).pointerEvents !== "none") return;
+      if (e.target.closest && e.target.closest("button, a, .g3-pill, .g3-badge, .overlay-sheet")) return;
+      closeRef.current();
+    };
+    document.addEventListener("click", outside);
+    return () => { document.removeEventListener("click", outside); stop(); };
   }, []);
   const finished = list.filter((t) => done[t.key]).length,
     total = list.length,

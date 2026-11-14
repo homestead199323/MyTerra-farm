@@ -159,8 +159,9 @@ export default function HomeV2({ data, setData, setPage, tasks, forecast, foreca
   }, []);
   useEffect(() => {
     document.body.classList.toggle("mt-desk", desk); document.body.classList.toggle("mt-solid", desk && solid);
-    return () => { document.body.classList.remove("mt-desk"); document.body.classList.remove("mt-solid"); };
-  }, [desk, solid]);
+    document.body.classList.toggle("mt-desk-home", desk && !covered); // the map home itself: area cards dock in the side column
+    return () => { document.body.classList.remove("mt-desk"); document.body.classList.remove("mt-solid"); document.body.classList.remove("mt-desk-home"); };
+  }, [desk, solid, covered]);
   const cropMap = useMemo(() => rCM(data.region), [data.region]);
   // A page opened over the farm: the map waits underneath with nothing floating on it.
   useEffect(() => { if (covered) { setModal(false); setWeek(false); setTaskZone(null); setBuild(false); setCheck(false); setVisit(null); } }, [covered]);

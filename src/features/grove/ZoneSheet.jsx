@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { isCoarse } from "./gestures";
 import { setCover, sheetMode } from "./cover";
+import { publishDockHeight } from "./dock";
 import "./zone-sheet.css";
 
 export default function ZoneSheet({ title, subtitle, onClose, children }) {
@@ -31,6 +32,8 @@ export default function ZoneSheet({ title, subtitle, onClose, children }) {
     return function () { el.removeEventListener("transitionend", report); window.removeEventListener("resize", resize); };
   }, [mode, tall]);
   useEffect(function () { return function () { setCover(null); }; }, []);
+  // on the desktop home the card is docked in the side column: the panel below it needs its height
+  useEffect(function () { return publishDockHeight(card.current); }, []);
 
   // focus moves into the card (for screen readers and Escape) and back to where it was on close
   useEffect(function () {

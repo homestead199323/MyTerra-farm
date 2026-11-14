@@ -3,7 +3,7 @@
    `body.mt-desk` is set by HomeV2 on a wide, tall screen; `mt-solid` when this computer's map runs slow. */
 
 /* ── the glass ── */
-body.mt-desk{--dk-pct:58%;--dk-pct2:74%;--dk-blur:blur(22px) saturate(1.5);--dk-shadow:0 10px 30px rgba(16,24,18,.24),inset 0 1px 0 rgba(255,255,255,.4)}
+body.mt-desk{--dk-pct:58%;--dk-pct2:74%;--dk-edge:color-mix(in srgb,var(--color-card,#fff) 55%,transparent);--dk-blur:blur(22px) saturate(1.5);--dk-shadow:0 10px 30px rgba(16,24,18,.24),inset 0 1px 0 rgba(255,255,255,.4)}
 body.mt-desk.mt-solid{--dk-pct:93%;--dk-pct2:95%;--dk-blur:none}
 @media(prefers-reduced-transparency:reduce){body.mt-desk{--dk-pct:93%;--dk-pct2:95%;--dk-blur:none}}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){body.mt-desk{--dk-pct:93%;--dk-pct2:95%;--dk-blur:none}}
@@ -108,6 +108,21 @@ button.dk-card:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(16,2
 @media(prefers-color-scheme:dark){html:not([data-theme=light]) .dk-row>b.is-ready{color:#f2c230}}
 .dk-stage{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap}
 .dk-stage i{width:9px;height:9px;flex:none;border-radius:5px}
+
+/* ── cards opened from the map dock in the same column: no popups on the desktop home ──
+   The area card and an area's jobs take the top of the right column, as wide as the panel and in the same
+   glass; the panel starts under them (--dock-h is their height, published by grove/dock.js). */
+body.mt-desk-home .zs-panel .zs-card,body.mt-desk-home .q-tp{top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:364px;max-width:calc(100vw - 24px);max-height:min(58vh,calc(100dvh - 334px));border:1px solid var(--dk-edge);border-radius:24px;background:color-mix(in srgb,var(--color-card,#fff) var(--dk-pct2),transparent);-webkit-backdrop-filter:var(--dk-blur);backdrop-filter:var(--dk-blur);box-shadow:var(--dk-shadow)}
+body.mt-desk-home .q-tp-backdrop{background:none;pointer-events:none;animation:none;padding:0}
+body.mt-desk-home .q-tp{position:fixed;pointer-events:auto;animation:zs-in .24s cubic-bezier(.3,.9,.3,1) both}
+body.mt-desk-home .q-tp-head{background:none}
+/* the jobs list is collapsed to its chip: the card sits under the chip */
+body.mt-desk-home:has(.hv2-hud .hv2-chip) .zs-panel .zs-card,body.mt-desk-home:has(.hv2-hud .hv2-chip) .q-tp{top:calc(72px + env(safe-area-inset-top))}
+/* one card at a time: an area's jobs go in front of its area card */
+body.mt-desk-home:has(.q-tp-backdrop) .zs-root{display:none}
+.hv2-panel.is-docked.dk-panel{transition:top .22s cubic-bezier(.3,.9,.3,1)}
+body.mt-desk-home:has(.zs-panel,.q-tp-backdrop) .hv2-panel.is-docked.dk-panel{top:calc(22px + env(safe-area-inset-top) + var(--dock-h,0px));max-height:calc(100% - 142px - var(--dock-h,0px))}
+@media(prefers-reduced-motion:reduce){.hv2-panel.is-docked.dk-panel{transition:none}body.mt-desk-home .q-tp{animation:none}}
 
 /* shorter laptop screens: four cards still fit above the map's buttons */
 @media(max-height:800px){
