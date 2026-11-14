@@ -2,7 +2,7 @@
 const Rec = require('./rec2'); const fs = require('fs');
 (async () => {
   const env = process.argv[2]; const onlyTake = +((process.argv.find(a => a.startsWith('take=')) || '').slice(5)) || 0; const rehearse = process.argv.includes('rehearse'); const only = (process.argv.find(a => a.startsWith('only=')) || '').slice(5);
-  const demo = require('./demo_' + env + '.js'); const base = (rehearse ? 'rehearse/' : 'frames/') + env; const manifest = { env, label: demo.label, fps: 30, segments: [] };
+  const demo = require(fs.existsSync(__dirname + '/' + env + '.js') ? './' + env + '.js' : './demo_' + env + '.js'); const base = (rehearse ? 'rehearse/' : 'frames/') + env; const manifest = { env, label: demo.label, fps: 30, segments: [] };
   for (let ti = 0; ti < demo.takes.length; ti++) {
     const take = demo.takes[ti]; const out = `${base}/take${ti + 1}`;
     if (only && !take.chapters.some(c => c.id === only)) continue;

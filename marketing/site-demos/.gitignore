@@ -4,3 +4,7 @@ states/
 out/
 logs/
 *.log
+w1/
+w2/
+w3/
+walk*.js

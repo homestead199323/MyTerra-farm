@@ -1,91 +1,23 @@
 {
- "balcony": {
-  "label": "Balcony",
-  "tagline": "A few pots count",
+ "first_minute": {
+  "label": "Your first minute",
+  "tagline": "From nothing to your first job",
   "chapters": {
    "setup": [
-    "Tell it about your balcony",
-    "How big, how sunny, how much time. It matches plants that are happy in pots."
+    "Pick your space",
+    "Three taps. No account, no card."
    ],
    "map": [
-    "Your balcony in 3D, at real size",
-    "Every pot, trough and railing planter. Tap one to fly in."
-   ],
-   "jobs": [
-    "Each planter has its own jobs",
-    "Tap a badge and tick it off. Harvests go straight into your pantry."
-   ],
-   "diary": [
-    "A diary for every plant",
-    "Watered, fed, a problem, a note or a photo. One tap each."
-   ],
-   "calendar": [
-    "Know what to sow this month",
-    "A calendar filtered for pots, with windowsill crops like cress and pea shoots."
-   ],
-   "growth": [
-    "See it grow before you plant",
-    "Slide the growth preview weeks ahead and watch every pot fill in and ripen."
-   ]
-  }
- },
- "backyard": {
-  "label": "Backyard",
-  "tagline": "Beds, greenhouse, a few hens",
-  "chapters": {
-   "setup": [
-    "Tell it what you already have",
-    "Greenhouse, coop, beds: all on your starter map, with a first bed sized for your time."
+    "Your balcony appears in 3D",
+    "Drawn for you, with a pointer to where you start."
    ],
    "plant": [
-    "It works out how many plants fit",
-    "Pick a crop for the bed you tapped. Spacing, rows and the expected harvest are filled in."
+    "Plant your first crop",
+    "Pick one. It works out how many fit and what you will harvest."
    ],
-   "seeds": [
-    "Start seeds in trays",
-    "It picks the tray, counts the weeks and tells you when to plant out."
-   ],
-   "layout": [
-    "Rearrange your garden any time",
-    "Tap to add a bed, a herb garden or a greenhouse, then drag it into place."
-   ],
-   "hens": [
-    "Collect the eggs with one tap",
-    "Daily care sits on the coop. Eggs are counted into your pantry."
-   ],
-   "weather": [
-    "Frost, heat and storm warnings",
-    "The 7-day forecast is checked against what you grow, so you hear about it first."
-   ]
-  }
- },
- "farm": {
-  "label": "Farm",
-  "tagline": "Orchard, paddocks, hives",
-  "chapters": {
-   "map": [
-    "Your whole farm on one map",
-    "Orchard, paddock, hives, greenhouse. Pick an area and fly to it."
-   ],
-   "milk": [
-    "One tap: milk goes to the pantry",
-    "Daily care for 14 kinds of animals. Tick a job and the amount is logged."
-   ],
-   "orchard": [
-    "Fruit trees crop year after year",
-    "Pick the cherries, log the kilos. The trees stay on the map for next season."
-   ],
-   "animals": [
-    "Animals, grouped by where they live",
-    "Each group keeps its feeding, housing and health guide a tap away."
-   ],
-   "sell": [
-    "Sell the surplus, track the money",
-    "Pantry stock, sales and costs in one place."
-   ],
-   "walk": [
-    "Morning walk: every job in order",
-    "One stop at a time. The map shows where to go next."
+   "job": [
+    "Tick your first job",
+    "It tells you what to do today. Tick it and the day is done."
    ]
   }
  }
