@@ -1156,3 +1156,18 @@
   **Open (app):** on phones the "N jobs completed" note sits on the Next-job card for a moment; a first crop saved
   as "Already sown" leaves day one with "Nothing due"; a piece dropped in build mode into a full garden lands on
   top of what is there.
+
+- [x] **Website FAQ: "Why not just ask a chatbot or watch videos?" (2026-11-17).** Added after "How does MyTerra
+  decide what I should do?". Reason: in the 1,000-persona simulation (project doc
+  `claude/version-test-1000-simulated-2026-11-17.md`; simulated, not real customers) "free options are good
+  enough" was the third most common objection. Nothing else on the page changed.
+- [ ] **Pricing restructure proposed, NOT shipped (2026-11-17, owner: "go ahead… update the website").** Two tiers
+  in one app: Grow $4.99/mo or $39/yr; Homestead $9.99/mo or $79/yr (adds animals, pantry, money and the
+  assistant); Founding Lifetime $129 for the first 100. Reverses the 2026-07-14 "pricing stays as shipped, no
+  yearly" decision. Not shipped because the Paddle checkout is live with three fixed prices and the website must
+  not show a price the checkout does not charge. Blocked on: (1) three new Paddle prices, which only the owner's
+  Paddle account can create; (2) owner confirmation that animals, pantry and money move behind the higher tier
+  in the app (today Basic gets them; no paying subscribers exist, only 4 trial and 2 founder lifetime accounts
+  on 2026-11-17); (3) one release with `Paywall.jsx` price map and monthly/yearly choice, the `paddle-webhook`
+  price map, `entitlements.js` feature gates, terms / refunds / privacy wording, the landing section and its
+  JSON-LD offers. Draft landing section: branch `pricing-two-tiers` (bundle in the Mac project folder).
