@@ -6,10 +6,10 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // basic = "Grow", pro = "Homestead". Monthly and yearly prices share a tier.
 const PRICE_TIER = {
   "pri_01kxdcntw2905t5fky81fy8cp0": "basic",    // Grow $4.99 / month
-  "PENDING_PADDLE_GROW_YEARLY_39": "basic",    // Grow $39 / year
+  "pri_01m7qyfgrm1zmts5k6yw5rh8kw": "basic",    // Grow $39 / year
   "pri_01kxdcqpgjd5z1qrpd6hxgmxr2": "pro",      // Homestead $9.99 / month
-  "PENDING_PADDLE_HOMESTEAD_YEARLY_79": "pro",  // Homestead $79 / year
-  "PENDING_PADDLE_FOUNDING_LIFETIME_129": "lifetime", // Founding Lifetime $129 once
+  "pri_01m7qygka3p9cknmynek8bt09m": "pro",  // Homestead $79 / year
+  "pri_01m7qyhngkt0s94p591kv2cacv": "lifetime", // Founding Lifetime $129 once
   "pri_01kxdcrgmy4jnxycc4h9fa2jsp": "lifetime", // old Lifetime $190: no longer sold, still honoured
 };
 

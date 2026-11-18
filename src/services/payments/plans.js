@@ -21,9 +21,9 @@
 // Paddle price ids. A yearly and a monthly price sit on the same Paddle
 // product, so both map to the same tier in the webhook.
 export const PRICE_IDS = {
-  basic: { month: "pri_01kxdcntw2905t5fky81fy8cp0", year: "PENDING_PADDLE_GROW_YEARLY_39" },
-  pro: { month: "pri_01kxdcqpgjd5z1qrpd6hxgmxr2", year: "PENDING_PADDLE_HOMESTEAD_YEARLY_79" },
-  lifetime: { once: "PENDING_PADDLE_FOUNDING_LIFETIME_129" },
+  basic: { month: "pri_01kxdcntw2905t5fky81fy8cp0", year: "pri_01m7qyfgrm1zmts5k6yw5rh8kw" },
+  pro: { month: "pri_01kxdcqpgjd5z1qrpd6hxgmxr2", year: "pri_01m7qygka3p9cknmynek8bt09m" },
+  lifetime: { once: "pri_01m7qyhngkt0s94p591kv2cacv" },
 };
 
 export const PLANS = [
