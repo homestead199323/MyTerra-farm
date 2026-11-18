@@ -467,11 +467,20 @@ Infra note (ex-corporate Mac): the Xcode platform download was blocked by a `0.0
 - Founder accounts (dervis + elvia) set tier='lifetime' (trials had
   expired; write-block would have locked them).
 
-Pricing (canonical — verified in public/landing.html line 954):
-- 7-day free trial, no card required
-- Basic $4.99/mo
-- Pro $9.99/mo (AI assistant, multi-zone, analytics)
-- Lifetime $190 one-time (early adopter)
+Pricing (canonical since 2026-11-18 — source of truth is
+`src/services/payments/plans.js`; tests check the landing page, the terms
+and the webhook agree with it):
+- 7-day free trial, no card required, everything unlocked
+- Grow (tier `basic`) $4.99/mo or $39/yr
+- Homestead (tier `pro`) $9.99/mo or $79/yr — adds Animals, Pantry, Money,
+  Insights, the assistant
+- Lifetime (tier `lifetime`) $129 one-time, Founding price, first 100
+  purchases (`public.founding_lifetime_sold()`); the old $190 price id is
+  still mapped in the webhook but no longer sold
+- Until 2026-11-18: Basic $4.99/mo, Pro $9.99/mo, Lifetime $190.
+- 2026-11-18: Paddle's dashboard shows account verification "Failed"
+  (website approval for myterra.farm: "Checkout approved"). Real payments
+  are unproven until Paddle verifies the account. See LAUNCH_PLAN.md.
 
 Remaining:
 - [x] Create `src/services/payments/` (8.1).

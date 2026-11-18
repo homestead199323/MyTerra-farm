@@ -3,7 +3,8 @@
 **Source brief:** `docs/LAUNCH_BRIEF.md` (full canonical text — read it before working on any stage).
 **Locked decisions (Dervis, 2026-07-14):**
 - Pricing stays as shipped: Basic $4.99/mo, Pro $9.99/mo, Lifetime $190 (Paddle live). Brief's €6.99/€59.99 pricing is REJECTED.
-- Trial: 7-day Pro trial → paywall. No permanent free plan.
+  **SUPERSEDED 2026-11-18:** Grow $4.99/mo or $39/yr, Homestead $9.99/mo or $79/yr, Founding Lifetime $129 (see the 2026-11-18 entry below).
+- Trial: 7-day free trial with everything unlocked → paywall. No permanent free plan.
 - Staged rollout, one stage per Full-ship cycle. No "implement everything at once."
 
 **Status legend:** `[ ]` not started · `[~]` in progress · `[x]` done
@@ -1161,13 +1162,36 @@
   decide what I should do?". Reason: in the 1,000-persona simulation (project doc
   `claude/version-test-1000-simulated-2026-11-17.md`; simulated, not real customers) "free options are good
   enough" was the third most common objection. Nothing else on the page changed.
-- [ ] **Pricing restructure proposed, NOT shipped (2026-11-17, owner: "go ahead… update the website").** Two tiers
-  in one app: Grow $4.99/mo or $39/yr; Homestead $9.99/mo or $79/yr (adds animals, pantry, money and the
-  assistant); Founding Lifetime $129 for the first 100. Reverses the 2026-07-14 "pricing stays as shipped, no
-  yearly" decision. Not shipped because the Paddle checkout is live with three fixed prices and the website must
-  not show a price the checkout does not charge. Blocked on: (1) three new Paddle prices, which only the owner's
-  Paddle account can create; (2) owner confirmation that animals, pantry and money move behind the higher tier
-  in the app (today Basic gets them; no paying subscribers exist, only 4 trial and 2 founder lifetime accounts
-  on 2026-11-17); (3) one release with `Paywall.jsx` price map and monthly/yearly choice, the `paddle-webhook`
-  price map, `entitlements.js` feature gates, terms / refunds / privacy wording, the landing section and its
-  JSON-LD offers. Draft landing section: branch `pricing-two-tiers` (bundle in the Mac project folder).
+- [x] **Pricing restructure SHIPPED (2026-11-18, commits `8060dcd` + `15a9219`, owner: "push it live").** Two
+  tiers in one app: Grow (tier `basic`) $4.99/mo or $39/yr; Homestead (tier `pro`) $9.99/mo or $79/yr, adds
+  Animals, Pantry, Money, Insights and the assistant; Founding Lifetime $129 for the first 100 purchases.
+  Reverses the 2026-07-14 "pricing stays as shipped, no yearly" decision. Basis: the 1,000-persona simulation
+  (simulated, not real customers). No paying subscribers existed (4 trial, 2 founder lifetime accounts).
+  **What shipped:** `src/services/payments/plans.js` (one catalogue: names, prices, Paddle price ids, gates);
+  plan picker with a yearly / monthly choice (yearly preselected); Grow shows a locked page for Animals,
+  Pantry and Money (data kept, trial fully unlocked, read-only farms keep records visible); SQL function
+  `public.founding_lifetime_sold()` closes the Lifetime offer in the picker at 100; `paddle-webhook` v5 maps
+  the five live prices plus the old $190 id; landing, JSON-LD, terms, refunds, privacy and in-app labels.
+  **Paddle (done in the owner's dashboard):** prices `pri_01m7qyfgrm1zmts5k6yw5rh8kw` (Grow yearly $39),
+  `pri_01m7qygka3p9cknmynek8bt09m` (Homestead yearly $79), `pri_01m7qyhngkt0s94p591kv2cacv` (Founding Lifetime
+  $129); products renamed "MyTerra Grow" and "MyTerra Homestead".
+  **Verified live:** deployment `dpl_7rAZ9fZfQkxxCPaAiTWzJQMr9hFV` READY; landing, terms, refunds and privacy
+  byte-identical to the repo; the app bundle carries all five price ids; `Paddle.PricePreview` run on
+  www.myterra.farm with the live client token returns $4.99 / $39.00 / $9.99 / $79.00 / $129.00; webhook answers
+  401 to an unsigned request; `founding_lifetime_sold()` returns 0, not callable by anon; 323 + 3 tests, lint,
+  build.
+  **Mistake during the release:** `8060dcd` went live with placeholder ids for the three new prices (the fill-in
+  was left unstaged when the draft commits were squashed). Found by grepping the live bundle, fixed by
+  `15a9219` about ten minutes later. Yearly and Lifetime checkout could not open in that window.
+  **NOT verified:** no real purchase; no signed-in run with a Grow subscription; the checkout overlay was not
+  opened on the new prices.
+- [ ] **Paddle account verification shows "Failed" (seen 2026-11-18).** The Paddle "Get started" page says
+  "We've been unable to verify your account. Check for an email from our support team". Website approval for
+  `myterra.farm` shows "Checkout approved"; zero completed transactions so far. Until Paddle verifies the
+  account, assume real payments may be refused. Owner to find Paddle's email and answer it.
+- [ ] **Paddle price names still say "Basic tier" / "Pro Tier" on the two monthly prices.** Shown to buyers at
+  checkout next to the product name. Rename to "Grow monthly" / "Homestead monthly" in the dashboard.
+- [ ] **Founding offer, loose ends.** The landing line "first 100 members" is static and needs a manual edit at
+  sell-out; a refunded Lifetime purchase still counts toward the 100 (no refund handling in the webhook).
+- [ ] **Grow soft edge.** Animals added during the trial stay on the map and keep producing care jobs on Grow;
+  only the Animals page is locked.
