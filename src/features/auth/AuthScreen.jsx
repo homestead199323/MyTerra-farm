@@ -190,7 +190,7 @@ export default function AuthScreen({ initialMode, initialNotice, onPasswordUpdat
           {/* Phase 8.3 — legal consent line, shown on the signup form only */}
           {mode === "signup" && (
             <div style={{textAlign:"center",marginTop:12,fontSize:11.5,color:C.t2,lineHeight:1.5}}>
-              7 days of Pro free, then choose a plan or keep your farm read-only. By creating an account you agree to the{" "}
+              7 days free with everything unlocked, then choose a plan or keep your farm read-only. By creating an account you agree to the{" "}
               <a href="/terms" target="_blank" rel="noopener" style={{color:C.green,fontWeight:600}}>Terms of Service</a>
               {" "}and{" "}
               <a href="/privacy" target="_blank" rel="noopener" style={{color:C.green,fontWeight:600}}>Privacy Policy</a>.

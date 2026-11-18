@@ -1,11 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// Price ID -> tier. MUST match Paddle products (8.4) and Paywall.jsx PLANS.
+// Price ID -> tier. MUST match the Paddle catalogue and PRICE_IDS in
+// src/services/payments/plans.js (tests/plans.test.js checks the two files agree).
+// basic = "Grow", pro = "Homestead". Monthly and yearly prices share a tier.
 const PRICE_TIER = {
-  "pri_01kxdcntw2905t5fky81fy8cp0": "basic",
-  "pri_01kxdcqpgjd5z1qrpd6hxgmxr2": "pro",
-  "pri_01kxdcrgmy4jnxycc4h9fa2jsp": "lifetime",
+  "pri_01kxdcntw2905t5fky81fy8cp0": "basic",    // Grow $4.99 / month
+  "PENDING_PADDLE_GROW_YEARLY_39": "basic",    // Grow $39 / year
+  "pri_01kxdcqpgjd5z1qrpd6hxgmxr2": "pro",      // Homestead $9.99 / month
+  "PENDING_PADDLE_HOMESTEAD_YEARLY_79": "pro",  // Homestead $79 / year
+  "PENDING_PADDLE_FOUNDING_LIFETIME_129": "lifetime", // Founding Lifetime $129 once
+  "pri_01kxdcrgmy4jnxycc4h9fa2jsp": "lifetime", // old Lifetime $190: no longer sold, still honoured
 };
 
 const WEBHOOK_SECRET = Deno.env.get("PADDLE_WEBHOOK_SECRET") ?? "";

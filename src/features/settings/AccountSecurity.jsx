@@ -128,7 +128,7 @@ export function DeleteAccount({ email, data, ent, exportData, onDeleted, rowBtn,
       <p style={note}>
         This permanently deletes your login and everything in your farm ({describeSummary(farmSummary(data))}, plus your tasks, notes and records) on every device. It can't be undone.
       </p>
-      {subscribed && <p style={note}>Your {ent.plan === "pro" ? "Pro" : "Basic"} subscription is cancelled at the same time, so you won't be charged again.</p>}
+      {subscribed && <p style={note}>Your {ent.plan === "pro" ? "Homestead" : "Grow"} subscription is cancelled at the same time, so you won't be charged again.</p>}
       {lifetime && <p style={note}>Your Lifetime plan belongs to this account and ends with it.</p>}
       <div style={{ marginBottom: 12 }}>
         <Btn sm v="secondary" onClick={exportData}><Download size={15} strokeWidth={1.8} /> Download my farm first</Btn>

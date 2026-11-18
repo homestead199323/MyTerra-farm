@@ -17,7 +17,7 @@ import {
 import "../plan/plan.css";
 
 /* ═══════════════════════════════════════════
-   INSIGHTS — Pro analytics (top-10 #4, 2026-09-30)
+   INSIGHTS — Homestead analytics (top-10 #4, 2026-09-30)
    Garden memory made visible: what each crop and bed gave against the
    estimate, lay/milk rates, what an egg or a kilo really costs, what grew
    where each year (for rotation), and spreadsheet exports.
@@ -45,7 +45,7 @@ function Locked({ onUpgrade }) {
   return (
     <Card style={{ textAlign: "center", padding: "28px 20px" }}>
       <Lock size={26} strokeWidth={1.8} color={C.t2} />
-      <h3 style={{ margin: "10px 0 6px", fontSize: 18, color: C.text }}>Insights are part of Pro</h3>
+      <h3 style={{ margin: "10px 0 6px", fontSize: 18, color: C.text }}>Insights are part of Homestead</h3>
       <p style={{ fontSize: 13.5, color: C.t2, lineHeight: 1.55, maxWidth: 420, margin: "0 auto 16px" }}>
         See what each crop and bed really gave against the estimate, your hens' lay rate, what an egg or a kilo of veg costs you,
         what grew where each year (with rotation warnings), and download it all as spreadsheets.

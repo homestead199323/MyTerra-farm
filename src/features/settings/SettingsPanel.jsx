@@ -95,7 +95,7 @@ export default function SettingsPanel({
             <span style={{ fontSize: 13, color: C.t2 }}>Plan</span>
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: C.green, background: C.gp, padding: "3px 11px", borderRadius: 12 }}>{plan || "On this device only"}</span>
-              {plan && plan !== "Lifetime Pro" && onUpgrade && (
+              {plan && plan !== "Lifetime" && onUpgrade && (
                 <button type="button" onClick={onUpgrade} style={{ border: `1px solid ${C.bdr}`, background: C.card, color: C.green, borderRadius: 10, padding: "5px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: F.body }}>See plans</button>
               )}
             </span>

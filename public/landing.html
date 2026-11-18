@@ -33,7 +33,7 @@
     <meta name="twitter:image" content="https://www.myterra.farm/og-image-v5.jpg">
 
     <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"MyTerra","url":"https://www.myterra.farm/","applicationCategory":"LifestyleApplication","operatingSystem":"Web, iOS, Android (installable web app)","description":"Grow food without the guesswork: a living 3D map of your balcony, backyard or farm, with daily jobs, a growth preview, 75 crop and 14 animal guides, and offline use.","offers":[{"@type":"Offer","name":"Basic","price":"4.99","priceCurrency":"USD"},{"@type":"Offer","name":"Pro","price":"9.99","priceCurrency":"USD"},{"@type":"Offer","name":"Lifetime","price":"190","priceCurrency":"USD"}]}
+    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"MyTerra","url":"https://www.myterra.farm/","applicationCategory":"LifestyleApplication","operatingSystem":"Web, iOS, Android (installable web app)","description":"Grow food without the guesswork: a living 3D map of your balcony, backyard or farm, with daily jobs, a growth preview, 75 crop and 14 animal guides, and offline use.","offers":[{"@type":"Offer","name":"Grow","price":"4.99","priceCurrency":"USD"},{"@type":"Offer","name":"Homestead","price":"9.99","priceCurrency":"USD"},{"@type":"Offer","name":"Founding Lifetime","price":"129","priceCurrency":"USD"}]}
     </script>
 
     <!-- Umami analytics with SRI. If analytics stop working, the script was updated by Umami.
@@ -288,6 +288,8 @@
         .plan .price { margin: 20px 0 4px; font-size: 44px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
         .plan .price small { font-size: 16px; font-weight: 600; letter-spacing: 0; color: var(--ink-3); }
         .plan.featured .price small { color: rgba(255,255,255,.7); }
+        .plan .price-alt { margin: 0 0 2px; font-size: 14.5px; font-weight: 600; color: var(--ink-3); }
+        .plan.featured .price-alt { color: rgba(255,255,255,.78); }
         .plan .ticks { margin: 20px 0 28px; flex: 1; }
         .plan .ticks li { font-size: 15px; }
         .plan.featured .ticks li { color: rgba(255,255,255,.88); }
@@ -439,7 +441,7 @@
             .trial-step + .trial-step { border-top: 1px solid var(--line); }
             .trial-step .when { margin: 0; font-size: 11px; }
             .trial-step p { font-size: 14px; }
-            /* plans swipe sideways with Pro first instead of stacking to ~2,000 px (as in fd1e149) */
+            /* plans swipe sideways with Homestead first instead of stacking to ~2,000 px (as in fd1e149) */
             .plans { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; max-width: none; margin: 0 calc(-1 * var(--gut)); padding: 18px var(--gut) 14px; scrollbar-width: none; }
             .plans::-webkit-scrollbar { display: none; }
             .plan { flex: 0 0 min(300px, 84vw); scroll-snap-align: center; }
@@ -515,10 +517,10 @@
             </div>
             <ul class="hero-trust" aria-label="What you get">
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>No farming experience required</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>7-day Pro trial, no card</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>7-day free trial, no card</li>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Works offline</li>
             </ul>
-            <p class="hero-demo">Want to keep your farm? <a href="/app?signup" data-umami-event="cta-trial">Start the 7-day Pro trial</a> — no card.</p>
+            <p class="hero-demo">Want to keep your farm? <a href="/app?signup" data-umami-event="cta-trial">Start the 7-day free trial</a> — no card.</p>
         </div>
         <div class="hero-stage" aria-hidden="true">
             <div class="phone"><img src="/landing/s5-hero.webp" width="720" height="1558" decoding="async" alt=""></div>
@@ -787,55 +789,57 @@
             <p>No card to start. Pick a plan only if MyTerra earns its place in your week.</p>
         </div>
         <div class="trial reveal" aria-label="How the free trial works">
-            <div class="trial-step"><span class="when">Today</span><p><b>Create your account.</b> Every Pro feature unlocked, no card.</p></div>
+            <div class="trial-step"><span class="when">Today</span><p><b>Create your account.</b> Every Homestead feature unlocked, no card.</p></div>
             <div class="trial-step"><span class="when">Days 1–7</span><p><b>Build your map</b> and follow your daily plan.</p></div>
             <div class="trial-step"><span class="when">Day 7</span><p><b>Choose a plan to keep editing.</b> If you don't, nothing is charged and your farm stays saved, read-only.</p></div>
         </div>
-        <p class="plans-hint" aria-hidden="true">Swipe to compare Pro, Basic and Lifetime →</p>
+        <p class="plans-hint" aria-hidden="true">Swipe to compare Homestead, Grow and Lifetime →</p>
         <div class="plans reveal">
             <div class="plan">
-                <h3>Basic</h3>
-                <p class="desc">Everything you need to start</p>
+                <h3>Grow</h3>
+                <p class="desc">For pots, beds and gardens</p>
                 <div class="price">$4.99<small> /month</small></div>
+                <p class="price-alt">or $39 a year. Save 35%.</p>
                 <ul class="ticks">
-                    <li>Your 3D map, crops, animals and pantry</li>
+                    <li>Your 3D map and daily job list</li>
+                    <li>Crops, seedlings and seasonal calendar</li>
+                    <li>Weather alerts for what you grow</li>
+                    <li>Full crop guide library</li>
                     <li>Offline mode + cloud backup</li>
-                    <li>Auto-generated tasks</li>
-                    <li>Seasonal calendar</li>
-                    <li>Full guide library</li>
                 </ul>
-                <a href="/app?signup" class="btn btn-line" data-umami-event="cta-pricing" data-umami-event-plan="basic">Start free trial</a>
+                <a href="/app?signup" class="btn btn-line" data-umami-event="cta-pricing" data-umami-event-plan="grow">Start free trial</a>
             </div>
             <div class="plan featured">
-                <span class="plan-tag tag-g">Recommended</span>
-                <h3>Pro</h3>
-                <p class="desc">For serious homesteaders</p>
+                <span class="plan-tag tag-g">For hens, goats and more</span>
+                <h3>Homestead</h3>
+                <p class="desc">When you keep animals or sell what you grow</p>
                 <div class="price">$9.99<small> /month</small></div>
+                <p class="price-alt">or $79 a year. Save 34%.</p>
                 <ul class="ticks">
-                    <li>Everything in Basic</li>
+                    <li>Everything in Grow</li>
+                    <li>Animals: eggs, milk, feed and care jobs</li>
+                    <li>Pantry: what you have stored and preserved</li>
+                    <li>Money: sales, costs and what the farm earns</li>
                     <li>Smart offline farm assistant</li>
-                    <li>Multi-zone management</li>
-                    <li>Advanced analytics</li>
-                    <li>Priority support</li>
                 </ul>
-                <a href="/app?signup" class="btn btn-amber" data-umami-event="cta-pricing" data-umami-event-plan="pro">Start free trial</a>
+                <a href="/app?signup" class="btn btn-amber" data-umami-event="cta-pricing" data-umami-event-plan="homestead">Start free trial</a>
             </div>
             <div class="plan">
-                <span class="plan-tag tag-a">Founding price — limited</span>
+                <span class="plan-tag tag-a">Founding price: first 100 members</span>
                 <h3>Lifetime</h3>
                 <p class="desc">Pay once, farm forever</p>
-                <div class="price">$190<small> one-time</small></div>
+                <div class="price">$129<small> one-time</small></div>
+                <p class="price-alt">Everything, with no renewal.</p>
                 <ul class="ticks">
-                    <li>Everything in Pro</li>
+                    <li>Everything in Homestead</li>
                     <li>Lifetime updates</li>
-                    <li>Early-adopter price, locked in</li>
                     <li>Founding member badge</li>
                     <li>A say in the roadmap</li>
                 </ul>
                 <a href="/app?signup" class="btn btn-line" data-umami-event="cta-pricing" data-umami-event-plan="lifetime">Start free trial</a>
             </div>
         </div>
-        <p class="pricing-note">Every plan starts with the same 7 free days. Prices in USD. Cancel any time.</p>
+        <p class="pricing-note">Every plan starts with the same 7 free days. Prices in USD. Monthly and yearly plans cancel any time.</p>
     </div>
 </section>
 
@@ -881,7 +885,7 @@
             </details>
             <details>
                 <summary>What happens after the 7 days?</summary>
-                <p>You choose Basic, Pro or Lifetime to keep going. No card is taken up front, so nothing charges automatically. If you don't pick a plan, your farm stays saved and viewable (read-only) until you do.</p>
+                <p>You choose Grow, Homestead or Lifetime to keep going. No card is taken up front, so nothing charges automatically. If you don't pick a plan, your farm stays saved and viewable (read-only) until you do.</p>
             </details>
             <details>
                 <summary>Is my data private?</summary>
@@ -901,7 +905,7 @@
                 Try it now — no sign-up
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <p class="micro">No sign-up to try · 7-day Pro trial · No card · Works offline</p>
+            <p class="micro">No sign-up to try · 7-day free trial · No card · Works offline</p>
         </div>
     </div>
 </section>

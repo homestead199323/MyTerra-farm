@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   INSIGHTS — Pro analytics from the garden memory (top-10 #4, 2026-09-30)
+   INSIGHTS — Homestead analytics from the garden memory (top-10 #4, 2026-09-30)
 
    Pure, read-only. Sources:
      data.memory (lib/memory.js) — harvests per planting/bed, beds history,

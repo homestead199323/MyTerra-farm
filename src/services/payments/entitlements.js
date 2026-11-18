@@ -8,10 +8,11 @@
    drives UI (read-only lock, trial banner, Pro feature gates).
 
    Plan model (profiles.tier):
-   - trial    — 7 days of full Pro from signup (trial_started_at)
-   - basic    — paid, core features
-   - pro      — paid, + AI assistant, multi-zone, analytics
+   - trial    — 7 days with everything unlocked, from signup (trial_started_at)
+   - basic    — paid "Grow": map, daily jobs, crops, calendar, weather, guides
+   - pro      — paid "Homestead": + animals, pantry, money, insights, assistant
    - lifetime — one-time purchase, same features as pro, never expires
+   Names, prices and the feature list live in ./plans.js.
 
    After trial expiry with no plan: READ-ONLY. Data stays visible and
    syncable DOWN (pull), but the farms RLS rejects upserts and the UI
@@ -39,8 +40,6 @@ const CACHE_KEY = "hfm_entitlement_v1"; // namespaced with hfm_data_v7 etc.
 const DAY_MS = 24 * 60 * 60 * 1000;
 const GRACE_MS = OFFLINE_GRACE_HOURS * 60 * 60 * 1000;
 
-// Feature → minimum plan. Trial gets full Pro so users taste everything.
-const PRO_FEATURES = ["ai", "multizone", "analytics"];
 
 // ── Pure logic (unit-testable, no I/O) ──────────────────────────────
 
@@ -107,13 +106,8 @@ export function computeEntitlement(profile, nowMs) {
 // planLabel / trialEndsAt live in a dependency-free module so they can be unit-tested.
 export { planLabel, trialEndsAt } from "./plan-label.js";
 
-// hasFeature(ent, 'ai' | 'multizone' | 'analytics' | anything-basic)
-// Unknown feature names are treated as basic-level (write access = has it).
-export function hasFeature(ent, feature) {
-  if (!ent) return false;
-  if (PRO_FEATURES.includes(feature)) return ent.isPro;
-  return ent.canWrite;
-}
+// hasFeature / pageLock / plan catalogue live in a dependency-free module (unit-tested).
+export { hasFeature, pageLock, planName, foundingLeft } from "./plans.js";
 
 // ── Cache (offline grace) ───────────────────────────────────────────
 
@@ -197,5 +191,24 @@ export async function fetchEntitlement() {
     return computeEntitlement(data);
   } catch {
     return getCachedEntitlement();
+  }
+}
+
+/*
+ * fetchFoundingSold() → number of Founding Lifetime purchases so far, or null
+ * when it cannot be read (offline, signed out, database paused). Backed by the
+ * SQL function public.founding_lifetime_sold() (security definer: profiles RLS
+ * is select-own, so the client cannot count rows itself). Callers treat null
+ * as "unknown" and keep the offer open — see foundingLeft() in plans.js.
+ */
+export async function fetchFoundingSold() {
+  if (!isSupabaseConfigured || !sessionPossible()) return null;
+  try {
+    const supabase = await getClient();
+    const { data, error } = await supabase.rpc("founding_lifetime_sold");
+    if (error || typeof data !== "number") return null;
+    return data;
+  } catch {
+    return null;
   }
 }

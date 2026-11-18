@@ -58,12 +58,12 @@ import { isSupabaseConfigured, recoveryInUrl, authLinkError } from "./lib/db";
 import { getSession, onAuthChange, signOut, signOutLocal } from "./lib/auth";
 import { pullFarmWithTimeout, pushFarm, flushPush, initSyncReconnect, pullIfRemoteNewer, noteAppliedUpdatedAt, resetSync, getSyncStatus } from "./lib/sync";
 import { checkIsAdmin } from "./lib/admin";
-import { fetchEntitlement, getCachedEntitlement, resetEntitlement, hasFeature, planLabel } from "./services/payments/entitlements";
+import { fetchEntitlement, getCachedEntitlement, resetEntitlement, hasFeature, pageLock, planLabel } from "./services/payments/entitlements";
 import { spaceTitle } from "./lib/environment";
 import { parseBackup, farmSummary, describeSummary } from "./lib/backup";
 import { keepLocalEdits } from "./lib/unsynced";
 import { toast } from "./lib/toast";
-import { TrialBanner, UpgradeSheet, LockedAssistantFab, onPaddlePurchase } from "./features/payments/Paywall";
+import { TrialBanner, UpgradeSheet, LockedAssistantFab, LockedPage, onPaddlePurchase } from "./features/payments/Paywall";
 /* ═══════════════════════════════════════════
    ERROR BOUNDARY — graceful crash recovery
    ═══════════════════════════════════════════ */
@@ -161,7 +161,7 @@ const AccountSheet = React.memo(function AccountSheet({page, setPage, onClose, o
             <div style={{fontSize:14,fontWeight:700,color:C.text,fontFamily:F.body,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{title}</div>
             <div style={{fontSize:11,color:C.t2,marginTop:1}}>{plan ? `MyTerra · ${plan}` : "MyTerra"}</div>
           </div>
-          {plan && plan !== "Lifetime Pro" && onUpgrade && (
+          {plan && plan !== "Lifetime" && onUpgrade && (
             <button type="button" onClick={function(){ onClose(); onUpgrade(); }} style={{border:`1px solid ${C.bdr}`,background:C.card,color:C.green,borderRadius:10,padding:"7px 10px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:F.body,whiteSpace:"nowrap"}}>
               Plans
             </button>
@@ -188,7 +188,7 @@ const AccountSheet = React.memo(function AccountSheet({page, setPage, onClose, o
 
 // Demo mode (no account). The farm lives in this browser's cache only,
 // stamped with DEMO_OWNER so a later sign-in never mistakes it for a user's
-// farm. Full write access, Pro screens open; the AI assistant stays off (it
+// farm. Full write access, Homestead screens open; the AI assistant stays off (it
 // needs a session). Nothing is ever fetched or pushed.
 const DEMO_OWNER = "demo";
 const DEMO_ENT = { plan: "demo", state: "demo", canWrite: true, isPro: true, trialDaysLeft: 0 };
@@ -211,7 +211,7 @@ function wantsAuthScreen() {
 function DemoBanner({ onSignup, onSignin }) {
   return (
     <div role="status" style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",background:C.gp,border:`1px solid ${C.bdr}`,borderRadius:12,padding:"8px 12px",marginBottom:14,fontFamily:F.body}}>
-      <span style={{fontSize:12.5,color:C.text,fontWeight:500,flex:1,minWidth:180}}>Demo mode — this farm lives only on this device. Create a free account to keep it and get 7 days of Pro.</span>
+      <span style={{fontSize:12.5,color:C.text,fontWeight:500,flex:1,minWidth:180}}>Demo mode — this farm lives only on this device. Create a free account to keep it and get 7 days free with everything unlocked.</span>
       {onSignin && <button type="button" onClick={onSignin} style={{border:`1px solid ${C.bdr}`,background:"transparent",color:C.text,cursor:"pointer",borderRadius:10,padding:"7px 12px",fontSize:12.5,fontWeight:600,fontFamily:F.body,whiteSpace:"nowrap"}}>Sign in</button>}
       <button type="button" onClick={onSignup} style={{border:"none",background:C.green,color:"#fff",cursor:"pointer",borderRadius:10,padding:"7px 12px",fontSize:12.5,fontWeight:700,fontFamily:F.body,whiteSpace:"nowrap"}}>Create free account</button>
     </div>
@@ -275,7 +275,7 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   const [badgeQueue,setBadgeQueue]=useState([]);
 
   // Phase 8.2 (payments) — entitlement drives the read-only lock, trial
-  // banner, and Pro gates. Seeded synchronously from the offline-grace
+  // banner, and plan gates. Seeded synchronously from the offline-grace
   // cache, then verified against Supabase on mount and on tab focus.
   // 'unknown' (no cache yet, fetch pending) is treated optimistically as
   // unlocked — the farms RLS is the real security boundary, and blocking a
@@ -587,7 +587,12 @@ function AppInner({ cloudData, allowLocal, seedCloud, onSignOut, onAccountDelete
   const mapHome = stage && page === "home";
   const goFarm = () => setPage("home");
 
+  // Grow does not include Animals, Pantry or Money: those pages show what
+  // Homestead adds instead. The demo has everything (DEMO_ENT.isPro).
+  const lockedFeature = pageLock(ent, page);
+
   const pg = () => {
+    if (lockedFeature && lockedFeature !== "analytics") return <LockedPage feature={lockedFeature} onUpgrade={openUpgrade}/>;
     switch(page) {
       case "tasks": return <TaskQueue data={data} setData={setData} setPage={setPage} tasks={tasks} forecast={forecast} pageData={pageData} clearPageData={clearFarmPageData}/>;
       case "map": return <MapScreen data={data} setData={setData} pageData={pageData} clearPageData={clearFarmPageData} setPage={setPage}/>;

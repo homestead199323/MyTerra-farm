@@ -26,6 +26,7 @@ import './build-model.test.js';
 import './fits-space.test.js';
 import './crop-icons.test.js';
 import './desk-model.test.js';
+import './plans.test.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {companionsFor,relation,growthOf,validatePlantingLayout,bedLength,bedRows,animalZone,freePlantingRows} from '../src/features/quiet/farm-model.js';
@@ -525,12 +526,8 @@ test('Toggling a later step never re-anchors; prep steps come before the sow ste
   const p=pending();const t=toggleStep(p,1,today,28);assert.equal(t.plantDate,p.plantDate);assert.equal(t.steps[1].done,true);
 });
 test('Plan label tells the truth about trials and plans',()=>{
-  assert.equal(planLabel({state:'trial',trialDaysLeft:6}),'Pro trial · 6 days left');
-  assert.equal(planLabel({state:'trial',trialDaysLeft:1}),'Pro trial · last day');
   assert.equal(planLabel({state:'trial_expired'}),'Trial ended · read-only');
-  assert.equal(planLabel({state:'active',plan:'basic'}),'Basic plan');
-  assert.equal(planLabel({state:'active',plan:'pro'}),'Pro plan');
-  assert.equal(planLabel({state:'lifetime'}),'Lifetime Pro');
+  assert.equal(planLabel({state:'expired'}),'Plan ended · read-only');
   assert.equal(planLabel({state:'unknown'}),'');
 });
 test('Money uses the chosen currency; auth copy opens sign-up from Start free',()=>{

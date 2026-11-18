@@ -12,6 +12,11 @@
                           openPaddleCheckout / paddle-webhook edge fn).
    - LockedAssistantFab — replaces the AI assistant FAB when the plan
                           lacks the 'ai' feature; opens the sheet.
+   - LockedPage         — stands in for Animals / Pantry / Money on the
+                          Grow plan (see pageLock in plans.js).
+
+   Plan names, prices and Paddle price ids live in
+   src/services/payments/plans.js.
 
    These are UX only. The write block is enforced by farms RLS
    (public.has_write_access) — see entitlements.js header.
@@ -23,6 +28,8 @@ import { C, F } from "../../lib/theme";
 import { getClient } from "../../lib/db";
 import { toast } from "../../lib/toast";
 import { SUPPORT_EMAIL } from "../../lib/auth-messages";
+import { PLANS, LOCK_COPY, priceIdFor, planName, yearlySaving, foundingLeft } from "../../services/payments/plans";
+import { fetchFoundingSold } from "../../services/payments/entitlements";
 
 // Phase 8.5: Paddle checkout is live.
 export const PADDLE_ENABLED = true;
@@ -32,14 +39,6 @@ export const PADDLE_ENABLED = true;
 // anything). Server-side API key + webhook secret live in the
 // paddle-webhook Supabase Edge Function's secrets, never here.
 const PADDLE_CLIENT_TOKEN = "live_734383069159c3bce2c4f6956b4";
-
-// Price ID per plan. MUST match the products created in Paddle (8.4)
-// and PRICE_TIER in supabase/functions/paddle-webhook/index.ts.
-const PRICE_IDS = {
-  basic: "pri_01kxdcntw2905t5fky81fy8cp0",
-  pro: "pri_01kxdcqpgjd5z1qrpd6hxgmxr2",
-  lifetime: "pri_01kxdcrgmy4jnxycc4h9fa2jsp",
-};
 
 // Who to tell when a checkout completes (App refreshes the entitlement —
 // the webhook that unlocks the plan lands a few seconds after the payment).
@@ -93,8 +92,10 @@ function loadPaddle() {
 // back to a profiles row — see paddle-webhook/index.ts.
 // Resolves true when the Paddle overlay opened; says why (toast) when it did not.
 // eslint-disable-next-line react-refresh/only-export-components -- checkout fn lives with the sheet that calls it; dev-only Fast Refresh nit
-export async function openPaddleCheckout(planId) {
+export async function openPaddleCheckout(planId, interval) {
   try {
+    const priceId = priceIdFor(planId, interval);
+    if (!priceId) return false;
     const Paddle = await loadPaddle();
     if (!Paddle) return false;
     const { data } = await (await getClient()).auth.getUser();
@@ -104,7 +105,7 @@ export async function openPaddleCheckout(planId) {
       return false;
     }
     Paddle.Checkout.open({
-      items: [{ priceId: PRICE_IDS[planId], quantity: 1 }],
+      items: [{ priceId, quantity: 1 }],
       customer: user.email ? { email: user.email } : undefined,
       customData: { user_id: user.id },
     });
@@ -116,13 +117,14 @@ export async function openPaddleCheckout(planId) {
   }
 }
 
-// Pricing — MUST match public/landing.html (canonical) and the Paddle
-// products created in Phase 8.4.
-const PLANS = [
-  { id: "basic", name: "Basic", price: "$4.99", per: "/month", blurb: "Everything you need to run one farm: tasks, crops, animals, pantry, financials, manuals." },
-  { id: "pro", name: "Pro", price: "$9.99", per: "/month", blurb: "Basic plus the AI farm assistant, multi-zone planning, and analytics.", highlight: true },
-  { id: "lifetime", name: "Lifetime", price: "$190", per: "one-time", blurb: "All Pro features forever. Early-adopter deal, limited availability." },
-];
+// What a plan card shows for the chosen billing period.
+function priceLine(plan, interval) {
+  if (plan.once) return { price: "$" + plan.once, per: "one-time", note: "" };
+  if (interval === "year") {
+    return { price: "$" + plan.year, per: "/year", note: `Save ${yearlySaving(plan)}% against paying monthly` };
+  }
+  return { price: "$" + plan.month.toFixed(2), per: "/month", note: `or $${plan.year} a year` };
+}
 
 /* ── TrialBanner ─────────────────────────────────────────────────────
    Renders nothing for lifetime / active states. */
@@ -139,8 +141,8 @@ export function TrialBanner({ ent, onUpgrade }) {
       ? new Date(ent.trialEndsAt).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })
       : "";
     text = ent.trialDaysLeft === 1
-      ? "Pro trial · last day. Pick a plan to keep editing — your farm stays safe either way."
-      : `Pro trial · ${ent.trialDaysLeft} days left${ends ? ` · ends ${ends}` : ""}`;
+      ? "Free trial · last day. Pick a plan to keep editing — your farm stays safe either way."
+      : `Free trial · ${ent.trialDaysLeft} days left${ends ? ` · ends ${ends}` : ""}`;
     // Early in the trial the job is to show value, not to sell: a quiet link.
     if (ent.trialDaysLeft > 2) cta = "See plans";
   } else if (ent.state === "trial_expired") {
@@ -179,6 +181,16 @@ export function TrialBanner({ ent, onUpgrade }) {
 /* ── UpgradeSheet ──────────────────────────────────────────────────── */
 export function UpgradeSheet({ open, onClose, ent }) {
   const [opening, setOpening] = useState(null); // plan id while the overlay loads
+  const [interval, setBilling] = useState("year"); // 'year' | 'month'
+  const [sold, setSold] = useState(null); // Founding Lifetime purchases so far; null = not known
+  // Founding Lifetime closes at 100 buyers. An unknown count (offline, a paused
+  // database) leaves the offer open rather than blocking a sale on a network blip.
+  useEffect(() => {
+    if (!open) return undefined;
+    let on = true;
+    fetchFoundingSold().then((n) => { if (on) setSold(n); });
+    return () => { on = false; };
+  }, [open]);
   // Escape closes — matches the app's other overlays.
   useEffect(() => {
     if (!open) return;
@@ -198,10 +210,14 @@ export function UpgradeSheet({ open, onClose, ent }) {
   const currentPlan = subscribed ? ent.plan : null;
   const mailChange = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Change my MyTerra plan")}`;
 
+  const left = foundingLeft(sold);
+  const foundingGone = left === 0;
+  const currentName = planName(currentPlan);
+
   async function choose(planId) {
     if (opening) return;
     setOpening(planId);
-    try { await openPaddleCheckout(planId); } finally { setOpening(null); }
+    try { await openPaddleCheckout(planId, interval); } finally { setOpening(null); }
   }
 
   return createPortal(
@@ -230,15 +246,36 @@ export function UpgradeSheet({ open, onClose, ent }) {
         <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
           {subscribed
             ? (ent.state === "past_due"
-              ? `You're on ${currentPlan === "pro" ? "Pro" : "Basic"}. Paddle emailed you a link to update your card; access continues while the payment is retried.`
-              : `You're on ${currentPlan === "pro" ? "Pro" : "Basic"}. To switch plans or cancel, email us and we'll change it without charging you twice.`)
+              ? `You're on ${currentName}. Paddle emailed you a link to update your card; access continues while the payment is retried.`
+              : `You're on ${currentName}. To switch plans or billing period, or to cancel, email us and we'll change it without charging you twice.`)
             : locked
             ? "Your farm and all its data are saved. Pick a plan to unlock editing again."
             : "Pick the plan that fits how you farm. Nothing is charged until you choose one. Cancel any time, and your first payment has a 14-day money-back guarantee."}
         </p>
 
+        {!subscribed && (
+          <div role="group" aria-label="Billing period" style={{ display: "flex", gap: 4, background: C.soft, borderRadius: 12, padding: 4, marginBottom: 14 }}>
+            {[{ id: "year", l: "Yearly", s: "save a third" }, { id: "month", l: "Monthly", s: "" }].map(function(opt) {
+              const on = interval === opt.id;
+              return (
+                <button key={opt.id} type="button" aria-pressed={on} onClick={function(){ setBilling(opt.id); }} style={{
+                  flex: 1, border: "none", borderRadius: 9, padding: "8px 6px", cursor: "pointer",
+                  background: on ? C.card : "transparent", color: on ? C.text : C.t2,
+                  boxShadow: on ? "0 1px 3px rgba(0,0,0,.12)" : "none",
+                  fontFamily: F.body, fontSize: 13, fontWeight: 700,
+                }}>
+                  {opt.l}{opt.s ? <span style={{ fontWeight: 500, fontSize: 11.5, color: on ? C.green : C.t2 }}> · {opt.s}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {PLANS.map(function(plan) {
+            // Someone already subscribed sees both prices: we do not know their billing period here.
+            const line = priceLine(plan, subscribed ? "month" : interval);
+            const gone = plan.id === "lifetime" && foundingGone;
             return (
               <div key={plan.id} style={{
                 border: plan.highlight ? `2px solid ${C.green}` : `1.5px solid ${C.bdr}`,
@@ -258,8 +295,9 @@ export function UpgradeSheet({ open, onClose, ent }) {
                 )}
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F.head, fontSize: 16, fontWeight: 800, color: C.text }}>{plan.name}</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: C.green }}>{plan.price}</span>
-                  <span style={{ fontSize: 11.5, color: C.t2 }}>{plan.per}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.green }}>{line.price}</span>
+                  <span style={{ fontSize: 11.5, color: C.t2 }}>{line.per}</span>
+                  {line.note ? <span style={{ fontSize: 11.5, color: C.t2, flexBasis: "100%" }}>{line.note}</span> : null}
                 </div>
                 <p style={{ fontSize: 12, color: C.t2, margin: "6px 0 10px", lineHeight: 1.5 }}>{plan.blurb}</p>
                 {subscribed ? (
@@ -268,6 +306,8 @@ export function UpgradeSheet({ open, onClose, ent }) {
                     : <a href={mailChange} style={{ display: "block", textAlign: "center", borderRadius: 10, padding: "9px 0", fontSize: 13, fontWeight: 700, fontFamily: F.body, background: C.soft, color: C.text, textDecoration: "none" }}>
                         Switch to {plan.name} — email us
                       </a>
+                ) : gone ? (
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: C.t2, padding: "8px 0" }}>All 100 Founding places are taken.</div>
                 ) : (
                 <button
                   disabled={!PADDLE_ENABLED || !!opening}
@@ -317,8 +357,8 @@ export function LockedAssistantFab({ lift, onClick }) {
     <button
       className="mt-fab"
       onClick={onClick}
-      aria-label="Farm assistant — available on the Pro plan"
-      title="Farm Assistant (Pro)"
+      aria-label="Farm assistant — available on the Homestead plan"
+      title="Farm Assistant (Homestead)"
       style={{
         position: "fixed",
         bottom: isMobile ? (lift ? "calc(210px + env(safe-area-inset-bottom))" : "calc(72px + env(safe-area-inset-bottom))") : 24,
@@ -345,5 +385,29 @@ export function LockedAssistantFab({ lift, onClick }) {
         </span>
       </span>
     </button>
+  );
+}
+
+/* ── LockedPage ──────────────────────────────────────────────────────
+   Shown in place of Animals / Pantry / Money on the Grow plan.
+   `feature` is what pageLock() returned: 'animals' | 'pantry' | 'money'. */
+export function LockedPage({ feature, onUpgrade }) {
+  const copy = LOCK_COPY[feature];
+  if (!copy) return null;
+  return (
+    <div style={{
+      textAlign: "center", padding: "28px 20px", background: C.card,
+      border: `1px solid ${C.bdr}`, borderRadius: 16, fontFamily: F.body,
+    }}>
+      <Lock size={26} strokeWidth={1.8} color={C.t2}/>
+      <h3 style={{ margin: "10px 0 6px", fontSize: 18, color: C.text, fontFamily: F.head }}>{copy.title}</h3>
+      <p style={{ fontSize: 13.5, color: C.t2, lineHeight: 1.55, maxWidth: 420, margin: "0 auto 16px" }}>{copy.body}</p>
+      <button type="button" onClick={onUpgrade} style={{
+        border: "none", background: C.green, color: "#fff", cursor: "pointer",
+        fontSize: 13, fontWeight: 700, fontFamily: F.body, padding: "9px 18px", borderRadius: 10,
+      }}>
+        See plans
+      </button>
+    </div>
   );
 }
